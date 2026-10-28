@@ -12,6 +12,7 @@
   const TDP = window.LiurenTianDiPan;
   const XY = window.LiurenXiangYi;
   const CM = window.LiurenCaseMatch;
+  let lastDomainUi = null;   // 上次排盘实际用的界面占类
   let BOOK = null;      // knowledge/liuren-cases.json：书中六壬案例（盘式照录＋摘要）
   const $ = (id) => document.getElementById(id);
   let school = 'zhuanpan';
@@ -136,6 +137,55 @@
     return by[ui] || (DOMAINS.uiPurposeToEngineCategory || {})[ui] || ui;
   }
   const feipanCategoryOf = (ui) => engineCategoryOf(ui, 'feipan');
+
+  /* ---------- 占类：唯一解析口径（同 Qimen-pwa resolveCategory） ----------
+   * 下拉选了 → 显式，直接就是结论，不再过分类器；留「跟随问句自动判定」→ 才交给引擎的
+   * classifyQuestion 按问句关键词判。分类器用 Qimen-pwa 引擎原有的，不在本仓库另写。 */
+  const YS = window.YongShen;
+  const schoolKey = () => (school === 'feipan' ? 'feipan' : 'zhuanpan');
+  /** 引擎占类 → 界面占类（求财→财运、功名→学业、疾病→健康；飞盘寻物→失物）。同名多项取表中先出现者 */
+  function uiOfEngineCategory(cat) {
+    if (!DOMAINS) return cat || '综合';
+    const by = (DOMAINS.uiPurposeToEngineCategoryBySchool || {})[schoolKey()] || {};
+    for (const k in by) if (by[k] === cat) return k;
+    const m = DOMAINS.uiPurposeToEngineCategory || {};
+    for (const k in m) if (m[k] === cat) return k;
+    return '综合';
+  }
+  function resolveDomain() {
+    const pick = $('inDomain').value;
+    if (pick) return { ui: pick, source: 'explicit' };
+    const q = ($('aiQuestion').value || '').trim();
+    if (!q) return { ui: '综合', source: 'empty' };
+    const builder = school === 'feipan' ? QM.feipanPredict : QM.zhuanpanPredict;
+    let cat = '综合';
+    try { cat = (builder.classifyQuestion(q, '综合') || {}).category || '综合'; } catch (e) { cat = '综合'; }
+    return { ui: uiOfEngineCategory(cat), engineCat: cat, source: 'auto' };
+  }
+  function renderDomainTag(dom) {
+    const tag = $('domainTag'); if (!tag) return;
+    const who = dom.source === 'explicit' ? '你指定的' : dom.source === 'auto' ? '按问句自动判定' : '未填问句，暂按综合';
+    let html = `本盘按「<b>${esc(dom.ui)}</b>」取用（${who}）`;
+    if (YS && YS.isLoaded && YS.isLoaded()) {
+      const m = YS.categoryMap(dom.ui, schoolKey());
+      if (m && m.loaded && !m.engineSupported) {
+        html += `<br><b style="color:#a94442">⚠ ${school === 'feipan' ? '飞盘' : '转盘'}不支持「${esc(m.unsupportedName || m.engineCategory)}」，`
+          + `本次落回「${esc(m.degradedTo)}」。</b>${m.degradeWhy ? '<span class="muted">' + esc(m.degradeWhy) + '</span>' : ''}`;
+      }
+    }
+    tag.innerHTML = html;
+  }
+  /** 本盘别不支持的占类，在下拉里先标出来（同 Qimen-pwa markUnsupportedDomains） */
+  function markUnsupportedDomains() {
+    if (!YS || !YS.isLoaded || !YS.isLoaded()) return;
+    const name = school === 'feipan' ? '飞盘' : '转盘';
+    [...$('inDomain').options].forEach((o) => {
+      if (!o.value) return;
+      const base = o.dataset.base || (o.dataset.base = o.textContent.replace(/（.*不支持）$/, ''));
+      const m = YS.categoryMap(o.value, schoolKey());
+      o.textContent = m.engineSupported ? base : base + '（' + name + '不支持）';
+    });
+  }
   /** 年命：引擎只收天干（甲须连支）；规则 6 要完整干支 */
   function nianMingGanForEngine(gz) { return !gz ? '' : gz[0] === '甲' ? gz : gz[0]; }
 
@@ -204,11 +254,13 @@
   }
 
   /* ---------- 穿壬层 ---------- */
-  const RULE_NAME = { 1: '用神天将', 2: '五行推理·天盘支', 3: '末传落宫', 4: '空亡互检', 5: '方位第二意见', 6: '命干' };
+  const RULE_NAME = { 1: '用神天将', 2: '五行推理·天盘支', 3: '末传落宫', 4: '空亡互检', 5: '方位第二意见', 6: '命干',
+    7: '应期融合·穿壬', 8: '类神入传', 9: '贵人互参', 10: '我彼双读' };
   const GONG_LABEL = (g) => { const J = QM.JIU_GONG[String(g)] || {}; return (J.name || '') + NUM_CN[+g]; };
 
   function voteHtml(r) {
-    if (r.rule === 5 || (r.rule === 4 && !r.applicable && r.Y)) return '<span class="vote z">—</span>';   // 规则 5 只给方位；规则 4 事宫不空不投票
+    if (r.rule === 5 || r.rule === 7 || (r.rule === 4 && !r.applicable && r.Y)) return '<span class="vote z">—</span>';   // 规则 7 只给应期
+    if (r.verdict === '混') return '<span class="vote z">混</span>';   // 规则 5 只给方位；规则 4 事宫不空不投票
     if (!r.applicable) return '<span class="vote z">弃权</span>';
     return r.vote > 0 ? '<span class="vote p">+1</span>' : r.vote < 0 ? '<span class="vote n">−1</span>' : '<span class="vote z">0</span>';
   }
@@ -232,6 +284,16 @@
     }
     if (r.rule === 6 && r.applicable) {
       return `本命${esc(r.benMingZhi)}上神${esc(r.shangShen)}（${esc(r.meWx)}，乘${esc(r.shangShenJiang)}）对事宫天盘支（${(r.yZhi || []).join('')}，${esc(r.yWx)}）：<b>${esc(r.relation)}</b>`;
+    }
+    if (r.rule === 7) {
+      const pt = Object.entries(r.parts || {}).map(([k, v]) => `${esc(k)} ${v.join('')}`).join('；');
+      return `应期日支：<b>${r.picks.map(esc).join('、')}</b>（${r.maxVotes} 票）<div class="muted">${pt}${r.overlap && r.overlap.length ? `；奇门与六壬重合：${r.overlap.join('')}` : ''}</div>`;
+    }
+    if (r.rule >= 8 && r.rule <= 10 && (r.lrWhy || r.qmWhy)) {
+      const sg = (v) => v > 0 ? '＋' : v < 0 ? '－' : '〇';
+      const head = r.rule === 8 ? `类神（${esc(r.leiShen)}）${r.inChuan && r.inChuan.length ? '入传：' + r.inChuan.join('') : ''}<br>` : '';
+      return `${head}六壬${sg(r.lr)} ${esc(r.lrWhy)}<br>奇门${sg(r.qm)} ${esc(r.qmWhy)}${r.verdict && r.verdict !== '混' ? ` → <b>${esc(r.verdict)}</b>` : ''}`
+        + (r.rule === 8 ? '<div class="muted">规则 8 判「事是否成形」，不等于如愿；问怕发生之事时，＋1 反是坏消息。</div>' : '');
     }
     return '';
   }
@@ -381,7 +443,8 @@
     }
     html += `</tbody></table>
       <p class="muted" style="margin:6px 0 0;">自创实验流派（appliesTo: ${esc(res.appliesTo)}）。+1／−1 只是关系分值，不等于吉或成功；
-      各规则分开计票、不相加，冲突原样保留。规则 3、4 依第二层三传（涉害取深浅法）。</p></div>`;
+      各规则分开计票、不相加，冲突原样保留。规则 3、4 依第二层三传（涉害取深浅法）。
+      规则 7–10 为 v2：奇门、六壬两边同向才投票，相反记「混」。</p></div>`;
     $('chuanren').innerHTML = html;
     renderBookMatches(pan, res);
   }
@@ -403,7 +466,10 @@
   /* ---------- 排盘 ---------- */
   function cast() {
     const date = getDate(), juShu = getJuShuOverride();
-    const ui = $('inDomain').value || '综合';
+    const dom = resolveDomain(), ui = dom.ui;
+    lastDomainUi = ui;
+    renderDomainTag(dom);
+    markUnsupportedDomains();
     const nianMing = $('inNianMing').value;
     const opts = school === 'feipan'
       ? { method: '时家', purpose: ui }
@@ -428,7 +494,7 @@
       renderChuanRen(pan, res);
       window._chuanren = res;
       // 供 AI 解读（web/ai.js）取用：同一张盘、同一份穿壬结果，不重算
-      window._chuanrenCtx = { pan, res, school, date, ui, nianMing, engineCategory: engineCategoryOf(ui, school), dateStr: `${$('inDate').value} ${$('inTime').value}` };
+      window._chuanrenCtx = { pan, res, school, date, ui, domainSource: dom.source, nianMing, engineCategory: engineCategoryOf(ui, school), dateStr: `${$('inDate').value} ${$('inTime').value}` };
     } catch (e) {
       renderBoard(pan, null);
       $('chuanren').innerHTML = `<div class="panel">穿壬层计算出错：${esc(e.message)}</div>`;
@@ -463,6 +529,16 @@
     cast();
   });
   $('castBtn').addEventListener('click', cast);
+  // 自动判定时，问句一改就重判占类；占类真变了才重排盘
+  let qTimer = null;
+  $('aiQuestion').addEventListener('input', () => {
+    clearTimeout(qTimer);
+    qTimer = setTimeout(() => {
+      if ($('inDomain').value) return;
+      const d = resolveDomain();
+      if (d.ui !== lastDomainUi) cast(); else renderDomainTag(d);
+    }, 400);
+  });
   ['inDomain', 'inNianMing'].forEach(id => $(id).addEventListener('change', cast));
 
   fillNianMing(); setNow();
@@ -470,7 +546,7 @@
     .then(d => { BOOK = d; const c = window._chuanrenCtx; if (c && c.res) renderBookMatches(c.pan, c.res); })
     .catch(e => console.warn('[书中案例] 载入失败：', e.message));
   fetch('vendor/qimen-pwa/knowledge/domains.json').then(r => r.json())
-    .then(d => { DOMAINS = d; })
+    .then(d => { DOMAINS = d; if (YS && YS.load) YS.load(d); })
     .catch(e => console.warn('[domains] 载入失败，占类一律按时干宫取：', e.message))
     .finally(cast);
 })();

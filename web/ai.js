@@ -107,7 +107,7 @@
     '8. 六壬层与奇门结论相左时，两边理由都写出，再给出唯一答案（以奇门为准），并注明哪条规则与之相左。',
     '9. 「穿壬事宫」按五行推理 v1 取用，可能与【用神落宫】不同；不同时两者都列，判断仍以【用神落宫】为准。',
     '【格式】',
-    '10. 结尾单列一节「穿壬旁证」：逐条列规则 1–6 的票或方位，并说明与奇门结论是否一致。',
+    '10. 结尾单列一节「穿壬旁证」：逐条列规则 1–10 的票、方位或应期，并说明与奇门结论是否一致。规则 7 的应期日支可与奇门应期互参；规则 8 判的是事是否发生，不是是否如愿。',
   ].join('\n');
 
   /* ---------- 穿壬段 ---------- */
@@ -151,6 +151,17 @@
       if (r.rule === 6) out.push(r.applicable
         ? `  规则6 命干：本命${r.benMingZhi}上神${r.shangShen}（${r.meWx}，乘${r.shangShenJiang}）对事宫天盘支（${r.yZhi.join('')}，${r.yWx}）＝${r.relation}；票 ${r.vote > 0 ? '+1' : '−1'}`
         : `  规则6 命干：弃权（${r.reason}）`);
+      const two = (r) => `六壬${r.lr > 0 ? '＋' : r.lr < 0 ? '－' : '〇'}（${r.lrWhy}）；奇门${r.qm > 0 ? '＋' : r.qm < 0 ? '－' : '〇'}（${r.qmWhy}）`;
+      const tally = (r) => (r.applicable ? `${r.verdict}，票 ${r.vote > 0 ? '+1' : '−1'}` : r.verdict === '混' ? '两边相反，记「混」不投票' : `不投票（${r.reason}）`);
+      if (r.rule === 7) out.push(`  规则7 应期融合·穿壬：应期日支 ${r.picks.join('、')}（${r.maxVotes} 票；`
+        + Object.entries(r.parts).map(([k, v]) => `${k} ${v.join('')}`).join('，') + `）${r.overlap && r.overlap.length ? '；奇门与六壬重合 ' + r.overlap.join('') : ''}（不投是非票，只给应期）`);
+      if (r.rule === 8) out.push(r.lrWhy
+        ? `  规则8 类神入传（类神：${r.leiShen}）：${two(r)}；${tally(r)}。注意：本条判的是「事是否成形／发生」，问怕发生之事时 +1 反为凶`
+        : `  规则8 类神入传：弃权（${r.reason}）`);
+      if (r.rule === 9) out.push(r.lrWhy
+        ? `  规则9 贵人互参：${two(r)}；${tally(r)}`
+        : `  规则9 贵人互参：弃权（${r.reason}）`);
+      if (r.rule === 10) out.push(`  规则10 我彼双读：${two(r)}；${tally(r)}`);
     }
     return out.join('\n');
   }

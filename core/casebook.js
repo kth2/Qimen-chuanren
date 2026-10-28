@@ -7,6 +7,9 @@
  *   · 评估点只看两次：≥40 题且两类各 ≥10；≥100 题且两类各 ≥25。未到评估点只报数，不下结论。
  *   · 比较基准：AI 解读的结论（奇门为主），由用户回填时照 AI 原文勾选。
  *   · 规则 5 只在方位题、且第二方位与奇门方位不同时计命中。
+ *   · v2（规则 7–10）：规则 8 判「事是否发生」，对「实况发生／没发生」计分，不对如愿；规则 7 只计应期日支命中。
+ *   · 规则账本按规则版本主号分开：v1 的账本不沿用到 v2（项目规则），故各规则只计与当前版本主号相同的记录；
+ *     AI 基准与五行 v1 不受规则版本影响，照旧全计。
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -25,12 +28,13 @@
     return {
       id, createdAt: now, updatedAt: now, app: 'qimen-chuanren', rulesVersion: res.version,
       question: String(question || '').trim(),
-      input: { date: ctx.dateStr, school: ctx.school, ui: ctx.ui, nianMing: ctx.nianMing || '' },
+      input: { date: ctx.dateStr, school: ctx.school, ui: ctx.ui, domainSource: ctx.domainSource || '', nianMing: ctx.nianMing || '' },
       chart: { siZhu: pan.siZhu, juShu: pan.juShu && pan.juShu.fullName },
       liuren: { yueJiang: res.yueJiang.yueJiang, xunKong: res.liuren.xunKong, sanChuan: res.sanChuan.chuan, keTi: res.sanChuan.name },
       quYong: res.quYong,
       votes: res.rules.map((r) => ({ rule: r.rule, applicable: !!r.applicable, vote: r.vote || 0, relation: r.relation || '',
-        secondGongs: r.secondGongs, qimenGong: r.qimenGong, yingQi: r.yingQi || null, mo: r.mo })),
+        secondGongs: r.secondGongs, qimenGong: r.qimenGong, yingQi: r.yingQi || null, mo: r.mo,
+        picks: r.picks, verdict: r.verdict || '', lr: r.lr, qm: r.qm })),
       wuxing: res.wuxing && res.wuxing.applicable ? { score: res.wuxing.score, verdict: res.wuxing.verdict } : null,
       ai: ai ? { answer: String(ai.answer || '').slice(0, 8000), model: ai.model || '' } : null,
       feedback: null,
@@ -72,10 +76,21 @@
     return { reached, next };
   }
 
-  /** 统计。返回各路判断的计分与评估点进度；判定（通过/停止/继续）只在到达评估点时给出 */
-  function stats(records) {
+  const major = (v) => String(v || '').split('.')[0];
+  /** 实况是否发生（规则 8 用）；部分、不清楚返回 null */
+  function happened(rec) {
+    const f = rec.feedback;
+    if (!f || f.type !== 'yesno') return null;
+    return f.happened === 'yes' ? true : f.happened === 'no' ? false : null;
+  }
+
+  /** 统计。返回各路判断的计分与评估点进度；判定（通过/停止/继续）只在到达评估点时给出。
+   *  opts.rulesVersion：当前规则版本；给了就只拿同主号的记录给各规则计分 */
+  function stats(records, opts) {
+    opts = opts || {};
     const done = dedupe(records.filter((r) => r.feedback && r.feedback.archived));
     const yn = done.filter((r) => outcome(r) !== null);
+    const sameVer = (r) => !opts.rulesVersion || major(r.rulesVersion) === major(opts.rulesVersion);
     const truthPos = yn.filter((r) => outcome(r)).length, truthNeg = yn.length - truthPos;
     const st = stage(yn.length, truthPos, truthNeg);
 
@@ -84,8 +99,10 @@
     const wx = score(yn.filter((r) => r.wuxing && r.wuxing.score !== 0).map((r) => ({ pred: r.wuxing.score > 0, truth: outcome(r) })));
 
     const rules = {};
-    for (const k of [1, 2, 3, 4, 6]) {
-      const rows = yn.map((r) => ({ v: (r.votes || []).find((x) => x.rule === k), truth: outcome(r) }))
+    for (const k of [1, 2, 3, 4, 6, 8, 9, 10]) {
+      const truthOf = k === 8 ? happened : outcome;
+      const pool = (k === 8 ? done.filter((r) => happened(r) !== null) : yn).filter(sameVer);
+      const rows = pool.map((r) => ({ v: (r.votes || []).find((x) => x.rule === k), truth: truthOf(r) }))
         .filter((x) => x.v && x.v.applicable && x.v.vote !== 0).map((x) => ({ pred: x.v.vote > 0, truth: x.truth }));
       const s = score(rows);
       let verdict = null;
@@ -98,7 +115,7 @@
     }
 
     // 规则 5：方位题，第二方位与奇门方位不同者
-    const dir = done.filter((r) => r.feedback.actualGong);
+    const dir = done.filter((r) => r.feedback.actualGong).filter(sameVer);
     let d5 = { n: 0, second: 0, qimen: 0 };
     for (const r of dir) {
       const v = (r.votes || []).find((x) => x.rule === 5);
@@ -108,14 +125,22 @@
     }
     // 规则 4 应期候选：实际应期之日支与末传相同
     let d4 = { n: 0, hit: 0 };
-    for (const r of done) {
+    for (const r of done.filter(sameVer)) {
       const v = (r.votes || []).find((x) => x.rule === 4);
       if (!v || !v.yingQi || !r.feedback.actualDayZhi) continue;
       d4.n++; if (r.feedback.actualDayZhi === v.mo) d4.hit++;
     }
+    // 规则 7 应期：实际应期日支落在所取日支里算命中；瞎猜期望＝各题所取支数／12 之和
+    let d7 = { n: 0, hit: 0, expect: 0 };
+    for (const r of done.filter(sameVer)) {
+      const v = (r.votes || []).find((x) => x.rule === 7);
+      if (!v || !v.picks || !v.picks.length || !r.feedback.actualDayZhi) continue;
+      d7.n++; d7.expect += v.picks.length / 12; if (v.picks.includes(r.feedback.actualDayZhi)) d7.hit++;
+    }
+    d7.expect = +d7.expect.toFixed(2);
     return { total: records.length, archived: done.length, yesno: yn.length, pos: truthPos, neg: truthNeg,
-      stage: st, ai, wuxing: wx, rules, rule5: d5, rule4YingQi: d4 };
+      stage: st, ai, wuxing: wx, rules, rule5: d5, rule4YingQi: d4, rule7: d7 };
   }
 
-  return { FORMAT, VERSION, EVAL, makeRecord, outcome, dedupe, score, stats };
+  return { FORMAT, VERSION, EVAL, makeRecord, outcome, happened, dedupe, score, stats };
 });
