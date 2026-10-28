@@ -38,11 +38,13 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     beforeParse(w) { w.fetch = (u) => fetch(new URL(u, base)); },
   });
   const w = dom.window, d = w.document;
-  for (let i = 0; i < 50 && !d.querySelector('.cr-grid'); i++) await sleep(100);
+  for (let i = 0; i < 50 && !d.querySelector('.cr-board'); i++) await sleep(100);
 
   function check(label) {
     assert(d.querySelectorAll('#chart .gong').length === 9, label + '：奇门盘不是九宫');
-    assert(d.querySelectorAll('.cr-cell').length === 9, label + '：穿壬九宫不是九格');
+    assert(d.querySelectorAll('.cr-board .cr-ob').length === 12, label + '：合盘外圈不是十二格');
+    assert(d.querySelectorAll('.cr-board .cr-center .gong').length === 9, label + '：合盘中间不是九宫');
+    assert(d.querySelectorAll('.cr-ob.ob-gui').length === 1, label + '：贵人不是正好一格');
     const rows = d.querySelectorAll('.rule-table tbody tr');
     assert(rows.length === 4, label + '：规则表不是四行');
     assert(/月将/.test(d.getElementById('chuanren').textContent), label + '：缺月将');
@@ -59,6 +61,10 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
 
   d.querySelector('#schoolSeg button[data-school="feipan"]').click();
   check('飞盘 同一时刻');
+
+  d.querySelector('#viewSeg button[data-view="qimen"]').click();
+  assert(!d.querySelector('.cr-board') && d.querySelectorAll('#chart .gong').length === 9, '只看奇门：应无外圈');
+  console.log('✓ 只看奇门：外圈收起');
 
   assert(!errors.length, '页面报错：' + errors.join(' / '));
   console.log('冒烟通过，无脚本报错。');

@@ -66,3 +66,19 @@ test('日旬空', () => {
   assert.deepEqual(L.xunKong('癸亥'), ['子', '丑']); // 甲寅旬
   assert.throws(() => L.xunKong('甲丑'));
 });
+
+test('与热卜「奇门穿壬」同盘交叉核对：乙亥日卯将酉时，十二天将逐支一致', () => {
+  // kt 2026-10-28 提供的热卜截图（丙午 戊戌 乙亥 乙酉）。热卜外圈所示，逐支照录。
+  const p = L.build({ riGan: '乙', yueJiang: '卯', shiZhi: '酉' });
+  const reBu = { 子: '贵人', 亥: '螣蛇', 戌: '朱雀', 酉: '六合', 申: '勾陈', 未: '青龙', 午: '天空', 巳: '白虎', 辰: '太常', 卯: '玄武', 寅: '太阴', 丑: '天后' };
+  for (const z in reBu) assert.equal(p.jiangOf(z), reBu[z], z);
+  assert.equal(p.tianOver('巳'), '亥'); // 热卜左上角：巳位上亥
+  assert.equal(p.tianOver('申'), '寅'); // 右上：申位上寅
+});
+
+test('遁干：按日旬配十支，旬空两支为 null', () => {
+  const d = L.dunGan('乙亥'); // 甲戌旬，空申酉
+  assert.deepEqual([d.戌, d.亥, d.子, d.丑, d.寅, d.卯, d.辰, d.巳, d.午, d.未], [...'甲乙丙丁戊己庚辛壬癸']);
+  assert.equal(d.申, null); assert.equal(d.酉, null);
+  assert.deepEqual(Object.entries(L.dunGan('甲子')).filter(([, v]) => v === null).map(([k]) => k), ['戌', '亥']);
+});

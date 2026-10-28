@@ -3,7 +3,7 @@
  * 排盘流程与盘面照 Qimen-pwa：同一个引擎（engine.bundle.js）、同一份 style.css、
  * 同样的「盘别 / 日期 / 时间 / 局」输入。奇门宫格的渲染函数从 Qimen-pwa app.js
  * （submodule 所钉的版本）逐字搬来——那边没有把它们导出，只能照抄；只抄展示，不抄任何断法。
- * 本文件自己的部分只有穿壬层：六壬概要、穿壬九宫、规则 1、2、5、6 的票。
+ * 本文件自己的部分只有穿壬层：合盘外圈（十二支天盘、天将、遁干）、六壬概要、规则 1、2、5、6 的票。
  */
 (function () {
   const QM = window.QM;
@@ -106,12 +106,6 @@
     </div></div>`;
   }
 
-  function renderChart(pan) {
-    const cellFn = school === 'feipan' ? cellFeipan : cellZhuanpan;
-    const cls = school === 'feipan' ? 'pan-grid feipan-grid' : 'pan-grid';
-    $('chart').innerHTML = `<div class="qimen-pan"><div class="pan-outer"><div class="${cls}">${GRID_ORDER.map(g => cellFn(pan, g)).join('')}</div></div></div>` + HARM_LEGEND;
-  }
-
   function getDate() {
     const d = $('inDate').value, t = $('inTime').value;
     if (d && t) { const dt = new Date(d + 'T' + t); if (!isNaN(dt)) return dt; }
@@ -140,8 +134,66 @@
   /** 年命：引擎只收天干（甲须连支）；规则 6 要完整干支 */
   function nianMingGanForEngine(gz) { return !gz ? '' : gz[0] === '甲' ? gz : gz[0]; }
 
+  /* ---------- 合盘：奇门九宫居中，外圈十二支按地盘方位排 ----------
+   * 外圈每格是一个地盘支的方位（巽四上方为巳、左方为辰，依此类推），
+   * 格内写加临其上的天盘支、所乘天将、遁干。版式参照热卜「奇门穿壬」。 */
+  const OUTER = [   // [地盘支, 行, 列]，5×5 网格，中间 3×3 为奇门九宫
+    ['巳', 1, 2], ['午', 1, 3], ['未', 1, 4],
+    ['申', 2, 5], ['酉', 3, 5], ['戌', 4, 5],
+    ['亥', 5, 4], ['子', 5, 3], ['丑', 5, 2],
+    ['寅', 4, 1], ['卯', 3, 1], ['辰', 2, 1],
+  ];
+  const JIANG_SHORT = { 贵人: '贵', 螣蛇: '蛇', 朱雀: '朱', 六合: '六', 勾陈: '勾', 青龙: '青', 天空: '空', 白虎: '白', 太常: '常', 玄武: '玄', 太阴: '阴', 天后: '后' };
+  let view = 'merged';   // 'merged' 合盘 | 'qimen' 只看奇门盘
+
+  function outerBox(ln, dun, di, row, col, marks) {
+    const tian = ln.tianOver(di), jiang = ln.jiangOf(tian), ji = TDP.JI_JIANG.has(jiang);
+    const gan = dun[tian];
+    const side = col === 1 || col === 5;
+    const cls = ['cr-ob', side ? 'cr-ob-v' : 'cr-ob-h', jiang === '贵人' ? 'ob-gui' : '', gan ? '' : 'ob-kong'].join(' ');
+    const tags = marks.map(m => `<span class="ob-tag">${m}</span>`).join('');
+    const tip = `地盘${di}上天盘${tian} · ${jiang}${ji ? '（吉）' : '（凶）'} · ${gan ? '遁干' + gan : '旬空'}`;
+    const ganHtml = gan ? `<span class="ob-gan">${gan}</span>` : '<span class="ob-gan ob-kong-t">○</span>';
+    const jHtml = `<span class="ob-jiang ${ji ? 'ji' : 'xiong'}">${JIANG_SHORT[jiang]}</span>`;
+    const inner = side
+      ? `<span class="ob-zhi">${tian}</span>${jHtml}${ganHtml}<span class="ob-di">${di}</span>${tags}`
+      : `<div><span class="ob-zhi">${tian}</span>${jHtml}</div><div>${ganHtml}<span class="ob-di">${di}位</span>${tags}</div>`;
+    return `<div class="${cls}" style="grid-row:${row};grid-column:${col}" title="${tip}">${inner}</div>`;
+  }
+
+  function renderBoard(pan, res) {
+    const cellFn = school === 'feipan' ? cellFeipan : cellZhuanpan;
+    const cls = school === 'feipan' ? 'pan-grid feipan-grid' : 'pan-grid';
+    const grid = `<div class="${cls}">${GRID_ORDER.map(g => cellFn(pan, g)).join('')}</div>`;
+    if (!res || view === 'qimen') {
+      $('chart').innerHTML = `<div class="qimen-pan"><div class="pan-outer">${grid}</div></div>` + HARM_LEGEND;
+    } else {
+      const ln = TDP.build({ riGan: pan.siZhu.day[0], yueJiang: res.yueJiang.yueJiang, shiZhi: pan.siZhu.time[1] });
+      const dun = TDP.dunGan(pan.siZhu.day);
+      const r6 = res.rules.find(x => x.rule === 6);
+      const benMing = r6 && r6.benMingZhi;
+      const outer = OUTER.map(([di, r, c]) => outerBox(ln, dun, di, r, c, di === benMing ? ['命'] : [])).join('');
+      $('chart').innerHTML = `<div class="qimen-pan cr-pan"><div class="cr-board">${outer}
+        <div class="cr-center pan-outer">${grid}</div></div></div>` + HARM_LEGEND +
+        `<div class="cr-legend">
+          <span><i class="sw sw-me"></i>我宫</span><span><i class="sw sw-shi"></i>事宫</span><span><i class="sw sw-dir"></i>第二方位</span>
+          <span><b class="ji">吉将</b>／<b class="xiong">凶将</b></span><span><span class="ob-tag">命</span>本命</span>
+          <span class="muted">外圈：地盘方位上所加的天盘支、天将、遁干；○＝六壬旬空，不配遁干</span>
+        </div>`;
+    }
+    // 我宫、事宫、第二方位：只加内阴影描边，不动宫格内的排版
+    const R = String((res && res.quYong.R) || ''), Y = String((res && res.quYong.Y) || '');
+    const r5 = res && res.rules.find(x => x.rule === 5);
+    const dirs = new Set(((r5 && r5.secondGongs) || []).map(String));
+    $('chart').querySelectorAll('.pan-grid .gong').forEach((el, i) => {
+      const g = GRID_ORDER[i];
+      if (g === R) el.classList.add('cr-me');
+      if (g === Y) el.classList.add('cr-shi');
+      if (dirs.has(g)) el.classList.add('cr-dir');
+    });
+  }
+
   /* ---------- 穿壬层 ---------- */
-  const JX_CLS = { 吉: 'ji', 凶: 'xiong', 混: 'hun' };
   const RULE_NAME = { 1: '用神天将', 2: '五行推理·天盘支', 5: '方位第二意见', 6: '命干' };
   const GONG_LABEL = (g) => { const J = QM.JIU_GONG[String(g)] || {}; return (J.name || '') + NUM_CN[+g]; };
 
@@ -169,10 +221,7 @@
   }
 
   function renderChuanRen(pan, res) {
-    const ln = TDP.build({ riGan: pan.siZhu.day[0], yueJiang: res.yueJiang.yueJiang, shiZhi: pan.siZhu.time[1] });
     const R = String(res.quYong.R || ''), Y = String(res.quYong.Y || '');
-    const r5 = res.rules.find(x => x.rule === 5);
-    const second = new Set(((r5 && r5.secondGongs) || []).map(String));
     const yj = res.yueJiang, L = res.liuren;
 
     let html = `<div class="panel"><h3>六壬层 <span class="exp-badge">实验</span></h3>
@@ -183,19 +232,6 @@
         　<b>六壬日旬空</b> ${esc(L.xunKong.join(''))}<br>
         <b>取用</b> 我＝${esc(res.quYong.rLabel)}${R ? GONG_LABEL(R) : '（未定）'}　事＝${esc(res.quYong.yName || '')}宫${Y ? GONG_LABEL(Y) : '（未定）'}
       </div></div>`;
-
-    html += `<div class="panel"><h3>穿壬九宫</h3><div class="cr-grid">`;
-    for (const g of GRID_ORDER) {
-      const rg = ln.readGong(Number(g));
-      const cls = ['cr-cell', rg.verdict ? 'cr-' + JX_CLS[rg.verdict] : '', g === R ? 'cr-me' : '', g === Y ? 'cr-shi' : ''].join(' ');
-      const roles = (g === R ? '<span class="cr-role me">我</span>' : '') + (g === Y ? '<span class="cr-role shi">事</span>' : '') +
-        (second.has(g) ? '<span class="cr-role dir">向</span>' : '');
-      const lines = rg.readings.map(x =>
-        `<div class="cr-line"><span class="z">${x.di}上</span>${x.tian} <span class="cr-${x.ji ? 'ji' : 'xiong'}-t">${x.jiang}</span></div>`).join('');
-      html += `<div class="${cls}"><div class="cr-name">${roles}${GONG_LABEL(g)}</div>
-        ${rg.verdict ? `<span class="cr-tag cr-${JX_CLS[rg.verdict]}-t">${rg.verdict}</span>` : ''}${lines || '<div class="muted">无支</div>'}</div>`;
-    }
-    html += `</div><p class="muted" style="margin:6px 0 0;">每格：地盘支上所加的天盘支与天将。绿框＝我宫，橙框＝事宫，「向」＝规则 5 的第二方位。四维宫两支一吉一凶记「混」。</p></div>`;
 
     html += `<div class="panel"><h3>穿壬规则 <span class="exp-badge">未检验</span></h3>
       <table class="rule-table"><thead><tr><th>规则</th><th>票</th><th>依据</th></tr></thead><tbody>`;
@@ -234,7 +270,7 @@
     const pan = school === 'feipan' ? QM.feipanQimen.calculate(date, opts) : QM.qimen.calculate(date, opts);
     if (pan.error) { $('chuanren').innerHTML = `<div class="panel">排盘出错：${esc(pan.message)}</div>`; return; }
     if (!pan.jiuGongAnalysis) pan.jiuGongAnalysis = {};
-    renderBasicInfo(pan); renderChart(pan);
+    renderBasicInfo(pan);
 
     let feipan = null;
     if (school === 'feipan') {
@@ -246,9 +282,11 @@
     }
     try {
       const res = RULES.evaluate({ chart: pan, wangshuai: WS.analyze(pan), domain: domainKeyOf(ui), date, feipan, nianMing });
+      renderBoard(pan, res);
       renderChuanRen(pan, res);
       window._chuanren = res;
     } catch (e) {
+      renderBoard(pan, null);
       $('chuanren').innerHTML = `<div class="panel">穿壬层计算出错：${esc(e.message)}</div>`;
       console.error(e);
     }
@@ -272,6 +310,12 @@
     const b = e.target.closest('button'); if (!b) return;
     school = b.dataset.school;
     [...$('schoolSeg').children].forEach(x => x.classList.toggle('on', x === b));
+    cast();
+  });
+  $('viewSeg').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    view = b.dataset.view;
+    [...$('viewSeg').children].forEach(x => x.classList.toggle('on', x === b));
     cast();
   });
   $('castBtn').addEventListener('click', cast);

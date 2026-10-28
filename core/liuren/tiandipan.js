@@ -101,5 +101,19 @@
     return [at(xunShouZhi + 10), at(xunShouZhi + 11)];
   }
 
-  return { ZHI, JIANG, JI_JIANG, DAY_GUI, NIGHT_GUI, GONG_ZHI, ZHI_GONG, build, xunKong };
+  /**
+   * 六壬遁干：以日柱所在旬配十支，旬空两支无遁干（不借下一旬的干）。
+   * @returns {Object<string,string|null>} 地支 → 遁干；旬空之支为 null
+   */
+  function dunGan(riZhu) {
+    const g = XUN_SHOU_GAN.indexOf(riZhu[0]);
+    const z = idx(riZhu[1]);
+    if (g < 0 || (g - z) % 2 !== 0) throw new Error('不是干支：' + riZhu);
+    const start = z - g;
+    const out = {};
+    for (let k = 0; k < 12; k++) out[at(start + k)] = k < 10 ? XUN_SHOU_GAN[k] : null;
+    return out;
+  }
+
+  return { ZHI, JIANG, JI_JIANG, DAY_GUI, NIGHT_GUI, GONG_ZHI, ZHI_GONG, build, xunKong, dunGan };
 });

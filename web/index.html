@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="vendor/qimen-pwa/style.css">
   <style>
     /* 以下页面骨架样式与 Qimen-pwa index.html 内联样式同一套 */
-    body { padding: 8px; max-width: 720px; margin: 0 auto; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    body { padding: 4px 4px 8px; max-width: 720px; margin: 0 auto; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
     .pwa-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
     .pwa-controls label { font-size: 13px; }
     .pwa-controls input, .pwa-controls select { padding: 4px 6px; font-size: 14px; }
@@ -27,21 +27,70 @@
 
     /* ---- 穿壬层：本应用独有 ---- */
     .exp-badge { display: inline-block; font-size: 11px; color: #8a6d3b; border: 1px solid #e0c98f; background: #fcf8e3; border-radius: 4px; padding: 0 5px; vertical-align: middle; }
-    .cr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-    .cr-cell { border: 1px solid #ddd; border-radius: 6px; padding: 5px 6px; font-size: 13px; min-height: 64px; position: relative; background: #fff; }
-    .cr-cell.cr-ji { background: #f3f9f1; }
-    .cr-cell.cr-xiong { background: #fbf1f0; }
-    .cr-cell.cr-hun { background: #f6f6f6; }
-    .cr-cell.cr-me { outline: 2px solid #3c763d; }
-    .cr-cell.cr-shi { outline: 2px solid #c27c0e; }
-    .cr-cell.cr-me.cr-shi { outline: 2px dashed #3c763d; }
-    .cr-name { font-weight: 700; font-size: 12px; color: #555; }
-    .cr-tag { position: absolute; top: 4px; right: 5px; font-size: 11px; }
-    .cr-line { line-height: 1.5; white-space: nowrap; }
-    .cr-line .z { color: #999; }
-    .cr-ji-t { color: #3c763d; } .cr-xiong-t { color: #a94442; } .cr-hun-t { color: #888; }
-    .cr-role { display: inline-block; font-size: 11px; border-radius: 3px; padding: 0 3px; margin-right: 2px; color: #fff; }
-    .cr-role.me { background: #3c763d; } .cr-role.shi { background: #c27c0e; } .cr-role.dir { background: #6f5499; }
+    /* 合盘：5×5 网格，中间 3×3 放 Qimen-pwa 的九宫，四周十二格是地支方位 */
+    .cr-pan { padding: 2px; }
+    .cr-board { display: grid; grid-template-columns: 24px repeat(3, minmax(0, 1fr)) 24px;
+      grid-template-rows: auto repeat(3, minmax(0, 1fr)) auto; gap: 2px; max-width: 540px; margin: 0 auto; }
+    .cr-center { grid-row: 2 / 5; grid-column: 2 / 5; container-type: inline-size; }
+    .cr-center .pan-grid { max-width: none; }
+    .cr-ob { background: #fbfaf6; border: 1px solid #e6e0d0; border-radius: 4px; text-align: center; line-height: 1.15; min-width: 0; }
+    .cr-ob-h { padding: 3px 2px; }
+    .cr-ob-h > div { display: flex; justify-content: center; align-items: baseline; gap: 4px; }
+    .cr-ob-v { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3px; padding: 2px 0; }
+    .ob-zhi { font-size: 17px; font-weight: 700; color: #333; }
+    .cr-ob-v .ob-zhi { font-size: 15px; }
+    .ob-jiang { font-size: 14px; }
+    .ob-gan { font-size: 12px; color: #666; }
+    .ob-kong-t { color: #999; }
+    .ob-di { font-size: 10px; color: #aaa; }
+    .ob-gui { border-color: #d4a017; background: #fff8e1; }
+    .ob-tag { display: inline-block; font-size: 10px; line-height: 14px; background: #6f5499; color: #fff; border-radius: 3px; padding: 0 2px; }
+    .ji { color: #3c763d; } .xiong { color: #a94442; }
+    /* 我宫、事宫、第二方位：用内阴影与内缩描边，不撑开宫格 */
+    .pan-grid .gong.cr-me { box-shadow: inset 0 0 0 2px #3c763d; }
+    .pan-grid .gong.cr-shi { box-shadow: inset 0 0 0 2px #c27c0e; }
+    .pan-grid .gong.cr-me.cr-shi { box-shadow: inset 0 0 0 2px #3c763d, inset 0 0 0 4px #c27c0e; }
+    .pan-grid .gong.cr-dir { outline: 2px dashed #6f5499; outline-offset: -5px; }
+    .cr-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; margin: -4px 0 8px; align-items: center; }
+    .cr-legend .sw { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; margin-right: 3px; border-radius: 2px; }
+    .sw-me { box-shadow: inset 0 0 0 2px #3c763d; } .sw-shi { box-shadow: inset 0 0 0 2px #c27c0e; }
+    .sw-dir { outline: 2px dashed #6f5499; outline-offset: -2px; }
+
+    /* 合盘里九宫比整屏窄。Qimen-pwa 按「屏宽」分档缩字；这里改按「九宫实际宽度」分同样的档，
+     * 档位＝原屏宽档减去页边与盘边（约 38px），字号、角标偏移照搬原档，不另定。 */
+    @container (max-width: 401px) {
+      .cr-center .gong-jiuxing, .cr-center .gong-bamen, .cr-center .gong-tiangan, .cr-center .gong-dipan { font-size: 16px; }
+      .cr-center .gong-bashen, .cr-center .gong-dizhi { font-size: 14px; }
+      .cr-center .gong-content .hg > .harm-mark { top: -8px; }
+    }
+    @container (max-width: 381px) {
+      .cr-center .feipan-gong-content .fp-xing { font-size: 13px; }
+      .cr-center .feipan-gong-content .fp-row { font-size: 10px; }
+      .cr-center .feipan-gong-content .fp-row .fp-an { font-size: 9px; }
+      .cr-center .feipan-gong-content .fp-gongname { font-size: 9px; }
+      .cr-center .feipan-gong-content .fp-row-harm,
+      .cr-center .feipan-gong-content .fp-ren.fp-row-harm { margin-top: 10px; }
+      .cr-center .feipan-gong-content .harm-mark { font-size: 7px; }
+      .cr-center .feipan-gong-content .hg > .harm-mark { top: -10px; }
+    }
+    @container (max-width: 354px) {
+      .cr-center .gong-jiuxing, .cr-center .gong-bamen, .cr-center .gong-tiangan, .cr-center .gong-dipan { font-size: 15px; }
+      .cr-center .gong-bashen, .cr-center .gong-dizhi { font-size: 13px; }
+      .cr-center .gong-content .harm-mark { font-size: 8px; }
+      .cr-center .gong-content .hg > .harm-mark { top: -7px; }
+    }
+    @container (max-width: 337px) {
+      .cr-center .gong-jiuxing, .cr-center .gong-bamen, .cr-center .gong-tiangan, .cr-center .gong-dipan { font-size: 14px; }
+      .cr-center .gong-bashen, .cr-center .gong-dizhi { font-size: 12px; }
+    }
+    @container (max-width: 321px) {
+      .cr-center .gong-jiuxing, .cr-center .gong-bamen, .cr-center .gong-tiangan, .cr-center .gong-dipan { font-size: 13px; }
+      .cr-center .gong-bashen, .cr-center .gong-dizhi { font-size: 12px; }
+      .cr-center .gong-content .hg > .harm-mark { display: none; }
+      .cr-center .feipan-gong-content .fp-row-harm,
+      .cr-center .feipan-gong-content .fp-ren.fp-row-harm { margin-top: 0; }
+      .cr-center .feipan-gong-content .hg > .harm-mark { display: none; }
+    }
     .rule-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .rule-table th, .rule-table td { border-bottom: 1px solid #eee; padding: 5px 4px; text-align: left; vertical-align: top; }
     .rule-table th { color: #666; font-weight: 600; }
@@ -55,6 +104,10 @@
   <h2 style="text-align:center;margin:6px 0;">奇门穿壬 · 排盘 <span class="exp-badge">实验</span></h2>
 
   <div class="pwa-controls">
+    <span class="seg" id="viewSeg">
+      <button data-view="merged" class="on">合盘</button>
+      <button data-view="qimen">只看奇门</button>
+    </span>
     <span class="seg" id="schoolSeg">
       <button data-school="zhuanpan" class="on">转盘</button>
       <button data-school="feipan">飞盘（括囊）</button>
