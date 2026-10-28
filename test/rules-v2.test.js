@@ -25,37 +25,32 @@ const run = (d, domain, purpose) => {
   return { ch, ws, r, by: Object.fromEntries(r.rules.map((x) => [x.rule, x])) };
 };
 
-test('版本 2.0.0；规则 7–10 齐全', () => {
+test('版本 2.1.0；规则 7–10 齐全', () => {
   const { r } = run(new Date('2026-10-28T15:30:00+08:00'), 'wealth', '财运');
-  assert.equal(r.version, '2.0.0');
+  assert.equal(r.version, '2.1.0');
   assert.deepEqual(r.rules.map((x) => x.rule), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 });
 
-test('规则 7：奇门融合法 v1 取支与六壬三法等权计票，取最多票者', () => {
-  for (const d of dates(150)) {
+test('规则 7（v2.1）：奇门应期融合法 v1 为主；并列时只留落在六壬三法取支里的，都不在则照奇门', () => {
+  let single = 0, broke = 0, kept = 0;
+  for (const d of dates(200)) {
     const { ch, r, by } = run(d, 'wealth', '财运');
     const x = by[7], sc = r.sanChuan, xk = r.liuren.xunKong;
     assert.equal(x.vote, 0);
+    assert.equal(x.method, 'qimen-first');
     assert.deepEqual(x.parts['末传合'], [LIU_HE[sc.chuan[2]]]);
     assert.deepEqual(x.parts['初传合'], [LIU_HE[sc.chuan[0]]]);
     assert.deepEqual(x.parts['三传旬空填实'] || [], [...new Set(sc.chuan.filter((z) => xk.includes(z)))]);
-    assert.deepEqual(x.qimenPicks, YingQi.fusionV1(ch, 'wealth').picks);
-    const votes = {};
-    for (const k in x.parts) for (const z of new Set(x.parts[k])) votes[z] = (votes[z] || 0) + 1;
-    const max = Math.max(...Object.values(votes));
-    assert.equal(x.maxVotes, max);
-    for (const z of x.picks) assert.equal(votes[z], max);
-    assert.equal(Object.values(votes).filter((v) => v === max).length, x.picks.length);
+    const q = YingQi.fusionV1(ch, 'wealth').picks;
+    assert.deepEqual(x.qimenPicks, q);
+    const lr = new Set([LIU_HE[sc.chuan[2]], LIU_HE[sc.chuan[0]], ...sc.chuan.filter((z) => xk.includes(z))]);
+    const inLr = q.filter((z) => lr.has(z));
+    if (q.length === 1) { assert.deepEqual(x.picks, q); single++; }
+    else if (inLr.length) { assert.deepEqual(x.picks, inLr); broke++; }
+    else { assert.deepEqual(x.picks, q); kept++; }
+    for (const z of x.picks) assert.ok(q.includes(z), '规则 7 不得取奇门没取的支');
   }
-});
-
-test('规则 7 飞盘：无奇门融合法，只用六壬三法', () => {
-  const d = new Date('2026-10-28T15:30:00+08:00'), ch = fei(d);
-  const r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), date: d, feipan: { shiGanGong: 4 } });
-  const x = r.rules.find((y) => y.rule === 7);
-  assert.equal(x.qimenPicks, null);
-  assert.ok(!x.parts['奇门融合法v1']);
-  assert.ok(x.reason);
+  assert.ok(single > 0 && broke > 0 && kept > 0, `单支 ${single}、决胜 ${broke}、照原样 ${kept}`);
 });
 
 test('规则 8：类神按占类取；入传不空＝六壬＋，两边同向才投票，判的是「发生」', () => {

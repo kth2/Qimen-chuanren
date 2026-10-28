@@ -3,7 +3,7 @@
  *   规则 1–6：照《奇门穿壬 v1 · 冻结规格》「取用」「六条规则」两节，原样不动。
  *   规则 7–10：v2 新增（docs/SPEC-v2.md；2026-10-28 kt 决定不冻结、直接启用），
  *     每条都是「奇门一侧 × 六壬一侧」两边各自定性，两边同向才投票，相反记「混」不投票。
- *     · 规则 7  应期融合·穿壬：奇门应期融合法 v1 的取支 ＋ 六壬末传合、初传合、三传旬空填实，等权计票
+ *     · 规则 7  应期融合·穿壬（v2.1）：奇门应期融合法 v1 为主，并列时以六壬末传合、初传合、三传旬空填实决胜
  *     · 规则 8  类神入传：六壬类神是否入三传（伍剑虹「三传不出现则事未形成」）× 奇门用神宫空亡／入墓／击刑
  *     · 规则 9  贵人互参：六壬贵人空亡或坐狱（临辰戌）× 奇门值符宫受制
  *     · 规则 10 我彼双读：六壬干上神与支上神的合生／刑冲克 × 奇门我宫与时干宫的生克
@@ -24,7 +24,7 @@
 })(typeof self !== 'undefined' ? self : this, function (WuXing, TianDiPan, YueJiang, SanChuan, YingQi, XiangYi) {
 'use strict';
 
-const VERSION = '2.0.0';
+const VERSION = '2.1.0';
 const APPLIES_TO = 'chuanren-exp';
 
 const ZHI_WX = { 子: '水', 亥: '水', 寅: '木', 卯: '木', 巳: '火', 午: '火', 申: '金', 酉: '金', 辰: '土', 戌: '土', 丑: '土', 未: '土' };
@@ -250,23 +250,26 @@ function evaluate(a) {
   const ws = a.wangshuai;
 
   // 规则 7：应期融合·穿壬（不投是非票，出应期日支）
+  //   v2.1（kt 2026-10-28 定）：奇门应期融合法 v1 为主；奇门取支多于一支（并列）时，才用六壬三法
+  //   （末传合、初传合、三传旬空填实）决胜——只留落在六壬取支里的那几支；都不在则照奇门原样。
+  //   飞盘无奇门融合法，六壬三法单用在回测里低于瞎猜，故弃权。
   {
-    const parts = {};
-    const qf = school === 'zhuanpan' && YingQi && YingQi.fusionV1 ? YingQi.fusionV1(ch, a.domain || '') : null;
-    if (qf && qf.picks.length) parts['奇门融合法v1'] = qf.picks.slice();
-    parts['末传合'] = [LIU_HE[sc.chuan[2]]];
-    parts['初传合'] = [LIU_HE[sc.chuan[0]]];
+    const lr = { '末传合': [LIU_HE[sc.chuan[2]]], '初传合': [LIU_HE[sc.chuan[0]]] };
     const kongIn = [...new Set(sc.chuan.filter((z) => xk.includes(z)))];
-    if (kongIn.length) parts['三传旬空填实'] = kongIn;
-    const votes = {};
-    for (const k in parts) for (const z of new Set(parts[k])) votes[z] = (votes[z] || 0) + 1;
-    const max = Math.max(0, ...Object.values(votes));
-    const picks = ZHI_ORDER.filter((z) => max > 0 && votes[z] === max);
-    const lrSet = new Set([].concat(parts['末传合'], parts['初传合'], parts['三传旬空填实'] || []));
-    const overlap = qf ? qf.picks.filter((z) => lrSet.has(z)) : [];
-    rules.push({ rule: 7, applicable: true, vote: 0, picks, maxVotes: max, votes, parts, overlap,
-      qimenPicks: qf ? qf.picks : null,
-      reason: qf ? '' : '飞盘无奇门应期融合法（只在转盘检验过），只用六壬三法' });
+    if (kongIn.length) lr['三传旬空填实'] = kongIn;
+    const lrSet = new Set([].concat(...Object.values(lr)));
+    const qf = school === 'zhuanpan' && YingQi && YingQi.fusionV1 ? YingQi.fusionV1(ch, a.domain || '') : null;
+    const base = { rule: 7, method: 'qimen-first', vote: 0, parts: lr, lrSet: ZHI_ORDER.filter((z) => lrSet.has(z)) };
+    if (!qf || !qf.picks.length) {
+      rules.push(Object.assign(base, { applicable: false, picks: [], qimenPicks: qf ? [] : null,
+        reason: qf ? '奇门应期融合法本盘未取出地支' : '飞盘无奇门应期融合法；六壬三法单用在回测里低于瞎猜，不单独给应期' }));
+    } else {
+      const overlap = qf.picks.filter((z) => lrSet.has(z));
+      const tie = qf.picks.length > 1;
+      const picks = tie && overlap.length ? overlap : qf.picks.slice();
+      const how = !tie ? '奇门只取一支，照用' : overlap.length ? `奇门并列 ${qf.picks.length} 支，六壬决胜留 ${overlap.join('')}` : `奇门并列 ${qf.picks.length} 支，六壬取支都不在其中，照奇门原样`;
+      rules.push(Object.assign(base, { applicable: true, picks, qimenPicks: qf.picks.slice(), qimenParts: qf.parts, overlap, how }));
+    }
   }
 
   // 规则 8：类神入传（判「事是否成形／发生」，计分对「发生」而非「如愿」）

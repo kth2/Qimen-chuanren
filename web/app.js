@@ -286,8 +286,10 @@
       return `本命${esc(r.benMingZhi)}上神${esc(r.shangShen)}（${esc(r.meWx)}，乘${esc(r.shangShenJiang)}）对事宫天盘支（${(r.yZhi || []).join('')}，${esc(r.yWx)}）：<b>${esc(r.relation)}</b>`;
     }
     if (r.rule === 7) {
-      const pt = Object.entries(r.parts || {}).map(([k, v]) => `${esc(k)} ${v.join('')}`).join('；');
-      return `应期日支：<b>${r.picks.map(esc).join('、')}</b>（${r.maxVotes} 票）<div class="muted">${pt}${r.overlap && r.overlap.length ? `；奇门与六壬重合：${r.overlap.join('')}` : ''}</div>`;
+      if (!r.applicable) return '';
+      const qp = Object.entries(r.qimenParts || {}).map(([k, v]) => `${esc(k)} ${v.join('') || '—'}`).join('；');
+      const lp = Object.entries(r.parts || {}).map(([k, v]) => `${esc(k)} ${v.join('')}`).join('；');
+      return `应期日支：<b>${r.picks.map(esc).join('、')}</b>（${esc(r.how)}）<div class="muted">奇门融合法 v1 取 ${r.qimenPicks.join('')}（${qp}）<br>六壬三法：${lp}</div>`;
     }
     if (r.rule >= 8 && r.rule <= 10 && (r.lrWhy || r.qmWhy)) {
       const sg = (v) => v > 0 ? '＋' : v < 0 ? '－' : '〇';

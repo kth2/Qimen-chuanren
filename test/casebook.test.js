@@ -42,7 +42,7 @@ test('v2：规则 8 对「实况发生」计分而非如愿；规则账本按版
   const mk = (i, o) => {
     const r = rec(i, o);
     r.rulesVersion = o.ver || '2.0.0';
-    r.votes.push({ rule: 7, applicable: true, vote: 0, picks: ['子', '午'] }, { rule: 8, applicable: o.v8 != null, vote: o.v8 || 0 });
+    r.votes.push({ rule: 7, applicable: true, vote: 0, method: 'm7' in o ? o.m7 : 'qimen-first', picks: ['子', '午'] }, { rule: 8, applicable: o.v8 != null, vote: o.v8 || 0 });
     if (o.day) r.feedback.actualDayZhi = o.day;
     return r;
   };
@@ -50,6 +50,7 @@ test('v2：规则 8 对「实况发生」计分而非如愿；规则账本按版
     mk(1, { want: 'fear', hap: 'yes', v8: 1, day: '午' }),   // 怕的事发生：不如愿，但规则 8 判发生——判对
     mk(2, { want: 'hope', hap: 'no', v8: -1, day: '丑' }),   // 规则 8 判不发生——判对
     mk(3, { want: 'hope', hap: 'yes', v8: 1, ver: '1.0.0-dev' }), // v1 记录：不计入规则账本
+    mk(4, { want: 'hope', hap: 'yes', day: '子', m7: '' }),       // 规则 7 旧法（四法等权）记录：不计
   ];
   const s = CB.stats(rs, { rulesVersion: '2.0.0' });
   assert.equal(s.rules[8].n, 2);
@@ -57,6 +58,6 @@ test('v2：规则 8 对「实况发生」计分而非如愿；规则账本按版
   assert.equal(s.rule7.n, 2);
   assert.equal(s.rule7.hit, 1);
   assert.equal(s.rule7.expect, +(2 * 2 / 12).toFixed(2));
-  assert.equal(CB.stats(rs).rules[8].n, 3);   // 不给版本则全计
+  assert.equal(CB.stats(rs).rules[8].n, 3);   // 不给版本则全计（例 4 规则 8 弃权）
   assert.equal(CB.happened(rs[0]), true);
 });

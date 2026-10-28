@@ -34,7 +34,7 @@
       quYong: res.quYong,
       votes: res.rules.map((r) => ({ rule: r.rule, applicable: !!r.applicable, vote: r.vote || 0, relation: r.relation || '',
         secondGongs: r.secondGongs, qimenGong: r.qimenGong, yingQi: r.yingQi || null, mo: r.mo,
-        picks: r.picks, verdict: r.verdict || '', lr: r.lr, qm: r.qm })),
+        picks: r.picks, method: r.method || '', verdict: r.verdict || '', lr: r.lr, qm: r.qm })),
       wuxing: res.wuxing && res.wuxing.applicable ? { score: res.wuxing.score, verdict: res.wuxing.verdict } : null,
       ai: ai ? { answer: String(ai.answer || '').slice(0, 8000), model: ai.model || '' } : null,
       feedback: null,
@@ -134,7 +134,8 @@
     let d7 = { n: 0, hit: 0, expect: 0 };
     for (const r of done.filter(sameVer)) {
       const v = (r.votes || []).find((x) => x.rule === 7);
-      if (!v || !v.picks || !v.picks.length || !r.feedback.actualDayZhi) continue;
+      // v2.1 起规则 7 改为「奇门为主、六壬决胜」；旧法（四法等权）的记录不混进来
+      if (!v || v.method !== 'qimen-first' || !v.picks || !v.picks.length || !r.feedback.actualDayZhi) continue;
       d7.n++; d7.expect += v.picks.length / 12; if (v.picks.includes(r.feedback.actualDayZhi)) d7.hit++;
     }
     d7.expect = +d7.expect.toFixed(2);
