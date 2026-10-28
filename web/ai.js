@@ -7,13 +7,14 @@
  *   · 奇门提示词：引擎 zhuanpanPredict / feipanPredict.buildPrompt，载入各派自己的解断纲要
  *     （vendor/qimen-pwa/assets/*-method.md），两派零串味照旧。
  *   · 旺衰四害、应期、五行推理：Qimen-pwa 的 WangShuai / YingQi / WuXing 模块原样调用。
+ *   · 问句方向（怕发生之事）：Qimen-pwa 的 Framing 模块原样调用；纪律第 11 条照奇门 app E30 改写成穿壬用语。
  * 本文件只新增：「穿壬·六壬层」一段（事实与规则票），以及约束模型怎样用它的几条纪律。
  *
  * 与 Qimen-pwa 的差距（如实说明）：它的结构化证据包（象义、应期时间线、类象、力量禁令、
  * 证据合流、吟局、八十一格、时格、取数）由 app.js 里约 300 行编排生成，没有导出，这里没有。
  */
 (function () {
-  const QM = window.QM, MD = window.MdLite, TDP = window.LiurenTianDiPan;
+  const QM = window.QM, MD = window.MdLite, TDP = window.LiurenTianDiPan, FR = window.Framing;
   const $ = (id) => document.getElementById(id);
   const esc = (s) => (s == null ? '' : String(s)).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const GONG_NAME = { 1: '坎一', 2: '坤二', 3: '震三', 4: '巽四', 5: '中五', 6: '乾六', 7: '兑七', 8: '艮八', 9: '离九' };
@@ -108,6 +109,14 @@
     '9. 「穿壬事宫」按五行推理 v1 取用，可能与【用神落宫】不同；不同时两者都列，判断仍以【用神落宫】为准。',
     '【格式】',
     '10. 结尾单列一节「穿壬旁证」：逐条列规则 1–10 的票、方位或应期，并说明与奇门结论是否一致。规则 7 的应期日支可与奇门应期互参；规则 8 判的是事是否发生，不是是否如愿。',
+    '【问句方向】',
+    '11. 若下文有「⚠ 问句方向」一行，所问之事是求测人（或所问之人）不愿其发生之事（被抓、被罚、被举报、裁员、出事、复发、倒闭……）。此时：'
+      + '① 奇门吉凶格局、旺衰、生克说的是「此事得成／不成」，对求测人的吉凶恰好相反，不得把「事成」写成对你有利；'
+      + '② 时干宫即这件怕发生之事，时干宫空亡、入墓读作所怕之事虚悬未成形；'
+      + '③ 凶门、凶星、凶神落时干宫只说明所问之事本身是凶事（题面已知），不是它会发生的证据，会不会发生要看时干宫虚实与日时生克，并写出所据；'
+      + '④ 穿壬规则 8 的 +1 是「此事会发生」，于此题为凶；五行推理 v1 的「如愿」即所怕之事不发生；规则 1–6、9、10 的 +1 只是关系分值，照第 7 条不作吉断；'
+      + '⑤ 断「会发生」之前，先说明为何不读作虚悬——只凭凶象叠加断「必发」是这类题的主错。'
+      + '（奇门 app 案例本 2026-10-05：此类是非题 18 例，所怕之事实际发生的只有 7 例；断错者 6 例断「会发生」而实际没发生。样本小，只作纠偏，不作概率。）',
   ].join('\n');
 
   /* ---------- 穿壬段 ---------- */
@@ -197,9 +206,14 @@
     const yq = window.YingQi ? window.YingQi.toPromptBlock(pan, { JIU_GONG: QM.JIU_GONG, yongShenGongs: ysGongs }) : '';
     let wx = '';
     if (window.WuXing && res.wuxing && res.wuxing.applicable) wx = '\n' + window.WuXing.toPromptLines(res.wuxing, false).join('\n');
-    const user = prompt.user + ws + yq + wx + '\n' + chuanRenBlock(pan, res) +
+    let fr = null;
+    try { fr = FR ? FR.detect(q) : null; } catch (e) { fr = null; }
+    const frLine = fr && fr.direction === 'adverse'
+      ? `\n· ⚠ 问句方向：所问之事「${fr.event}」是求测人（或所问之人）不愿其发生之事（问句检出：「${fr.phrase}」）。奇门「事成」与穿壬规则 8 的 +1 于此题为凶，换算见纪律第 11 条。`
+      : '';
+    const user = prompt.user + frLine + ws + yq + wx + '\n' + chuanRenBlock(pan, res) +
       `\n\n【再次提醒】占问：${q}。奇门为主，穿壬只作旁证；结尾单列「穿壬旁证」。`;
-    return { system: prompt.system + '\n' + DISCIPLINE, user, category: (prompt.context && prompt.context.category) || engineCategory };
+    return { system: prompt.system + '\n' + DISCIPLINE, user, category: (prompt.context && prompt.context.category) || engineCategory, framing: fr };
   }
 
   async function runAI() {
@@ -221,7 +235,8 @@
       paint();
       $('aiStatus').textContent = '完成';
       const u = (LLM.lastUsed && LLM.lastUsed()) || LLM.info();
-      window._lastAI = { ctx, answer: ans || '', model: `${u.provider}/${u.model}` };   // 供「存为案例」取用，只认同一张盘
+      window._lastAI = { ctx, question: q, answer: ans || '', model: `${u.provider}/${u.model}` };   // 供「存为案例」取用，只认同一张盘、同一问句
+      $('aiAnswer').classList.remove('ai-stale');
     } catch (e) {
       $('aiStatus').textContent = '失败：' + e.message;
       console.error(e);

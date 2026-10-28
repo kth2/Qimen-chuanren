@@ -137,6 +137,25 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   assert(/可计分的是非题 1 题/.test(d.getElementById('caseBody').textContent) && /未到评估点/.test(d.getElementById('caseBody').textContent), '准确率页不对');
   console.log('✓ 案例本：存（含 AI 解读）→ 回填归档 → 准确率页');
 
+  // 问句方向：怕发生之事要在提示词里点出；盼发生之事不点
+  { const mFear = await AI.buildMessages(w._chuanrenCtx, '这次会不会被裁员');
+    const mHope = await AI.buildMessages(w._chuanrenCtx, '这次投资能赚钱吗');
+    assert(mFear.user.includes('⚠ 问句方向') && mFear.system.includes('【问句方向】'), '怕发生之事未点出');
+    assert(!mHope.user.includes('⚠ 问句方向'), '盼发生之事不该点出问句方向');
+    console.log('✓ 问句方向：怕发生之事已点出'); }
+  // 改了问句：旧解读标灰；存案例不收旧解读；检出怕发生之事时回填预选「怕」
+  d.querySelector('#caseTabSeg button[data-tab="open"]').click();
+  d.getElementById('aiQuestion').value = '这次会不会被裁员';
+  d.getElementById('aiQuestion').dispatchEvent(new w.Event('input'));
+  assert(d.getElementById('aiAnswer').classList.contains('ai-stale') && /问句已改/.test(d.getElementById('aiStatus').textContent), '改问句后旧解读未标灰');
+  d.getElementById('caseSaveBtn').click();
+  for (let i = 0; i < 40 && !/已存/.test(d.getElementById('caseSaveTag').textContent + '') ; i++) await sleep(50);
+  for (let i = 0; i < 40 && !/问句已改/.test(d.getElementById('caseSaveTag').textContent); i++) await sleep(50);
+  assert(/问句已改，未含/.test(d.getElementById('caseSaveTag').textContent), '改问句后仍收了旧解读：' + d.getElementById('caseSaveTag').textContent);
+  { const fear = [...d.querySelectorAll('.case-card .fb input[value="fear"]')].some((x) => x.checked);
+    assert(fear, '怕发生之事未预选「怕」'); }
+  console.log('✓ 改问句：旧解读标灰、不入案例；回填预选「怕」');
+
   d.querySelector('#viewSeg button[data-view="qimen"]').click();
   assert(!d.querySelector('.cr-board') && d.querySelectorAll('#chart .gong').length === 9, '只看奇门：应无外圈');
   console.log('✓ 只看奇门：外圈收起');

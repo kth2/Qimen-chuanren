@@ -59,9 +59,15 @@
     if (!ctx || !ctx.res) { $('caseSaveTag').textContent = '请先排盘'; return; }
     if (!q) { $('caseSaveTag').textContent = '请先在上面填写占问'; return; }
     const now = new Date().toISOString();
-    const ai = window._lastAI && window._lastAI.ctx === ctx ? window._lastAI : null;   // 只收这一盘的 AI 解读
-    const rec = CB.makeRecord({ id: store.newId(now), now, ctx, question: q, ai });
-    try { await store.save(rec); $('caseSaveTag').textContent = '已存 ✓' + (ai ? '（含 AI 解读）' : '（未含 AI 解读）'); tab = 'open'; await refresh(); }
+    // 只收这一盘、这一问句的 AI 解读：解读后改过问句或重排过盘，就不把旧解读当成本题的
+    const last = window._lastAI;
+    const sameCtx = !!(last && last.ctx === ctx), sameQ = !!(last && last.question === q);
+    const ai = sameCtx && sameQ ? last : null;
+    const why = ai ? '（含 AI 解读）' : !last ? '（未含 AI 解读）' : !sameCtx ? '（盘已重排，未含旧盘的 AI 解读）' : '（问句已改，未含旧问句的 AI 解读）';
+    let framing = '';
+    try { framing = window.Framing ? window.Framing.detect(q).direction : ''; } catch (e) { framing = ''; }
+    const rec = CB.makeRecord({ id: store.newId(now), now, ctx, question: q, ai, framing });
+    try { await store.save(rec); $('caseSaveTag').textContent = '已存 ✓' + why; tab = 'open'; await refresh(); }
     catch (e) { $('caseSaveTag').textContent = e.message; }
   }
 
@@ -76,7 +82,7 @@
     const opt = (name, val, label, cur) => `<label><input type="radio" name="${name}-${c.id}" value="${val}" ${cur === val ? 'checked' : ''}> ${label}</label>`;
     return `<div class="fb" data-id="${c.id}">
       <div>题型 ${opt('type', 'yesno', '是非题', f.type || 'yesno')} ${opt('type', 'other', '非是非题', f.type)}</div>
-      <div>所盼 ${opt('want', 'hope', '盼它发生', f.want)} ${opt('want', 'fear', '怕它发生', f.want)}</div>
+      <div>所盼 ${opt('want', 'hope', '盼它发生', f.want)} ${opt('want', 'fear', '怕它发生', f.want || (c.framing === 'adverse' ? 'fear' : ''))}${!f.want && c.framing === 'adverse' ? '<span class="muted">（问句检出怕发生之事，已预选，请核对）</span>' : ''}</div>
       <div>实况 ${opt('hap', 'yes', '发生了', f.happened)} ${opt('hap', 'no', '没发生', f.happened)} ${opt('hap', 'partial', '部分', f.happened)} ${opt('hap', '?', '不清楚', f.happened)}</div>
       <div>AI 结论 ${opt('ai', 'wish', '如愿', f.aiVerdict)} ${opt('ai', 'unwish', '不如愿', f.aiVerdict)} ${opt('ai', 'none', '未断／无 AI', f.aiVerdict)}</div>
       <div>实际方位 <select data-k="gong"><option value="">不适用</option>${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => `<option value="${g}" ${String(f.actualGong) === String(g) ? 'selected' : ''}>${GONG[g]}</option>`).join('')}</select>

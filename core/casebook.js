@@ -23,11 +23,12 @@
 
   /** 排盘与穿壬结果 → 一条案例（只存复算和计分需要的，不存整张盘） */
   function makeRecord(o) {
-    const { id, now, ctx, question, ai } = o;
+    const { id, now, ctx, question, ai, framing } = o;
     const pan = ctx.pan, res = ctx.res;
     return {
       id, createdAt: now, updatedAt: now, app: 'qimen-chuanren', rulesVersion: res.version,
       question: String(question || '').trim(),
+      framing: framing || '',   // Qimen-pwa Framing：'adverse'＝检出怕发生之事；回填时据此预选「怕」
       input: { date: ctx.dateStr, school: ctx.school, ui: ctx.ui, domainSource: ctx.domainSource || '', nianMing: ctx.nianMing || '' },
       chart: { siZhu: pan.siZhu, juShu: pan.juShu && pan.juShu.fullName },
       liuren: { yueJiang: res.yueJiang.yueJiang, xunKong: res.liuren.xunKong, sanChuan: res.sanChuan.chuan, keTi: res.sanChuan.name },

@@ -465,6 +465,19 @@
     ].join('');
   }
 
+  /** 下方的 AI 解读若不是这一盘、这一问句的，标灰并提示重解（存案例时也不会收它） */
+  function markAIStale() {
+    const box = $('aiAnswer'), last = window._lastAI;
+    if (!box || box.style.display === 'none' || !last) return;
+    const q = ($('aiQuestion').value || '').trim();
+    const stale = last.ctx !== window._chuanrenCtx || last.question !== q;
+    box.classList.toggle('ai-stale', stale);
+    if (stale) $('aiStatus').textContent = last.ctx !== window._chuanrenCtx
+      ? '⚠ 盘已重排，下方是上一盘的解读，请重新按「AI 解读此盘」'
+      : '⚠ 问句已改，下方是旧问句的解读，请重新按「AI 解读此盘」';
+    else if (/^⚠ (盘已重排|问句已改)/.test($('aiStatus').textContent)) $('aiStatus').textContent = '完成';
+  }
+
   /* ---------- 排盘 ---------- */
   function cast() {
     const date = getDate(), juShu = getJuShuOverride();
@@ -497,6 +510,7 @@
       window._chuanren = res;
       // 供 AI 解读（web/ai.js）取用：同一张盘、同一份穿壬结果，不重算
       window._chuanrenCtx = { pan, res, school, date, ui, domainSource: dom.source, nianMing, engineCategory: engineCategoryOf(ui, school), dateStr: `${$('inDate').value} ${$('inTime').value}` };
+      markAIStale();
     } catch (e) {
       renderBoard(pan, null);
       $('chuanren').innerHTML = `<div class="panel">穿壬层计算出错：${esc(e.message)}</div>`;
@@ -534,6 +548,7 @@
   // 自动判定时，问句一改就重判占类；占类真变了才重排盘
   let qTimer = null;
   $('aiQuestion').addEventListener('input', () => {
+    markAIStale();
     clearTimeout(qTimer);
     qTimer = setTimeout(() => {
       if ($('inDomain').value) return;

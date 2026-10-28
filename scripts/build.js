@@ -39,6 +39,7 @@ const COPY = [
   ['vendor/qimen-pwa/core/wangshuai.js', 'vendor/qimen-pwa/core/wangshuai.js'],
   ['vendor/qimen-pwa/core/wuxing.js', 'vendor/qimen-pwa/core/wuxing.js'],
   ['vendor/qimen-pwa/core/yongshen.js', 'vendor/qimen-pwa/core/yongshen.js'],
+  ['vendor/qimen-pwa/core/framing.js', 'vendor/qimen-pwa/core/framing.js'],
   ['vendor/qimen-pwa/core/yingqi.js', 'vendor/qimen-pwa/core/yingqi.js'],
   ['vendor/qimen-pwa/core/mdlite.js', 'vendor/qimen-pwa/core/mdlite.js'],
   ['vendor/qimen-pwa/llm.js', 'vendor/qimen-pwa/llm.js'],
