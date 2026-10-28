@@ -179,6 +179,7 @@ function evaluate(a) {
     liuren: { zhouYe: ln.zhouYe, guiRen: ln.guiRen, guiRenOverDi: ln.guiRenOverDi, shun: ln.shun,
       xunKong: TianDiPan.xunKong(sz.day) },   // 六壬日旬空，与奇门 kongWang 分开存
     quYong: { R, Y, yName, rLabel: wx.rLabel || (school === 'feipan' ? '年命宫' : '日干宫') },
+    wuxing: wx,   // 五行推理 v1 原结果（Qimen-pwa 同一实现），AI 提示词照引
     rules,
   };
 }

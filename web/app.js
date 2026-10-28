@@ -126,11 +126,13 @@
     for (const k in ds) if ((ds[k].uiPurposes || []).indexOf(ui) >= 0) return k;
     return '';
   }
-  function feipanCategoryOf(ui) {
+  /** 界面占类 → 引擎占类（财运→求财、健康→疾病、学业→功名；飞盘另有失物→寻物），查 Qimen-pwa 的表 */
+  function engineCategoryOf(ui, sch) {
     if (!DOMAINS) return ui;
-    const by = (DOMAINS.uiPurposeToEngineCategoryBySchool || {}).feipan || {};
+    const by = (DOMAINS.uiPurposeToEngineCategoryBySchool || {})[sch] || {};
     return by[ui] || (DOMAINS.uiPurposeToEngineCategory || {})[ui] || ui;
   }
+  const feipanCategoryOf = (ui) => engineCategoryOf(ui, 'feipan');
   /** 年命：引擎只收天干（甲须连支）；规则 6 要完整干支 */
   function nianMingGanForEngine(gz) { return !gz ? '' : gz[0] === '甲' ? gz : gz[0]; }
 
@@ -285,6 +287,8 @@
       renderBoard(pan, res);
       renderChuanRen(pan, res);
       window._chuanren = res;
+      // 供 AI 解读（web/ai.js）取用：同一张盘、同一份穿壬结果，不重算
+      window._chuanrenCtx = { pan, res, school, date, ui, nianMing, engineCategory: engineCategoryOf(ui, school) };
     } catch (e) {
       renderBoard(pan, null);
       $('chuanren').innerHTML = `<div class="panel">穿壬层计算出错：${esc(e.message)}</div>`;

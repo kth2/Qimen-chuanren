@@ -18,6 +18,7 @@ const DIST = path.join(ROOT, 'dist');
 const COPY = [
   ['web/index.html', 'index.html'],
   ['web/app.js', 'app.js'],
+  ['web/ai.js', 'ai.js'],
   ['web/manifest.json', 'manifest.json'],
   ['web/icon.svg', 'icon.svg'],
   ['core/rules.js', 'core/rules.js'],
@@ -27,6 +28,11 @@ const COPY = [
   ['vendor/qimen-pwa/engine.bundle.js', 'vendor/qimen-pwa/engine.bundle.js'],
   ['vendor/qimen-pwa/core/wangshuai.js', 'vendor/qimen-pwa/core/wangshuai.js'],
   ['vendor/qimen-pwa/core/wuxing.js', 'vendor/qimen-pwa/core/wuxing.js'],
+  ['vendor/qimen-pwa/core/yingqi.js', 'vendor/qimen-pwa/core/yingqi.js'],
+  ['vendor/qimen-pwa/core/mdlite.js', 'vendor/qimen-pwa/core/mdlite.js'],
+  ['vendor/qimen-pwa/llm.js', 'vendor/qimen-pwa/llm.js'],
+  ['vendor/qimen-pwa/assets/zhuanpan-method.md', 'vendor/qimen-pwa/assets/zhuanpan-method.md'],
+  ['vendor/qimen-pwa/assets/feipan-method.md', 'vendor/qimen-pwa/assets/feipan-method.md'],
   ['vendor/qimen-pwa/knowledge/domains.json', 'vendor/qimen-pwa/knowledge/domains.json'],
 ];
 

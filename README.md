@@ -21,6 +21,7 @@
 | 第二层 | 四课、九法三传 | 待《探原》原文 |
 | 规则 3、4 | 需要三传 | 待第二层 |
 | PWA | 合盘：奇门九宫照 Qimen-pwa 渲染居中，外圈十二支按地盘方位排天盘支、天将、遁干（版式参照热卜）；可切「只看奇门」；可离线、可装到主屏 | 已完成 |
+| AI 解读 | 用 Qimen-pwa 的 llm.js、各派纲要、旺衰、应期、五行推理，加「穿壬·六壬层」一段作旁证；设置与 Qimen-pwa 同源共用 | 已完成；Qimen-pwa 的结构化证据包尚未接入 |
 
 在 600 张随机转盘上的适用率：规则 1 约 59%（其余为「混」），规则 2 约 38%（四维宫两支五行不一即弃权），规则 5 为 100%，规则 6 约 62%（给了年命时）。
 
@@ -31,7 +32,7 @@ core/liuren/tiandipan.js   第一层：天地盘与天将（纯函数）
 core/liuren/yuejiang.js    月将（中气切换，待核）
 core/rules.js              规则 1、2、5、6，入口 evaluate()
 knowledge/liuren-candidates.json  《实占百例》萃取的候选规则（不参与求值）
-web/                       PWA 页面、控制器、manifest、service worker
+web/                       PWA 页面、控制器（app.js）、AI 解读（ai.js）、manifest、service worker
 scripts/build.js           产出 dist/（打包 tyme4ts，从 submodule 取页面用到的文件）
 scripts/smoke.js           在 jsdom 里打开 dist 页面，排转盘、飞盘各一次
 vendor/qimen-pwa           Qimen-pwa（git submodule，只读引用）

@@ -25,6 +25,34 @@
     .muted { color: #888; font-size: 12px; }
     #basicInfo .item { display: inline-block; margin-right: 12px; font-size: 13px; }
 
+    #aiAnswer { white-space: pre-wrap; background: #f7f7f7; border-radius: 6px; padding: 10px; margin-top: 10px; display: none; }
+    /* 渲染模式：Markdown 已成 HTML，不能再让 pre-wrap 把标签之间的换行也画出来 */
+    #aiAnswer.md-on { white-space: normal; }
+    /* ---- 极简 Markdown 的样式（core/mdlite.js 只产出这几个 class） ---- */
+    .md-p { margin: 6px 0; }
+    .md-h { font-weight: 700; margin: 12px 0 6px; line-height: 1.4; }
+    .md-h1 { font-size: 18px; } .md-h2 { font-size: 17px; } .md-h3 { font-size: 16px; }
+    .md-h4, .md-h5, .md-h6 { font-size: 14px; }
+    .md-list { margin: 6px 0; padding-left: 22px; }
+    .md-list li { margin: 3px 0; }
+    .md-hr { border: 0; border-top: 1px solid #ddd; margin: 10px 0; }
+    .md-quote { margin: 6px 0; padding: 2px 10px; border-left: 3px solid #ccc; color: #555; }
+    .md-pre { background: #efefef; border-radius: 4px; padding: 8px; overflow-x: auto; font-size: 12px; margin: 6px 0; }
+    #aiAnswer code, .md-pre code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; }
+    /* 表格：窄屏放不下就让它自己横向滚动，绝不把整页撑宽 */
+    .md-tablewrap { overflow-x: auto; margin: 8px 0; -webkit-overflow-scrolling: touch; }
+    .md-table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+    .md-table th, .md-table td { border: 1px solid #d5d5d5; padding: 4px 8px; vertical-align: top; white-space: nowrap; }
+    .md-table th { background: #ececec; font-weight: 700; }
+    .md-table tbody tr:nth-child(even) { background: #fbfbfb; }
+    .ai-cfg { font-size: 13px; }
+    .ai-cfg label { display: inline-block; min-width: 88px; }
+    .ai-cfg input, .ai-cfg select { width: 60%; max-width: 360px; padding: 4px; margin: 2px 0; }
+    .ai-cfg { font-size: 13px; }
+    .ai-cfg label { display: inline-block; min-width: 88px; }
+    .ai-cfg input, .ai-cfg select { width: 60%; max-width: 360px; padding: 4px; margin: 2px 0; }
+    details > summary { cursor: pointer; font-size: 13px; color: #3c763d; }
+
     /* ---- 穿壬层：本应用独有 ---- */
     .exp-badge { display: inline-block; font-size: 11px; color: #8a6d3b; border: 1px solid #e0c98f; background: #fcf8e3; border-radius: 4px; padding: 0 5px; vertical-align: middle; }
     /* 合盘：5×5 网格，中间 3×3 放 Qimen-pwa 的九宫，四周十二格是地支方位 */
@@ -145,6 +173,77 @@
   <div id="chart"></div>
   <div id="chuanren"></div>
 
+  <div class="panel" id="aiPanel">
+    <h3>AI 解读 <span class="exp-badge">奇门为主·穿壬旁证</span>　<span class="muted" id="aiProviderTag"></span></h3>
+    <details>
+      <summary>⚙️ AI 设置（Provider / Key，仅存本机）</summary>
+      <div class="ai-cfg" style="margin-top:8px;">
+        <div><label>Provider</label>
+          <select id="cfgProvider">
+            <option value="gemini">Gemini（免费云端·手机推荐）</option>
+            <option value="local">Local Ollama（本机/PC）</option>
+            <option value="custom">Custom（OpenAI 兼容·Groq/OpenRouter等）</option>
+          </select>
+        </div>
+        <div class="prov prov-gemini"><label>Gemini Key</label><input id="cfgGeminiKey" type="password" placeholder="AI Studio 免费获取"></div>
+        <div class="prov prov-gemini"><label>Gemini 模型</label><input id="cfgGeminiModel" placeholder="gemini-3.5-flash"></div>
+        <div class="prov prov-gemini"><label></label><button class="btn" type="button" data-listmodels="gemini" style="background:#666;padding:3px 8px;font-size:12px;">📋 列出可用模型</button> <span class="muted" data-modelstag="gemini" style="font-size:12px;"></span></div>
+        <div class="prov prov-local"><label>Ollama URL</label><input id="cfgOllamaUrl" placeholder="http://localhost:11434"></div>
+        <div class="prov prov-local"><label>Ollama 模型</label><input id="cfgOllamaModel" placeholder="qwen3:latest"></div>
+        <div class="prov prov-local"><label></label><button class="btn" type="button" data-listmodels="local" style="background:#666;padding:3px 8px;font-size:12px;">📋 列出可用模型</button> <span class="muted" data-modelstag="local" style="font-size:12px;"></span></div>
+        <div class="prov prov-custom"><label>端点 URL</label><input id="cfgCustomUrl" placeholder="https://api.groq.com/openai/v1"></div>
+        <div class="prov prov-custom"><label>API Key</label><input id="cfgCustomKey" type="password" placeholder="Bearer key"></div>
+        <div class="prov prov-custom"><label>模型</label><input id="cfgCustomModel" placeholder="llama-3.1-8b-instant"></div>
+        <div class="prov prov-custom"><label></label><button class="btn" type="button" data-listmodels="custom" style="background:#666;padding:3px 8px;font-size:12px;">📋 列出可用模型</button> <span class="muted" data-modelstag="custom" style="font-size:12px;"></span></div>
+        <div class="prov prov-gemini"><label>思考预算</label><input id="cfgGeminiThinkingBudget" type="number" min="0" placeholder="留空=模型自定；0=关闭思考">
+          <span class="muted">思考型模型（如 gemini-flash-latest）遇 500/超时，把它设 0 或调小往往能绕过</span></div>
+        <div class="prov prov-gemini"><label>备用模型</label><input id="cfgGeminiFallbackModel" placeholder="留空=不启用。主模型 503 繁忙时自动接力"></div>
+        <div class="prov prov-custom"><label>备用模型</label><input id="cfgCustomFallbackModel" placeholder="留空=不启用。主模型失败时自动接力"></div>
+        <details style="margin-top:6px;">
+          <summary>超时与重试（默认值一般够用；出现「生成超时」或「503 繁忙」时才需调）</summary>
+          <div style="margin-top:6px;">
+            <div><label>空闲超时(秒)</label><input id="cfgIdleTimeout" type="number" min="10" placeholder="90">
+              <span class="muted">多久<b>没有新内容</b>才算卡死。流式下这才是真超时——只要还在吐字就不会中断</span></div>
+            <div><label>总时长上限(秒)</label><input id="cfgTotalTimeout" type="number" min="30" placeholder="600"></div>
+            <div><label>重试次数</label><input id="cfgMaxRetries" type="number" min="0" max="6" placeholder="3">
+              <span class="muted">遇 503/429/504 时按指数退避自动重试。<b>填 0 即不重试</b>（失败就直接报错，
+                有备用链的仍会接力）；留空用默认 3 次</span></div>
+            <div><label>maxTokens</label><input id="cfgMaxTokens" type="number" min="256" placeholder="16384">
+              <span class="muted">思考型模型「思考+回答」共用此额度，调太小会截断答案</span></div>
+            <div><label>备用 Provider</label>
+              <select id="cfgFallbackProvider">
+                <option value="none">不启用</option>
+                <option value="gemini">Gemini</option>
+                <option value="custom">自定义端点</option>
+                <option value="local">Local Ollama</option>
+              </select>
+              <span class="muted">主 provider 反复失败后自动接力（需已填好该 provider 的必填项）</span></div>
+          </div>
+        </details>
+        <button class="btn" id="cfgSaveBtn" style="margin-top:6px;">保存设置</button>
+        <button class="btn" id="cfgProbeBtn" style="margin-top:6px;background:#666;">🔌 连接自检</button>
+        <span class="muted" id="cfgSavedTag"></span>
+        <pre id="cfgProbeOut" style="white-space:pre-wrap;font-size:11px;background:#fafafa;border-radius:6px;padding:6px;margin:6px 0 0;"></pre>
+        <div class="muted" style="font-size:11px;">
+          自检会用当前配置发一次**最小**请求，把原始 HTTP 状态码与响应体原样列出——
+          「暂时失败，重试中…」看不出是 500 还是断网，先跑这个，别猜。
+        </div>
+      </div>
+    </details>
+    <div style="margin-top:8px;">
+      <textarea id="aiQuestion" rows="2" style="width:100%;box-sizing:border-box;" placeholder="例：这次投资能赚钱吗？"></textarea>
+      <div class="muted" style="margin:4px 0;">占类、年命取上方排盘栏所选；改了会重新排盘。</div>
+      <button class="btn" id="aiBtn">AI 解读此盘</button>
+      <span class="muted" id="aiStatus"></span>
+    </div>
+    <div id="aiAnswerBar" class="muted" style="display:none;margin-top:8px;">
+      <button class="btn" id="aiRawToggle" style="padding:2px 8px;font-size:12px;">查看原文</button>
+    </div>
+    <div id="aiAnswer"></div>
+    <p class="muted" style="margin:8px 0 0;">设置与 Qimen-pwa 共用（同一网站，同一份本机设置），key 只存在本机。
+      奇门部分照 Qimen-pwa 的纲要与盘面数据；Qimen-pwa 的结构化证据包这里尚未接入。</p>
+  </div>
+
   <p class="muted" style="text-align:center;margin:16px 0;">
     奇门排盘与五行推理取自 <a href="https://github.com/kth2/Qimen-pwa">Qimen-pwa</a>；六壬基准为《大六壬探原》。
     穿壬规则为自创实验流派，尚未经案例检验。
@@ -153,11 +252,15 @@
   <script src="vendor/qimen-pwa/engine.bundle.js"></script>
   <script src="vendor/qimen-pwa/core/wangshuai.js"></script>
   <script src="vendor/qimen-pwa/core/wuxing.js"></script>
+  <script src="vendor/qimen-pwa/core/yingqi.js"></script>
+  <script src="vendor/qimen-pwa/core/mdlite.js"></script>
+  <script src="vendor/qimen-pwa/llm.js"></script>
   <script src="lib/tyme4ts.js"></script>
   <script src="core/liuren/tiandipan.js"></script>
   <script src="core/liuren/yuejiang.js"></script>
   <script src="core/rules.js"></script>
   <script src="app.js"></script>
+  <script src="ai.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('[sw] 注册失败：', e.message); });

@@ -62,6 +62,29 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   d.querySelector('#schoolSeg button[data-school="feipan"]').click();
   check('飞盘 同一时刻');
 
+  // AI：组出的提示词（两派各一次）+ 用假模型走一遍流式显示
+  const AI = w.ChuanRenAI;
+  assert(AI, 'AI 模块未载入');
+  d.getElementById('inDomain').value = '财运';
+  for (const sch of ['zhuanpan', 'feipan']) {
+    d.querySelector(`#schoolSeg button[data-school="${sch}"]`).click();
+    const m = await AI.buildMessages(w._chuanrenCtx, '这次投资能赚钱吗');
+    const name = sch === 'feipan' ? '飞盘' : '转盘';
+    const other = sch === 'feipan' ? '转盘奇门·解断方法纲要' : '飞盘奇门·解断方法纲要';
+    assert(m.system.includes('解断方法纲要') && !m.system.includes(other), name + '：纲要串派或缺失');
+    assert(m.user.includes('【穿壬·六壬层】') && m.user.includes('规则1') && m.user.includes('规则6'), name + '：缺穿壬段');
+    assert(m.user.includes('【旺衰与四害'), name + '：缺旺衰块');
+    assert(m.category === '求财', name + '：占类应为求财，实为 ' + m.category);
+    console.log(`✓ AI 提示词（${name}）：system ${m.system.length} 字，user ${m.user.length} 字，含纲要、旺衰、穿壬段`);
+  }
+  w.eval("LLM.chat = async (s, u, onTok) => { onTok('## 结论\\n可成。'); return '## 结论\\n可成。\\n\\n## 穿壬旁证\\n规则1 弃权'; }");
+  d.getElementById('aiQuestion').value = '这次投资能赚钱吗';
+  d.getElementById('aiBtn').click();
+  for (let i = 0; i < 50 && d.getElementById('aiStatus').textContent !== '完成'; i++) await sleep(50);
+  assert(d.getElementById('aiStatus').textContent === '完成', 'AI 未完成：' + d.getElementById('aiStatus').textContent);
+  assert(/穿壬旁证/.test(d.getElementById('aiAnswer').textContent), 'AI 答案未显示');
+  console.log('✓ AI 解读：假模型流式作答，答案已渲染');
+
   d.querySelector('#viewSeg button[data-view="qimen"]').click();
   assert(!d.querySelector('.cr-board') && d.querySelectorAll('#chart .gong').length === 9, '只看奇门：应无外圈');
   console.log('✓ 只看奇门：外圈收起');
