@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#3c763d"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="10">
+    <rect x="96" y="96" width="320" height="320"/>
+    <line x1="203" y1="96" x2="203" y2="416"/><line x1="309" y1="96" x2="309" y2="416"/>
+    <line x1="96" y1="203" x2="416" y2="203"/><line x1="96" y1="309" x2="416" y2="309"/>
+  </g>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#f0c75e" stroke-width="12"/>
+  <text x="256" y="300" text-anchor="middle" font-size="130" font-family="'PingFang SC','Microsoft YaHei',sans-serif" fill="#ffffff" font-weight="700">穿壬</text>
+</svg>

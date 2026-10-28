@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#3c763d">
+  <title>奇门穿壬 · 排盘</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <!-- 奇门盘面样式：直接用 Qimen-pwa 的 style.css，不另抄一份 -->
+  <link rel="stylesheet" href="vendor/qimen-pwa/style.css">
+  <style>
+    /* 以下页面骨架样式与 Qimen-pwa index.html 内联样式同一套 */
+    body { padding: 8px; max-width: 720px; margin: 0 auto; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .pwa-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+    .pwa-controls label { font-size: 13px; }
+    .pwa-controls input, .pwa-controls select { padding: 4px 6px; font-size: 14px; }
+    .seg { display: inline-flex; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
+    .seg button { border: none; background: #fff; padding: 6px 14px; font-size: 14px; }
+    .seg button.on { background: #3c763d; color: #fff; }
+    .btn { background: #3c763d; color: #fff; border: none; border-radius: 6px; padding: 7px 16px; font-size: 15px; }
+    .panel { border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin: 10px 0; }
+    .panel h3 { margin: 0 0 8px; font-size: 16px; }
+    .muted { color: #888; font-size: 12px; }
+    #basicInfo .item { display: inline-block; margin-right: 12px; font-size: 13px; }
+
+    /* ---- 穿壬层：本应用独有 ---- */
+    .exp-badge { display: inline-block; font-size: 11px; color: #8a6d3b; border: 1px solid #e0c98f; background: #fcf8e3; border-radius: 4px; padding: 0 5px; vertical-align: middle; }
+    .cr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .cr-cell { border: 1px solid #ddd; border-radius: 6px; padding: 5px 6px; font-size: 13px; min-height: 64px; position: relative; background: #fff; }
+    .cr-cell.cr-ji { background: #f3f9f1; }
+    .cr-cell.cr-xiong { background: #fbf1f0; }
+    .cr-cell.cr-hun { background: #f6f6f6; }
+    .cr-cell.cr-me { outline: 2px solid #3c763d; }
+    .cr-cell.cr-shi { outline: 2px solid #c27c0e; }
+    .cr-cell.cr-me.cr-shi { outline: 2px dashed #3c763d; }
+    .cr-name { font-weight: 700; font-size: 12px; color: #555; }
+    .cr-tag { position: absolute; top: 4px; right: 5px; font-size: 11px; }
+    .cr-line { line-height: 1.5; white-space: nowrap; }
+    .cr-line .z { color: #999; }
+    .cr-ji-t { color: #3c763d; } .cr-xiong-t { color: #a94442; } .cr-hun-t { color: #888; }
+    .cr-role { display: inline-block; font-size: 11px; border-radius: 3px; padding: 0 3px; margin-right: 2px; color: #fff; }
+    .cr-role.me { background: #3c763d; } .cr-role.shi { background: #c27c0e; } .cr-role.dir { background: #6f5499; }
+    .rule-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .rule-table th, .rule-table td { border-bottom: 1px solid #eee; padding: 5px 4px; text-align: left; vertical-align: top; }
+    .rule-table th { color: #666; font-weight: 600; }
+    .rule-table td:first-child { width: 7.5em; white-space: nowrap; }
+    .rule-table td:nth-child(2) { width: 2.5em; }
+    .vote { font-weight: 700; white-space: nowrap; }
+    .vote.p { color: #3c763d; } .vote.n { color: #a94442; } .vote.z { color: #888; }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;margin:6px 0;">奇门穿壬 · 排盘 <span class="exp-badge">实验</span></h2>
+
+  <div class="pwa-controls">
+    <span class="seg" id="schoolSeg">
+      <button data-school="zhuanpan" class="on">转盘</button>
+      <button data-school="feipan">飞盘（括囊）</button>
+    </span>
+    <label>日期 <input type="date" id="inDate"></label>
+    <label>时间 <input type="time" id="inTime"></label>
+    <label>局
+      <select id="inJuShu">
+        <option value="">跟随日期时间（自动起局）</option>
+        <optgroup label="阳遁">
+          <option value="yang-1">阳遁1局</option><option value="yang-2">阳遁2局</option><option value="yang-3">阳遁3局</option>
+          <option value="yang-4">阳遁4局</option><option value="yang-5">阳遁5局</option><option value="yang-6">阳遁6局</option>
+          <option value="yang-7">阳遁7局</option><option value="yang-8">阳遁8局</option><option value="yang-9">阳遁9局</option>
+        </optgroup>
+        <optgroup label="阴遁">
+          <option value="yin-1">阴遁1局</option><option value="yin-2">阴遁2局</option><option value="yin-3">阴遁3局</option>
+          <option value="yin-4">阴遁4局</option><option value="yin-5">阴遁5局</option><option value="yin-6">阴遁6局</option>
+          <option value="yin-7">阴遁7局</option><option value="yin-8">阴遁8局</option><option value="yin-9">阴遁9局</option>
+        </optgroup>
+      </select>
+    </label>
+    <label>占类
+      <select id="inDomain">
+        <option value="综合">综合</option><option value="事业">事业</option><option value="财运">财运</option>
+        <option value="婚姻">婚姻</option><option value="健康">健康</option><option value="学业">学业</option>
+        <option value="出行">出行</option><option value="行人">行人</option><option value="失物">失物</option><option value="寻人">寻人</option>
+        <option value="怀孕">怀孕</option><option value="官司">官司</option><option value="风水">风水</option>
+      </select>
+    </label>
+    <label title="规则 6 要用年支，所以须选完整干支">年命 <select id="inNianMing"><option value="">不提供</option></select></label>
+    <button class="btn" id="castBtn">排盘</button>
+  </div>
+
+  <div id="basicInfo" class="panel" style="display:none;"></div>
+  <div id="chart"></div>
+  <div id="chuanren"></div>
+
+  <p class="muted" style="text-align:center;margin:16px 0;">
+    奇门排盘与五行推理取自 <a href="https://github.com/kth2/Qimen-pwa">Qimen-pwa</a>；六壬基准为《大六壬探原》。
+    穿壬规则为自创实验流派，尚未经案例检验。
+  </p>
+
+  <script src="vendor/qimen-pwa/engine.bundle.js"></script>
+  <script src="vendor/qimen-pwa/core/wangshuai.js"></script>
+  <script src="vendor/qimen-pwa/core/wuxing.js"></script>
+  <script src="lib/tyme4ts.js"></script>
+  <script src="core/liuren/tiandipan.js"></script>
+  <script src="core/liuren/yuejiang.js"></script>
+  <script src="core/rules.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('[sw] 注册失败：', e.message); });
+      navigator.serviceWorker.addEventListener('message', function (e) {
+        if (e.data && e.data.type === 'sw-updated' && !sessionStorage.getItem('sw-reloaded')) {
+          sessionStorage.setItem('sw-reloaded', '1'); location.reload();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

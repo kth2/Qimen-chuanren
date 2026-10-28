@@ -1,0 +1,66 @@
+/**
+ * 冒烟测试：在 jsdom 里打开 dist/index.html，按真实页面载入全部脚本，
+ * 排转盘、飞盘各一次，检查奇门盘、穿壬九宫、规则表都画出来了，且没有报错。
+ * 用法：npm run build && npm run smoke
+ */
+'use strict';
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const { JSDOM, VirtualConsole } = require('jsdom');
+
+const DIST = path.join(__dirname, '..', 'dist');
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml' };
+
+function serve() {
+  return new Promise((resolve) => {
+    const srv = http.createServer((req, res) => {
+      const p = path.join(DIST, decodeURIComponent(req.url.split('?')[0]).replace(/\/$/, '/index.html'));
+      if (!p.startsWith(DIST) || !fs.existsSync(p)) { res.statusCode = 404; return res.end(); }
+      res.setHeader('Content-Type', TYPES[path.extname(p)] || 'application/octet-stream');
+      fs.createReadStream(p).pipe(res);
+    }).listen(0, () => resolve(srv));
+  });
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
+
+(async () => {
+  const srv = await serve();
+  const base = `http://127.0.0.1:${srv.address().port}/`;
+  const errors = [];
+  const vc = new VirtualConsole();
+  vc.on('jsdomError', (e) => errors.push(e.message));
+  vc.on('error', (...a) => errors.push(a.join(' ')));
+  const dom = await JSDOM.fromURL(base + 'index.html', {
+    runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true, virtualConsole: vc,
+    beforeParse(w) { w.fetch = (u) => fetch(new URL(u, base)); },
+  });
+  const w = dom.window, d = w.document;
+  for (let i = 0; i < 50 && !d.querySelector('.cr-grid'); i++) await sleep(100);
+
+  function check(label) {
+    assert(d.querySelectorAll('#chart .gong').length === 9, label + '：奇门盘不是九宫');
+    assert(d.querySelectorAll('.cr-cell').length === 9, label + '：穿壬九宫不是九格');
+    const rows = d.querySelectorAll('.rule-table tbody tr');
+    assert(rows.length === 4, label + '：规则表不是四行');
+    assert(/月将/.test(d.getElementById('chuanren').textContent), label + '：缺月将');
+    console.log(`✓ ${label}：${[...rows].map((r) => r.children[0].textContent.trim() + ' ' + r.children[1].textContent.trim()).join(' ｜ ')}`);
+  }
+
+  d.getElementById('inDate').value = '2026-10-28';
+  d.getElementById('inTime').value = '15:30';
+  d.getElementById('inDomain').value = '财运';
+  d.getElementById('inNianMing').value = '庚午';
+  d.getElementById('castBtn').click();
+  check('转盘 2026-10-28 15:30 财运 年命庚午');
+  assert(/卯/.test(d.getElementById('chuanren').textContent), '霜降后应为卯将');
+
+  d.querySelector('#schoolSeg button[data-school="feipan"]').click();
+  check('飞盘 同一时刻');
+
+  assert(!errors.length, '页面报错：' + errors.join(' / '));
+  console.log('冒烟通过，无脚本报错。');
+  w.close(); srv.close();
+})().catch((e) => { console.error(e.message); process.exit(1); });

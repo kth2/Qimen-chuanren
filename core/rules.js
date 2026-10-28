@@ -9,11 +9,14 @@
  *   · 每条规则各出一票，不相加；+1／−1 只是关系分值，不等于吉或成功。
  *   · 计票同时记下原始关系，供五种关系分开盲测。
  */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) {
+    module.exports = factory(require('../vendor/qimen-pwa/core/wuxing.js'), require('./liuren/tiandipan.js'), require('./liuren/yuejiang.js'));
+  } else {
+    root.ChuanRenRules = factory(root.WuXing, root.LiurenTianDiPan, root.LiurenYueJiang);
+  }
+})(typeof self !== 'undefined' ? self : this, function (WuXing, TianDiPan, YueJiang) {
 'use strict';
-
-const WuXing = require('../vendor/qimen-pwa/core/wuxing.js');
-const TianDiPan = require('./liuren/tiandipan.js');
-const YueJiang = require('./liuren/yuejiang.js');
 
 const VERSION = '1.0.0-dev';
 const APPLIES_TO = 'chuanren-exp';
@@ -180,4 +183,5 @@ function evaluate(a) {
   };
 }
 
-module.exports = { VERSION, APPLIES_TO, evaluate, wuxingScore, relationVote, ZHI_WX };
+return { VERSION, APPLIES_TO, evaluate, wuxingScore, relationVote, ZHI_WX };
+});

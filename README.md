@@ -7,6 +7,9 @@
 - 规格：[奇门穿壬 v1 · 冻结规格](https://claude.ai/artifact/QXZoZZ2tCdDzprmidLBQB6)
 - 奇门部分：[kth2/Qimen-pwa](https://github.com/kth2/Qimen-pwa)（本仓库不复制、不改动它）
 - 六壬基准：袁树珊《大六壬探原》卷上推演篇
+- PWA：<https://kth2.github.io/qimen-chuanren/>（须先在仓库 Settings → Pages 把 Source 设为 GitHub Actions）
+
+<img src="docs/screenshot-zhuanpan.png" width="300" alt="转盘截图">
 
 ## 现状
 
@@ -17,6 +20,7 @@
 | 规则 1、2、5、6 | 只需第一层；取用照 Qimen-pwa 五行推理 v1 | 已实现，未检验 |
 | 第二层 | 四课、九法三传 | 待《探原》原文 |
 | 规则 3、4 | 需要三传 | 待第二层 |
+| PWA | 沿用 Qimen-pwa 样式与排盘流程，加六壬层、穿壬九宫、规则表；可离线、可装到主屏 | 已完成 |
 
 在 600 张随机转盘上的适用率：规则 1 约 59%（其余为「混」），规则 2 约 38%（四维宫两支五行不一即弃权），规则 5 为 100%，规则 6 约 62%（给了年命时）。
 
@@ -26,6 +30,9 @@
 core/liuren/tiandipan.js   第一层：天地盘与天将（纯函数）
 core/liuren/yuejiang.js    月将（中气切换，待核）
 core/rules.js              规则 1、2、5、6，入口 evaluate()
+web/                       PWA 页面、控制器、manifest、service worker
+scripts/build.js           产出 dist/（打包 tyme4ts，从 submodule 取页面用到的文件）
+scripts/smoke.js           在 jsdom 里打开 dist 页面，排转盘、飞盘各一次
 vendor/qimen-pwa           Qimen-pwa（git submodule，只读引用）
 test/                      《探原》原书例、与上游五行推理逐盘比对、规则测试
 ```
@@ -36,6 +43,13 @@ test/                      《探原》原书例、与上游五行推理逐盘�
 git clone --recurse-submodules https://github.com/kth2/qimen-chuanren
 npm install
 npm test
+npm run build      # 产出 dist/
+npm run smoke      # 冒烟测试
+python3 -m http.server --directory dist   # 本地打开 http://localhost:8000
 ```
+
+推到 main 后，GitHub Actions 会依次跑测试、build、冒烟，全过才部署。
+
+界面的奇门宫格渲染函数是从 Qimen-pwa `app.js` 逐字搬来的（那边没有导出），只搬展示，不搬断法；Qimen-pwa 改了盘面样式，要同步更新 submodule 和 `web/app.js` 开头那一段。
 
 规则 2 需要把五行推理 v1 的「宫五行」换成天盘支五行，上游没有这个参数，所以在 `core/rules.js` 里移植了打分函数。`test/rules.test.js` 用 240 张盘、每盘 81 组宫位，逐一比对移植版与上游 `WuXing.score()`，保证输入宫五行时结果完全相同。
