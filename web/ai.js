@@ -102,7 +102,7 @@
     '4. 年命、日干为甲者按所遁之仪取宫（甲子戊、甲戌己、甲申庚、甲午辛、甲辰壬、甲寅癸），不得以本盘旬首顶替；时干为甲者以值符落宫论。',
     '【穿壬·六壬层】',
     '5. 穿壬是自创的实验流派，各条规则尚未经案例检验。六壬层只作旁证：可以引用，不得据以推翻奇门的成败结论。',
-    '6. 六壬层只用【穿壬·六壬层】一段给出的事实（天盘支、天将、遁干、旬空、规则票）。不得自行起四课三传，不得引用毕法赋、课体等未给出的内容。',
+    '6. 六壬层只用【穿壬·六壬层】一段给出的事实（天盘支、天将、遁干、旬空、四课三传、规则票）。四课三传以该段为准，不得另起；不得引用毕法赋等未给出的内容。三传可读作起因、经过、结局，但成败仍以奇门为准。',
     '7. 规则票的 +1／−1 只是关系分值，不等于吉、成功或有利；各条分开看，不相加。',
     '8. 六壬层与奇门结论相左时，两边理由都写出，再给出唯一答案（以奇门为准），并注明哪条规则与之相左。',
     '9. 「穿壬事宫」按五行推理 v1 取用，可能与【用神落宫】不同；不同时两者都列，判断仍以【用神落宫】为准。',
@@ -122,6 +122,14 @@
       const t = ln.tianOver(di);
       out.push(`  ${di}：${t}·${ln.jiangOf(t)}·${dun[t] || '旬空无遁干'} → ${GONG_NAME[ZHI_GONG[di]]}`);
     }
+    const sc = res.sanChuan;
+    if (sc) {
+      const kk = sc.ke.map((k) => `第${'一二三四'[k.n - 1]}课 ${k.xia}上${k.shang}·${ln.jiangOf(k.shang)}`).join('；');
+      out.push(`四课：${kk}。`);
+      out.push(`三传（${sc.name}；${sc.why}）：` + sc.chuan.map((z, i) =>
+        `${'初中末'[i]}传 ${z}·${ln.jiangOf(z)}·${dun[z] || '旬空无遁干'}${L.xunKong.includes(z) ? '（六壬旬空）' : ''}，临地盘${ln.diUnder(z)}（${GONG_NAME[ZHI_GONG[ln.diUnder(z)]]}）`).join('；') + '。');
+      if (sc.flags.length) out.push('三传取法待核处：' + sc.flags.join('；'));
+    }
     out.push(`取用（照五行推理 v1）：我＝${q.rLabel}${q.R ? GONG_NAME[q.R] : '（未定）'}；事＝${q.yName || ''}宫${q.Y ? GONG_NAME[q.Y] : '（未定）'}。`);
     out.push('规则票：');
     for (const r of res.rules) {
@@ -138,7 +146,7 @@
         ? `  规则6 命干：本命${r.benMingZhi}上神${r.shangShen}（${r.meWx}，乘${r.shangShenJiang}）对事宫天盘支（${r.yZhi.join('')}，${r.yWx}）＝${r.relation}；票 ${r.vote > 0 ? '+1' : '−1'}`
         : `  规则6 命干：弃权（${r.reason}）`);
     }
-    out.push('规则3、4 需要三传，尚未启用。');
+    out.push('规则3、4 需要三传，三传已能排出，但这两条规则尚未启用。');
     return out.join('\n');
   }
 

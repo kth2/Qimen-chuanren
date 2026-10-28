@@ -3,13 +3,14 @@
  * 排盘流程与盘面照 Qimen-pwa：同一个引擎（engine.bundle.js）、同一份 style.css、
  * 同样的「盘别 / 日期 / 时间 / 局」输入。奇门宫格的渲染函数从 Qimen-pwa app.js
  * （submodule 所钉的版本）逐字搬来——那边没有把它们导出，只能照抄；只抄展示，不抄任何断法。
- * 本文件自己的部分只有穿壬层：合盘外圈（十二支天盘、天将、遁干）、六壬概要、规则 1、2、5、6 的票。
+ * 本文件自己的部分只有穿壬层：合盘外圈（十二支天盘、天将、遁干）、六壬概要、四课三传、规则 1、2、5、6 的票。
  */
 (function () {
   const QM = window.QM;
   const WS = window.WangShuai;
   const RULES = window.ChuanRenRules;
   const TDP = window.LiurenTianDiPan;
+  const SC = window.LiurenSanChuan;
   const $ = (id) => document.getElementById(id);
   let school = 'zhuanpan';
   let DOMAINS = null;   // Qimen-pwa knowledge/domains.json：占类 → 五行推理占类键、飞盘引擎占类
@@ -222,6 +223,27 @@
     return '';
   }
 
+  /** 四课三传（版式同六壬书：四课右起第一课，上行天将、中行上神、下行下神） */
+  function sanChuanPanel(pan, res) {
+    const sc = res.sanChuan;
+    if (!sc) return '';
+    const ln = sc.liuren, dun = TDP.dunGan(pan.siZhu.day), kong = new Set(res.liuren.xunKong);
+    const jx = (z) => { const j = ln.jiangOf(z); return `<span class="${TDP.JI_JIANG.has(j) ? 'ji' : 'xiong'}">${JIANG_SHORT[j]}</span>`; };
+    const ke = sc.ke.slice().reverse();   // 第四课在左，第一课在右
+    const keHtml = `<table class="ke-table"><tr>${ke.map(k => `<td>${jx(k.shang)}</td>`).join('')}</tr>
+      <tr>${ke.map(k => `<td class="ke-up">${k.shang}</td>`).join('')}</tr>
+      <tr>${ke.map(k => `<td class="ke-down">${k.xia}</td>`).join('')}</tr>
+      <tr class="muted">${ke.map(k => `<td>第${'一二三四'[k.n - 1]}课</td>`).join('')}</tr></table>`;
+    const chHtml = `<table class="chuan-table">${sc.chuan.map((z, i) => `<tr><td class="muted">${'初中末'[i]}传</td>
+      <td>${dun[z] || '<span class="muted">○</span>'}</td><td class="ke-up">${z}${kong.has(z) ? '<sup class="kong-mark">空</sup>' : ''}</td><td>${jx(z)}</td>
+      <td class="muted">临${ln.diUnder(z)}·${GONG_LABEL(TDP.ZHI_GONG[ln.diUnder(z)])}</td></tr>`).join('')}</table>`;
+    return `<div class="panel"><h3>四课三传 <span class="exp-badge">${esc(sc.name)}</span></h3>
+      <div class="sc-wrap">${chHtml}${keHtml}</div>
+      <p class="muted" style="margin:6px 0 0;">${esc(sc.why)}。三传取法据伍剑虹《大六壬精义讲解》，涉害取深浅法；
+        「临」＝该支加在地盘何位、属奇门何宫。空＝六壬日旬空，○＝旬空无遁干。</p>
+      ${sc.flags.length ? `<p class="muted" style="margin:4px 0 0;color:#8a6d3b;">${sc.flags.map(esc).join('；')}</p>` : ''}</div>`;
+  }
+
   function renderChuanRen(pan, res) {
     const R = String(res.quYong.R || ''), Y = String(res.quYong.Y || '');
     const yj = res.yueJiang, L = res.liuren;
@@ -234,6 +256,8 @@
         　<b>六壬日旬空</b> ${esc(L.xunKong.join(''))}<br>
         <b>取用</b> 我＝${esc(res.quYong.rLabel)}${R ? GONG_LABEL(R) : '（未定）'}　事＝${esc(res.quYong.yName || '')}宫${Y ? GONG_LABEL(Y) : '（未定）'}
       </div></div>`;
+
+    html += sanChuanPanel(pan, res);
 
     html += `<div class="panel"><h3>穿壬规则 <span class="exp-badge">未检验</span></h3>
       <table class="rule-table"><thead><tr><th>规则</th><th>票</th><th>依据</th></tr></thead><tbody>`;
@@ -284,6 +308,7 @@
     }
     try {
       const res = RULES.evaluate({ chart: pan, wangshuai: WS.analyze(pan), domain: domainKeyOf(ui), date, feipan, nianMing });
+      res.sanChuan = SC.compute({ riGan: pan.siZhu.day[0], riZhi: pan.siZhu.day[1], yueJiang: res.yueJiang.yueJiang, shiZhi: pan.siZhu.time[1] });
       renderBoard(pan, res);
       renderChuanRen(pan, res);
       window._chuanren = res;

@@ -48,6 +48,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     const rows = d.querySelectorAll('.rule-table tbody tr');
     assert(rows.length === 4, label + '：规则表不是四行');
     assert(/月将/.test(d.getElementById('chuanren').textContent), label + '：缺月将');
+    assert(d.querySelectorAll('.chuan-table tr').length === 3 && d.querySelectorAll('.ke-table .ke-up').length === 4, label + '：缺四课三传');
     console.log(`✓ ${label}：${[...rows].map((r) => r.children[0].textContent.trim() + ' ' + r.children[1].textContent.trim()).join(' ｜ ')}`);
   }
 
@@ -57,6 +58,11 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   d.getElementById('inNianMing').value = '庚午';
   d.getElementById('castBtn').click();
   check('转盘 2026-10-28 15:30 财运 年命庚午');
+  // 2026-10-28 15:30：乙亥日、卯将、申时（offset 7）。课一 乙寄辰上亥，下贼上之类由引擎定；只核对三传与引擎一致
+  { const S = w.LiurenSanChuan.compute({ riGan: '乙', riZhi: '亥', yueJiang: '卯', shiZhi: '申' });
+    const shown = [...d.querySelectorAll('.chuan-table .ke-up')].map((e) => e.textContent.replace('空', '')).join('');
+    assert(shown === S.chuan.join(''), '页面三传与引擎不符：' + shown + ' vs ' + S.chuan.join(''));
+    console.log('✓ 四课三传：' + S.name + ' ' + shown); }
   assert(/卯/.test(d.getElementById('chuanren').textContent), '霜降后应为卯将');
 
   d.querySelector('#schoolSeg button[data-school="feipan"]').click();
@@ -74,6 +80,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(m.system.includes('解断方法纲要') && !m.system.includes(other), name + '：纲要串派或缺失');
     assert(m.user.includes('【穿壬·六壬层】') && m.user.includes('规则1') && m.user.includes('规则6'), name + '：缺穿壬段');
     assert(m.user.includes('【旺衰与四害'), name + '：缺旺衰块');
+    assert(/三传（.+）：初传/.test(m.user) && m.user.includes('四课：第一课'), name + '：提示词缺四课三传');
     assert(m.category === '求财', name + '：占类应为求财，实为 ' + m.category);
     console.log(`✓ AI 提示词（${name}）：system ${m.system.length} 字，user ${m.user.length} 字，含纲要、旺衰、穿壬段`);
   }
