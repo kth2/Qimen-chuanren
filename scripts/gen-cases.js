@@ -7,7 +7,8 @@
  *     再不然，以书中三传在 12 种位差里反推，唯一解才收。
  *   · 由 diff 与占时推回月将（书中未明写月将者标 yueJiangDerived）。
  *   · 本 app 引擎所得三传与课体（chuanEngine、keTiEngine），与书不同者加 flag。
- *   · 书记公历日与日柱不合者，标「活动时」：伍剑虹书中说明，代人占多以抽签取干支。
+ *   · 书记公历日与日柱不合者：伍剑虹书标「活动时」（书中说明代人占多以抽签取干支）；
+ *     王雷之书抽签只取时辰、日柱照实，不合即报出待核。
  * 用法：npm run gen:cases
  */
 'use strict';
@@ -58,7 +59,10 @@ function build() {
       if (c.date && T && /^\d{4}-\d{2}-\d{2}$/.test(c.date)) {
         const [y, m, d] = c.date.split('-').map(Number);
         const day = T.SolarDay.fromYmd(y, m, d).getSixtyCycleDay().getSixtyCycle().getName();
-        if (day !== c.riZhu) flags.push('活动时');
+        if (day !== c.riZhu) {
+          if (bk === 'wu') flags.push('活动时');
+          else problems.push(`${c.id}：公历 ${c.date} 为 ${day} 日，书中日柱 ${c.riZhu}，请核对`);
+        }
       }
       out.push({
         id: c.id, book: bk, page: c.page, src: c.src || '', cat: c.cat || '',
