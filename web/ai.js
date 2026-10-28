@@ -107,7 +107,7 @@
     '8. 六壬层与奇门结论相左时，两边理由都写出，再给出唯一答案（以奇门为准），并注明哪条规则与之相左。',
     '9. 「穿壬事宫」按五行推理 v1 取用，可能与【用神落宫】不同；不同时两者都列，判断仍以【用神落宫】为准。',
     '【格式】',
-    '10. 结尾单列一节「穿壬旁证」：逐条列规则 1、2、5、6 的票或方位，并说明与奇门结论是否一致。',
+    '10. 结尾单列一节「穿壬旁证」：逐条列规则 1–6 的票或方位，并说明与奇门结论是否一致。',
   ].join('\n');
 
   /* ---------- 穿壬段 ---------- */
@@ -139,6 +139,12 @@
       if (r.rule === 2) out.push(r.applicable
         ? `  规则2 五行推理·天盘支：我（${r.rZhi.join('')}，${r.rWx}，${r.lR}）对事（${r.yZhi.join('')}，${r.yWx}，${r.lY}）＝${r.relation}，${r.why}；票 ${r.vote > 0 ? '+1' : '−1'}`
         : `  规则2 五行推理·天盘支：弃权（${r.reason}）`);
+      if (r.rule === 3) out.push(r.applicable
+        ? `  规则3 末传落宫：末传${r.mo}临地盘${r.moDi}，落${GONG_NAME[r.moGong]}（${r.moWx}）对我宫${GONG_NAME[r.R]}（${r.meWx}）＝${r.relation}；票 ${r.vote > 0 ? '+1' : '−1'}`
+        : `  规则3 末传落宫：弃权（${r.reason}）`);
+      if (r.rule === 4) out.push(r.applicable
+        ? `  规则4 空亡互检：事宫${GONG_NAME[r.Y]}奇门空亡，末传${r.mo}${r.moKong ? '亦落六壬旬空' : '不空'}＝${r.verdict}；票 ${r.vote > 0 ? '+1' : '−1'}${r.yingQi ? '；应期候选 ' + r.yingQi : ''}`
+        : `  规则4 空亡互检：不投票（${r.reason}）`);
       if (r.rule === 5) out.push(r.applicable
         ? `  规则5 方位第二意见：奇门方位 ${GONG_NAME[r.qimenGong]}；第二方位 ${r.secondGongs.map((g) => GONG_NAME[g]).join('、')}（不投票，只给方位）`
         : `  规则5 方位第二意见：弃权（${r.reason}）`);
@@ -146,7 +152,6 @@
         ? `  规则6 命干：本命${r.benMingZhi}上神${r.shangShen}（${r.meWx}，乘${r.shangShenJiang}）对事宫天盘支（${r.yZhi.join('')}，${r.yWx}）＝${r.relation}；票 ${r.vote > 0 ? '+1' : '−1'}`
         : `  规则6 命干：弃权（${r.reason}）`);
     }
-    out.push('规则3、4 需要三传，三传已能排出，但这两条规则尚未启用。');
     return out.join('\n');
   }
 

@@ -25,6 +25,7 @@ const COPY = [
   ['core/liuren/tiandipan.js', 'core/liuren/tiandipan.js'],
   ['core/liuren/yuejiang.js', 'core/liuren/yuejiang.js'],
   ['core/liuren/sanchuan.js', 'core/liuren/sanchuan.js'],
+  ['core/liuren/xiangyi.js', 'core/liuren/xiangyi.js'],
   ['vendor/qimen-pwa/style.css', 'vendor/qimen-pwa/style.css'],
   ['vendor/qimen-pwa/engine.bundle.js', 'vendor/qimen-pwa/engine.bundle.js'],
   ['vendor/qimen-pwa/core/wangshuai.js', 'vendor/qimen-pwa/core/wangshuai.js'],

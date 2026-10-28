@@ -1,9 +1,9 @@
 /**
- * 奇门穿壬 v1 · 规则 1、2、5、6（只用第一层：天地盘与天将）
+ * 奇门穿壬 v1 · 规则 1–6（规则 1、2、5、6 只用第一层；规则 3、4 用第二层三传）
  *
  * 规格：《奇门穿壬 v1 · 冻结规格》「取用」「六条规则」两节。
  * 纪律：
- *   · 本文件不得调用任何四课三传的函数（规则 3、4 等第二层原文）。
+ *   · 规则 1、2、5、6 不读三传；三传只供规则 3、4（2026-10-28 kt 决定启用，涉害取深浅法）。
  *   · 「我」「事」一律取自 Qimen-pwa 五行推理 v1 的取用（转盘：日干宫／占类用神宫；
  *     飞盘：年命宫／《鸣法》用神宫或时干宫），不在本仓库另立取用。
  *   · 每条规则各出一票，不相加；+1／−1 只是关系分值，不等于吉或成功。
@@ -11,11 +11,11 @@
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('../vendor/qimen-pwa/core/wuxing.js'), require('./liuren/tiandipan.js'), require('./liuren/yuejiang.js'));
+    module.exports = factory(require('../vendor/qimen-pwa/core/wuxing.js'), require('./liuren/tiandipan.js'), require('./liuren/yuejiang.js'), require('./liuren/sanchuan.js'));
   } else {
-    root.ChuanRenRules = factory(root.WuXing, root.LiurenTianDiPan, root.LiurenYueJiang);
+    root.ChuanRenRules = factory(root.WuXing, root.LiurenTianDiPan, root.LiurenYueJiang, root.LiurenSanChuan);
   }
-})(typeof self !== 'undefined' ? self : this, function (WuXing, TianDiPan, YueJiang) {
+})(typeof self !== 'undefined' ? self : this, function (WuXing, TianDiPan, YueJiang, SanChuan) {
 'use strict';
 
 const VERSION = '1.0.0-dev';
@@ -27,6 +27,7 @@ const KE = { 木: '土', 土: '水', 水: '火', 火: '金', 金: '木' };
 
 // ── 以下四个小函数照 Qimen-pwa core/wuxing.js 逐字移植，只为规则 2 能换掉「宫五行」。
 //    test/wuxing-parity.test.js 保证：传入宫五行时，与上游 WuXing.score() 结果完全相同。
+const GONG_WX = { 1: '水', 2: '土', 3: '木', 4: '木', 5: '土', 6: '金', 7: '金', 8: '土', 9: '火' };
 const GAN_WX = { 甲: '木', 乙: '木', 丙: '火', 丁: '火', 戊: '土', 己: '土', 庚: '金', 辛: '金', 壬: '水', 癸: '水' };
 const MEN_WX = { 休门: '水', 生门: '土', 伤门: '木', 杜门: '木', 景门: '火', 死门: '土', 惊门: '金', 开门: '金' };
 const XING_WX = { 蓬: '水', 芮: '土', 冲: '木', 辅: '木', 禽: '土', 心: '金', 柱: '金', 任: '土', 英: '火' };
@@ -153,6 +154,30 @@ function evaluate(a) {
     }
   }
 
+  // 第二层：四课三传（规则 3、4 用）
+  const sc = SanChuan.compute({ riGan, riZhi: String(sz.day || '').charAt(1), yueJiang: yj.yueJiang, shiZhi });
+  const mo = sc.chuan[2];
+  const moGong = TianDiPan.ZHI_GONG[ln.diUnder(mo)];
+
+  // 规则 3：末传落宫——末传所加地盘之宫，其宫五行对我宫宫五行查计票表
+  if (!R) rules.push(abstain(3, (wx.rLabel || '我宫') + '未定'));
+  else {
+    const rv = relationVote(GONG_WX[R], GONG_WX[moGong]);
+    rules.push({ rule: 3, applicable: true, vote: rv.vote, relation: rv.relation, mo, moDi: ln.diUnder(mo), moGong, R,
+      meWx: GONG_WX[R], moWx: GONG_WX[moGong] });
+  }
+
+  // 规则 4：空亡互检——事宫奇门空亡时，看末传是否落六壬日旬空
+  const xk = TianDiPan.xunKong(sz.day);
+  const yKong = !!(Y && a.wangshuai && a.wangshuai.gongs && (a.wangshuai.gongs[Y] || {}).kongWang);
+  if (!Y) rules.push(abstain(4, '事宫未定'));
+  else if (!yKong) rules.push(abstain(4, '事宫奇门不空，不投票', { Y }));
+  else {
+    const moKong = xk.includes(mo);
+    rules.push({ rule: 4, applicable: true, vote: moKong ? -1 : 1, Y, mo, moKong,
+      verdict: moKong ? '末传亦空，不成' : '末传实，迟成', yingQi: moKong ? null : mo + '日（末传支日，应期候选）' });
+  }
+
   // 规则 5：方位第二意见
   if (!Y || !ln.readGong(Number(Y)).readings.length) rules.push(abstain(5, '事宫未定或在中五'));
   else rules.push({ rule: 5, applicable: true, qimenGong: Number(Y), secondGongs: ln.secondDirection(Number(Y)) });
@@ -180,6 +205,7 @@ function evaluate(a) {
       xunKong: TianDiPan.xunKong(sz.day) },   // 六壬日旬空，与奇门 kongWang 分开存
     quYong: { R, Y, yName, rLabel: wx.rLabel || (school === 'feipan' ? '年命宫' : '日干宫') },
     wuxing: wx,   // 五行推理 v1 原结果（Qimen-pwa 同一实现），AI 提示词照引
+    sanChuan: sc, // 第二层四课三传
     rules,
   };
 }

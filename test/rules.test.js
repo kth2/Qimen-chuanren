@@ -39,14 +39,14 @@ test('移植的五行打分与上游 WuXing.score() 逐盘逐宫一致（宫五�
   assert.ok(n > 10000, '比对数量 ' + n);
 });
 
-test('规则 1、2、5、6 在真实转盘上都给出合法输出', () => {
+test('规则 1–6 在真实转盘上都给出合法输出', () => {
   const iso = '2026-10-28T15:30:00+08:00';
   const ch = zhuan(iso);
   const r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: 'wealth', date: new Date(iso), nianMing: '戊辰' });
   assert.equal(r.appliesTo, 'chuanren-exp');
   assert.equal(r.yueJiang.yueJiang, '卯');         // 霜降后卯将
   assert.equal(r.yueJiang.status, '待核');
-  assert.deepEqual(r.rules.map((x) => x.rule), [1, 2, 5, 6]);
+  assert.deepEqual(r.rules.map((x) => x.rule), [1, 2, 3, 4, 5, 6]);
   for (const x of r.rules.filter((x) => x.rule !== 5)) assert.ok([-1, 0, 1].includes(x.vote), JSON.stringify(x));
   const r5 = r.rules.find((x) => x.rule === 5);           // 规则 5 只出方位，不投票
   assert.ok(r5.secondGongs.length >= 1 && r5.secondGongs.length <= 2);
@@ -74,7 +74,7 @@ test('规则 6：本命上神对事宫天盘支查生克计票表，并记原始
 });
 
 test('批量：各规则票值只取 −1/0/+1，弃权必附理由', () => {
-  const tally = { 1: 0, 2: 0, 5: 0, 6: 0 };
+  const tally = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
   for (const iso of sampleDates(200)) {
     const ch = zhuan(iso);
     const r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: 'career', date: new Date(iso), nianMing: '庚午' });
@@ -86,9 +86,31 @@ test('批量：各规则票值只取 −1/0/+1，弃权必附理由', () => {
   for (const k in tally) assert.ok(tally[k] > 0, '规则 ' + k + ' 从未适用');
 });
 
-test('第一层规则不调用四课三传', () => {
-  const src = fs.readFileSync(path.join(__dirname, '../core/rules.js'), 'utf8').replace(/\/\/.*$|\/\*[\s\S]*?\*\//gm, '');
-  assert.doesNotMatch(src, /sanChuan|siKe|sike|sanchuan|三传|四课/);
+test('规则 1、2、5、6 不读三传：结果与三传无关', () => {
+  const src = fs.readFileSync(path.join(__dirname, '../core/rules.js'), 'utf8');
+  const i1 = src.indexOf('// 规则 1：'), i3 = src.indexOf('// 第二层：四课三传'), i5 = src.indexOf('// 规则 5：'), iEnd = src.indexOf('  return {\n    version');
+  for (const seg of [src.slice(i1, i3), src.slice(i5, iEnd)]) assert.doesNotMatch(seg, /\bsc\b|sanChuan|SanChuan|\bmo\b|moGong/);
+});
+
+test('规则 3：末传所临之宫对我宫查计票表；规则 4：事宫奇门空亡才投票', () => {
+  let n3 = 0, n4 = 0, n4kong = 0;
+  for (const iso of sampleDates(300)) {
+    const ch = zhuan(iso), ws = WangShuai.analyze(ch);
+    const r = Rules.evaluate({ chart: ch, wangshuai: ws, domain: 'wealth', date: new Date(iso) });
+    const by = Object.fromEntries(r.rules.map((x) => [x.rule, x]));
+    const T = require('../core/liuren/tiandipan.js');
+    if (by[3].applicable) {
+      n3++;
+      const ln = T.build({ riGan: ch.siZhu.day[0], yueJiang: r.yueJiang.yueJiang, shiZhi: ch.siZhu.time[1] });
+      assert.equal(by[3].mo, r.sanChuan.chuan[2]);
+      assert.equal(by[3].moGong, T.ZHI_GONG[ln.diUnder(by[3].mo)]);
+      assert.deepEqual({ relation: by[3].relation, vote: by[3].vote }, Rules.relationVote(GONG_WX[by[3].R], GONG_WX[by[3].moGong]));
+    }
+    const yKong = !!(ws.gongs[r.quYong.Y] || {}).kongWang;
+    assert.equal(by[4].applicable, yKong);
+    if (yKong) { n4++; if (by[4].moKong) { n4kong++; assert.equal(by[4].vote, -1); } else { assert.equal(by[4].vote, 1); assert.ok(by[4].yingQi); } }
+  }
+  assert.ok(n3 > 250 && n4 > 20 && n4kong > 0, `规则3 ${n3}、规则4 ${n4}（末传亦空 ${n4kong}）`);
 });
 
 test('月将：中气前后各一分钟', () => {

@@ -3,14 +3,14 @@
  * 排盘流程与盘面照 Qimen-pwa：同一个引擎（engine.bundle.js）、同一份 style.css、
  * 同样的「盘别 / 日期 / 时间 / 局」输入。奇门宫格的渲染函数从 Qimen-pwa app.js
  * （submodule 所钉的版本）逐字搬来——那边没有把它们导出，只能照抄；只抄展示，不抄任何断法。
- * 本文件自己的部分只有穿壬层：合盘外圈（十二支天盘、天将、遁干）、六壬概要、四课三传、规则 1、2、5、6 的票。
+ * 本文件自己的部分只有穿壬层：合盘外圈（十二支天盘、天将、遁干）、六壬概要、四课三传、九宫详解的六壬一行、规则 1–6 的票。
  */
 (function () {
   const QM = window.QM;
   const WS = window.WangShuai;
   const RULES = window.ChuanRenRules;
   const TDP = window.LiurenTianDiPan;
-  const SC = window.LiurenSanChuan;
+  const XY = window.LiurenXiangYi;
   const $ = (id) => document.getElementById(id);
   let school = 'zhuanpan';
   let DOMAINS = null;   // Qimen-pwa knowledge/domains.json：占类 → 五行推理占类键、飞盘引擎占类
@@ -184,6 +184,11 @@
           <span class="muted">外圈：地盘方位上所加的天盘支、天将、遁干；○＝六壬旬空，不配遁干</span>
         </div>`;
     }
+    // 点宫跳到九宫详解
+    $('chart').querySelectorAll('.pan-grid .gong').forEach((el, i) => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => { const t = document.getElementById('xj-g' + GRID_ORDER[i]); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.classList.add('xj-hit'); setTimeout(() => t.classList.remove('xj-hit'), 1200); } });
+    });
     // 我宫、事宫、第二方位：只加内阴影描边，不动宫格内的排版
     const R = String((res && res.quYong.R) || ''), Y = String((res && res.quYong.Y) || '');
     const r5 = res && res.rules.find(x => x.rule === 5);
@@ -197,11 +202,11 @@
   }
 
   /* ---------- 穿壬层 ---------- */
-  const RULE_NAME = { 1: '用神天将', 2: '五行推理·天盘支', 5: '方位第二意见', 6: '命干' };
+  const RULE_NAME = { 1: '用神天将', 2: '五行推理·天盘支', 3: '末传落宫', 4: '空亡互检', 5: '方位第二意见', 6: '命干' };
   const GONG_LABEL = (g) => { const J = QM.JIU_GONG[String(g)] || {}; return (J.name || '') + NUM_CN[+g]; };
 
   function voteHtml(r) {
-    if (r.rule === 5) return '<span class="vote z">—</span>';
+    if (r.rule === 5 || (r.rule === 4 && !r.applicable && r.Y)) return '<span class="vote z">—</span>';   // 规则 5 只给方位；规则 4 事宫不空不投票
     if (!r.applicable) return '<span class="vote z">弃权</span>';
     return r.vote > 0 ? '<span class="vote p">+1</span>' : r.vote < 0 ? '<span class="vote n">−1</span>' : '<span class="vote z">0</span>';
   }
@@ -214,6 +219,12 @@
       return `我（${(r.rZhi || []).join('')}，${esc(r.rWx)}，${esc(r.lR)}）对事（${(r.yZhi || []).join('')}，${esc(r.yWx)}，${esc(r.lY)}）：` +
         `<b>${esc(r.relation)}</b>——${esc(r.why)}（得分 ${r.score > 0 ? '+' : ''}${r.score}）`;
     }
+    if (r.rule === 3 && r.applicable) {
+      return `末传${esc(r.mo)}临地盘${esc(r.moDi)}，落${GONG_LABEL(r.moGong)}（${esc(r.moWx)}）对我宫${GONG_LABEL(r.R)}（${esc(r.meWx)}）：<b>${esc(r.relation)}</b>`;
+    }
+    if (r.rule === 4 && r.applicable) {
+      return `事宫${GONG_LABEL(r.Y)}奇门空亡；末传${esc(r.mo)}${r.moKong ? '亦落六壬旬空' : '不空'} → <b>${esc(r.verdict)}</b>${r.yingQi ? `；应期候选：${esc(r.yingQi)}` : ''}`;
+    }
     if (r.rule === 5 && r.applicable) {
       return `奇门方位 ${GONG_LABEL(r.qimenGong)}；第二方位 <b>${r.secondGongs.map(GONG_LABEL).join('、')}</b>`;
     }
@@ -221,6 +232,50 @@
       return `本命${esc(r.benMingZhi)}上神${esc(r.shangShen)}（${esc(r.meWx)}，乘${esc(r.shangShenJiang)}）对事宫天盘支（${(r.yZhi || []).join('')}，${esc(r.yWx)}）：<b>${esc(r.relation)}</b>`;
     }
     return '';
+  }
+
+  /* ---------- 奇门分析：照 Qimen-pwa renderAnalysis 搬来（只展示引擎已算好的结果） ---------- */
+  function qimenAnalysisPanels(pan) {
+    const a = pan.analysis || {};
+    const purpose = (pan.basicInfo && pan.basicInfo.purpose) || '综合';
+    let html = '';
+    if (school === 'feipan') html += `<p class="muted">飞盘解断复用通用奇门基线(五行生克/十干克应/门迫/空亡/格局/用神)，飞盘专法(遁干81格/三乙四宫)以 AI 占断为准。</p>`;
+    html += `<div class="panel"><h3>分析与建议 · 目的：${esc(purpose)}</h3>`;
+    if (a.yongShen) html += `<p>用神（${esc(purpose)}）：<b>${esc(a.yongShen.name)}</b> 落 <b>${esc(a.yongShen.direction)}方(${esc(a.yongShen.gongName)}宫，${esc(a.yongShen.jiXiongText)})</b> <span class="muted">${esc(a.yongShen.tip)}</span></p>`;
+    else html += `<p class="muted">目的「${esc(purpose)}」无专一用神，综观全盘。</p>`;
+    if (Array.isArray(a.suggestions) && a.suggestions.length) html += `<b>建议:</b><ul class="suggestion-list">${a.suggestions.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+    html += `</div><div class="panel"><h3>格局</h3>`;
+    if (Array.isArray(pan.geju) && pan.geju.length) html += `<ul class="geju-list">${pan.geju.map(g => `<li><b>${esc(g.name)}</b>${g.gong ? '(' + g.gong + '宫)' : ''} — ${esc(g.explain || (g.jiXiong === 'ji' ? '吉' : g.jiXiong === 'xiong' ? '凶' : '平'))}</li>`).join('')}</ul>`;
+    else html += `<p class="muted">本盘未见显著格局。</p>`;
+    return html + `</div>`;
+  }
+
+  /* ---------- 九宫详解：奇门一行（引擎）＋ 六壬一行（本宫地盘支上的天盘支、天将、遁干，天将×六亲象义） ---------- */
+  function jiuGongPanel(pan, res) {
+    const ja = pan.jiuGongAnalysis || {}, sc = res.sanChuan, ln = sc.liuren;
+    const dun = TDP.dunGan(pan.siZhu.day), kong = new Set(res.liuren.xunKong), riGan = pan.siZhu.day[0];
+    const R = String(res.quYong.R || ''), Y = String(res.quYong.Y || '');
+    const r5 = res.rules.find(x => x.rule === 5), dirs = new Set(((r5 && r5.secondGongs) || []).map(String));
+    const chuanAt = {}; sc.chuan.forEach((z, i) => { (chuanAt[z] = chuanAt[z] || []).push('初中末'[i] + '传'); });
+    const keUp = new Set(sc.ke.map(k => k.shang));
+    let html = `<div class="panel" id="jiuGongXiangJie"><h3>九宫详解 <span class="muted" style="font-weight:normal;">点盘上任一宫可跳到这里</span></h3><div class="gong-details">`;
+    for (let i = 1; i <= 9; i++) {
+      const g = String(i), d = ja[i] || {};
+      const roles = (g === R ? '<span class="cr-role me">我</span>' : '') + (g === Y ? '<span class="cr-role shi">事</span>' : '') + (dirs.has(g) ? '<span class="cr-role dir">向</span>' : '');
+      html += `<div class="xj-gong" id="xj-g${i}"><div><b>${roles}${i}-${esc(d.gongName || GONG_LABEL(i))}</b> <span class="muted">${esc(d.direction || '')}</span> · ${esc(d.jiXiongText || '')}`
+        + `${d.isYongShen ? ' <b style="color:#3c763d;">【用神·' + esc(d.yongShenName) + '】</b>' : ''}${d.keYing ? '[' + esc(d.keYing.name) + ']' : ''}${d.menPo ? ' [门迫]' : ''}${d.kongWang ? ' [空亡]' : ''}${d.yiMa ? ' [驿马]' : ''}`
+        + `<br><span class="muted">${esc(d.explain || '')}</span></div>`;
+      for (const di of (TDP.GONG_ZHI[i] || [])) {
+        const t = ln.tianOver(di), j = ln.jiangOf(t), x = XY.read(j, t, riGan);
+        const marks = [...(chuanAt[t] || []), keUp.has(t) ? '入课' : '', kong.has(t) ? '六壬旬空' : ''].filter(Boolean);
+        html += `<div class="xj-lr"><span class="muted">六壬·${di}位</span> 上${t}·<span class="${TDP.JI_JIANG.has(j) ? 'ji' : 'xiong'}">${j}</span>·${dun[t] || '○'}`
+          + `（${x.liuQin}）${marks.length ? ' <span class="xj-mark">' + marks.join('·') + '</span>' : ''}：${esc(x.text)}${x.fromBase ? '<span class="muted">（书未载此组合，取本义）</span>' : ''}</div>`;
+      }
+      if (!(TDP.GONG_ZHI[i] || []).length) html += `<div class="xj-lr muted">六壬·中五无支</div>`;
+      html += `</div>`;
+    }
+    return html + `</div><p class="muted" style="margin:6px 0 0;">奇门一行为引擎解断（同 Qimen-pwa）。六壬一行：本宫地盘支上所加天盘支·天将·遁干，括号内为该支对日干的六亲；
+      象义取 ${esc(XY.SOURCE)}，书中原则「以十二神与六亲的结合为准」。我＝我宫，事＝事宫，向＝规则 5 第二方位。</p></div>`;
   }
 
   /** 四课三传（版式同六壬书：四课右起第一课，上行天将、中行上神、下行下神） */
@@ -258,6 +313,8 @@
       </div></div>`;
 
     html += sanChuanPanel(pan, res);
+    html += qimenAnalysisPanels(pan);
+    html += jiuGongPanel(pan, res);
 
     html += `<div class="panel"><h3>穿壬规则 <span class="exp-badge">未检验</span></h3>
       <table class="rule-table"><thead><tr><th>规则</th><th>票</th><th>依据</th></tr></thead><tbody>`;
@@ -266,7 +323,7 @@
     }
     html += `</tbody></table>
       <p class="muted" style="margin:6px 0 0;">自创实验流派（appliesTo: ${esc(res.appliesTo)}）。+1／−1 只是关系分值，不等于吉或成功；
-      各规则分开计票、不相加，冲突原样保留。规则 3、4 需要三传，待《大六壬探原》原文。</p></div>`;
+      各规则分开计票、不相加，冲突原样保留。规则 3、4 依第二层三传（涉害取深浅法）。</p></div>`;
     $('chuanren').innerHTML = html;
   }
 
@@ -290,8 +347,8 @@
     const ui = $('inDomain').value || '综合';
     const nianMing = $('inNianMing').value;
     const opts = school === 'feipan'
-      ? { method: '时家', purpose: '综合' }
-      : { type: '四柱', method: '时家', purpose: '综合', location: '默认位置' };
+      ? { method: '时家', purpose: ui }
+      : { type: '四柱', method: '时家', purpose: ui, location: '默认位置' };   // 同 Qimen-pwa：引擎按占类取用神
     if (juShu) opts.juShu = juShu;
     const pan = school === 'feipan' ? QM.feipanQimen.calculate(date, opts) : QM.qimen.calculate(date, opts);
     if (pan.error) { $('chuanren').innerHTML = `<div class="panel">排盘出错：${esc(pan.message)}</div>`; return; }
@@ -308,7 +365,6 @@
     }
     try {
       const res = RULES.evaluate({ chart: pan, wangshuai: WS.analyze(pan), domain: domainKeyOf(ui), date, feipan, nianMing });
-      res.sanChuan = SC.compute({ riGan: pan.siZhu.day[0], riZhi: pan.siZhu.day[1], yueJiang: res.yueJiang.yueJiang, shiZhi: pan.siZhu.time[1] });
       renderBoard(pan, res);
       renderChuanRen(pan, res);
       window._chuanren = res;

@@ -46,7 +46,9 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(d.querySelectorAll('.cr-board .cr-center .gong').length === 9, label + '：合盘中间不是九宫');
     assert(d.querySelectorAll('.cr-ob.ob-gui').length === 1, label + '：贵人不是正好一格');
     const rows = d.querySelectorAll('.rule-table tbody tr');
-    assert(rows.length === 4, label + '：规则表不是四行');
+    assert(rows.length === 6, label + '：规则表不是六行');
+    assert(d.querySelectorAll('.xj-gong').length === 9 && d.querySelectorAll('.xj-lr').length === 13, label + '：九宫详解应九宫、十二支加中五一行');
+    assert(/格局/.test(d.getElementById('chuanren').textContent), label + '：缺格局');
     assert(/月将/.test(d.getElementById('chuanren').textContent), label + '：缺月将');
     assert(d.querySelectorAll('.chuan-table tr').length === 3 && d.querySelectorAll('.ke-table .ke-up').length === 4, label + '：缺四课三传');
     console.log(`✓ ${label}：${[...rows].map((r) => r.children[0].textContent.trim() + ' ' + r.children[1].textContent.trim()).join(' ｜ ')}`);
@@ -78,7 +80,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     const name = sch === 'feipan' ? '飞盘' : '转盘';
     const other = sch === 'feipan' ? '转盘奇门·解断方法纲要' : '飞盘奇门·解断方法纲要';
     assert(m.system.includes('解断方法纲要') && !m.system.includes(other), name + '：纲要串派或缺失');
-    assert(m.user.includes('【穿壬·六壬层】') && m.user.includes('规则1') && m.user.includes('规则6'), name + '：缺穿壬段');
+    assert(m.user.includes('【穿壬·六壬层】') && m.user.includes('规则1') && m.user.includes('规则3') && m.user.includes('规则4') && m.user.includes('规则6'), name + '：缺穿壬段');
     assert(m.user.includes('【旺衰与四害'), name + '：缺旺衰块');
     assert(/三传（.+）：初传/.test(m.user) && m.user.includes('四课：第一课'), name + '：提示词缺四课三传');
     assert(m.category === '求财', name + '：占类应为求财，实为 ' + m.category);
