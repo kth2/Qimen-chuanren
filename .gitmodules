@@ -1,0 +1,3 @@
+[submodule "vendor/qimen-pwa"]
+	path = vendor/qimen-pwa
+	url = https://github.com/kth2/Qimen-pwa
