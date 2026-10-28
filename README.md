@@ -4,7 +4,7 @@
 
 这是自创的实验流派。每条融合规则都要先在案例本上影子追踪、证明有效，才可写进纲要。
 
-- 规格：[奇门穿壬 v1 · 冻结规格](https://claude.ai/artifact/QXZoZZ2tCdDzprmidLBQB6)
+- 规格：[奇门穿壬 v1 · 冻结规格](https://claude.ai/artifact/QXZoZZ2tCdDzprmidLBQB6)（规则 1–6）；[v2 规格](docs/SPEC-v2.md)（规则 7–10）
 - 奇门部分：[kth2/Qimen-pwa](https://github.com/kth2/Qimen-pwa)（本仓库不复制、不改动它）
 - 六壬基准：袁树珊《大六壬探原》卷上推演篇
 - PWA：<https://kth2.github.io/Qimen-chuanren/>
@@ -22,6 +22,9 @@
 | 九宫详解 | 每宫奇门一行（引擎解断，同 Qimen-pwa）＋六壬一行（天盘支、天将、遁干、六亲，天将×六亲象义据伍剑虹书 p84–85）；点盘上宫格可跳到该宫 | 已完成 |
 | 第二层 | 四课、九宗门三传 | 已完成：取法据伍剑虹《大六壬精义讲解》，涉害取深浅法；王雷之《实占百例》62 例、伍剑虹书 19 例逐例一致（伍书一例自相矛盾，见注） |
 | 规则 3、4 | 末传落宫、空亡互检 | 2026-10-28 启用，未检验 |
+| 规则 7–10（v2） | 应期融合·穿壬、类神入传、贵人互参、我彼双读；奇门、六壬两边同向才投票 | 2026-10-28 启用（不冻结），未检验；规则 7 启用前探索见 v2 规格 |
+| 占类 | 同奇门 app：下拉同一份清单，默认「跟随问句自动判定」（引擎 classifyQuestion），显式选择优先，实时显示判定结果与本盘别不支持的占类 | 已完成 |
+| 书中同课案例 | 王雷之 102 课、伍剑虹 33 例，按全同／同课／同三传列于盘下，可分类浏览、搜索 | 已完成 |
 | PWA | 合盘：奇门九宫照 Qimen-pwa 渲染居中，外圈十二支按地盘方位排天盘支、天将、遁干（版式参照热卜）；可切「只看奇门」；可离线、可装到主屏 | 已完成 |
 | AI 解读 | 用 Qimen-pwa 的 llm.js、各派纲要、旺衰、应期、五行推理，加「穿壬·六壬层」一段作旁证；设置与 Qimen-pwa 同源共用 | 已完成；Qimen-pwa 的结构化证据包尚未接入 |
 
@@ -36,7 +39,8 @@ core/liuren/sanchuan.js    第二层：四课与三传（九宗门）
 core/liuren/xiangyi.js     十二天将 × 六亲象义
 core/casebook.js           案例记录与准确率计分（纯函数）
 web/cases.js               案例本界面（存取用 Qimen-pwa 的 CaseStore，另开库）
-core/rules.js              规则 1、2、5、6，入口 evaluate()
+core/rules.js              规则 1–10，入口 evaluate()
+docs/SPEC-v2.md            v2 规格（规则 7–10）
 knowledge/liuren-candidates.json  《实占百例》萃取的候选规则（不参与求值）
 web/                       PWA 页面、控制器（app.js）、AI 解读（ai.js）、manifest、service worker
 scripts/build.js           产出 dist/（打包 tyme4ts，从 submodule 取页面用到的文件）

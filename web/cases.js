@@ -10,7 +10,7 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => (s == null ? '' : String(s)).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const GONG = { 1: '坎一', 2: '坤二', 3: '震三', 4: '巽四', 5: '中五', 6: '乾六', 7: '兑七', 8: '艮八', 9: '离九' };
-  const RULE_NAME = { 1: '用神天将', 2: '五行推理·天盘支', 3: '末传落宫', 4: '空亡互检', 6: '命干' };
+  const RULE_NAME = { 1: '用神天将', 2: '五行推理·天盘支', 3: '末传落宫', 4: '空亡互检', 6: '命干', 8: '类神入传（对实况发生）', 9: '贵人互参', 10: '我彼双读' };
   const pct = (x) => (x == null ? '—' : (x * 100).toFixed(1) + '%');
 
   /** 独立的 IndexedDB 后端（照 CaseStore 的 KV 契约），库名与奇门 app 不同 */
@@ -96,7 +96,9 @@
 
   /* ---------- 列表 ---------- */
   function voteLine(c) {
-    return (c.votes || []).map((v) => `${v.rule}:${v.rule === 5 ? (v.applicable ? '向' + (v.secondGongs || []).join('') : '—') : !v.applicable ? '弃' : v.vote > 0 ? '+' : '−'}`).join(' ');
+    return (c.votes || []).map((v) => `${v.rule}:${v.rule === 5 ? (v.applicable ? '向' + (v.secondGongs || []).join('') : '—')
+      : v.rule === 7 ? (v.picks && v.picks.length ? '期' + v.picks.join('') : '—')
+      : v.verdict === '混' ? '混' : !v.applicable ? '弃' : v.vote > 0 ? '+' : '−'}`).join(' ');
   }
   function caseCard(c) {
     const f = c.feedback, o = CB.outcome(c);
@@ -109,19 +111,21 @@
   }
 
   function statsHtml() {
-    const s = CB.stats(cache), st = s.stage;
+    const s = CB.stats(cache, { rulesVersion: window.ChuanRenRules && window.ChuanRenRules.VERSION }), st = s.stage;
     const nextTxt = st.next ? `离${st.next.label}：还差 ${Math.max(0, st.next.n - s.yesno)} 题（且如愿、不如愿各 ≥${st.next.each}，现 ${s.pos}／${s.neg}）` : '两次评估都已到';
     let h = `<p>已归档 ${s.archived} 条（去重后），其中可计分的是非题 ${s.yesno} 题：如愿 ${s.pos}、不如愿 ${s.neg}。<br>${nextTxt}。</p>`;
     h += `<table class="rule-table"><thead><tr><th>判断</th><th>计分题数</th><th>平衡准确率</th><th>准确率</th><th>判定</th></tr></thead><tbody>`;
     h += `<tr><td>AI 结论（奇门为主，基准）</td><td>${s.ai.n}</td><td>${pct(s.ai.balanced)}</td><td>${pct(s.ai.acc)}</td><td class="muted">—</td></tr>`;
     h += `<tr><td>五行推理 v1</td><td>${s.wuxing.n}</td><td>${pct(s.wuxing.balanced)}</td><td>${pct(s.wuxing.acc)}</td><td class="muted">参照</td></tr>`;
-    for (const k of [1, 2, 3, 4, 6]) {
+    for (const k of [1, 2, 3, 4, 6, 8, 9, 10]) {
       const r = s.rules[k];
       h += `<tr><td>规则 ${k} ${RULE_NAME[k]}</td><td>${r.n}</td><td>${pct(r.balanced)}</td><td>${pct(r.acc)}</td><td>${r.verdict ? `<b>${r.verdict}</b>` : '<span class="muted">未到评估点</span>'}</td></tr>`;
     }
     h += `</tbody></table>`;
     h += `<p style="margin-top:8px;">规则 5 方位（只计第二方位与奇门方位不同的方位题）：${s.rule5.n} 题，第二方位命中 ${s.rule5.second}，奇门方位命中 ${s.rule5.qimen}。<br>
-      规则 4 应期候选（末传支日）：${s.rule4YingQi.n} 题有实际应期，命中 ${s.rule4YingQi.hit}。</p>`;
+      规则 4 应期候选（末传支日）：${s.rule4YingQi.n} 题有实际应期，命中 ${s.rule4YingQi.hit}。<br>
+      规则 7 应期融合·穿壬：${s.rule7.n} 题有实际应期，命中 ${s.rule7.hit}（瞎猜期望 ${s.rule7.expect}）。</p>
+      <p class="muted">规则账本按版本分开：只计本版（v${esc(String((window.ChuanRenRules || {}).VERSION || '').split('.')[0])}）录入的案例；AI 与五行 v1 全计。</p>`;
     h += `<p class="muted">口径照冻结规格：平衡准确率＝如愿题判对率与不如愿题判对率的平均，瞎猜为 50%；弃权不计。
       判定只在到达评估点时给出：比 AI 结论高 5 个百分点以上且本身 ≥55% 为通过；低于 AI 结论为停止；其余第一次评估继续、第二次停止。</p>`;
     return h;

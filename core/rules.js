@@ -1,7 +1,12 @@
 /**
- * 奇门穿壬 v1 · 规则 1–6（规则 1、2、5、6 只用第一层；规则 3、4 用第二层三传）
- *
- * 规格：《奇门穿壬 v1 · 冻结规格》「取用」「六条规则」两节。
+ * 奇门穿壬 v2 · 规则 1–10
+ *   规则 1–6：照《奇门穿壬 v1 · 冻结规格》「取用」「六条规则」两节，原样不动。
+ *   规则 7–10：v2 新增（docs/SPEC-v2.md；2026-10-28 kt 决定不冻结、直接启用），
+ *     每条都是「奇门一侧 × 六壬一侧」两边各自定性，两边同向才投票，相反记「混」不投票。
+ *     · 规则 7  应期融合·穿壬：奇门应期融合法 v1 的取支 ＋ 六壬末传合、初传合、三传旬空填实，等权计票
+ *     · 规则 8  类神入传：六壬类神是否入三传（伍剑虹「三传不出现则事未形成」）× 奇门用神宫空亡／入墓／击刑
+ *     · 规则 9  贵人互参：六壬贵人空亡或坐狱（临辰戌）× 奇门值符宫受制
+ *     · 规则 10 我彼双读：六壬干上神与支上神的合生／刑冲克 × 奇门我宫与时干宫的生克
  * 纪律：
  *   · 规则 1、2、5、6 不读三传；三传只供规则 3、4（2026-10-28 kt 决定启用，涉害取深浅法）。
  *   · 「我」「事」一律取自 Qimen-pwa 五行推理 v1 的取用（转盘：日干宫／占类用神宫；
@@ -11,14 +16,15 @@
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('../vendor/qimen-pwa/core/wuxing.js'), require('./liuren/tiandipan.js'), require('./liuren/yuejiang.js'), require('./liuren/sanchuan.js'));
+    module.exports = factory(require('../vendor/qimen-pwa/core/wuxing.js'), require('./liuren/tiandipan.js'), require('./liuren/yuejiang.js'),
+      require('./liuren/sanchuan.js'), require('../vendor/qimen-pwa/core/yingqi.js'), require('./liuren/xiangyi.js'));
   } else {
-    root.ChuanRenRules = factory(root.WuXing, root.LiurenTianDiPan, root.LiurenYueJiang, root.LiurenSanChuan);
+    root.ChuanRenRules = factory(root.WuXing, root.LiurenTianDiPan, root.LiurenYueJiang, root.LiurenSanChuan, root.YingQi, root.LiurenXiangYi);
   }
-})(typeof self !== 'undefined' ? self : this, function (WuXing, TianDiPan, YueJiang, SanChuan) {
+})(typeof self !== 'undefined' ? self : this, function (WuXing, TianDiPan, YueJiang, SanChuan, YingQi, XiangYi) {
 'use strict';
 
-const VERSION = '1.0.0-dev';
+const VERSION = '2.0.0';
 const APPLIES_TO = 'chuanren-exp';
 
 const ZHI_WX = { 子: '水', 亥: '水', 寅: '木', 卯: '木', 巳: '火', 午: '火', 申: '金', 酉: '金', 辰: '土', 戌: '土', 丑: '土', 未: '土' };
@@ -99,6 +105,46 @@ function gongTianWx(ln, gong) {
   if (!rs.length) return { wx: null, zhi: [] };
   const wxs = [...new Set(rs.map((r) => ZHI_WX[r.tian]))];
   return { wx: wxs.length === 1 ? wxs[0] : null, zhi: rs.map((r) => r.tian) };
+}
+
+// ── v2（规则 7–10）用的小表 ──
+const ZHI_ORDER = '子丑寅卯辰巳午未申酉戌亥'.split('');
+const LIU_HE = { 子: '丑', 丑: '子', 寅: '亥', 亥: '寅', 卯: '戌', 戌: '卯', 辰: '酉', 酉: '辰', 巳: '申', 申: '巳', 午: '未', 未: '午' };
+const CHONG = { 子: '午', 午: '子', 丑: '未', 未: '丑', 寅: '申', 申: '寅', 卯: '酉', 酉: '卯', 辰: '戌', 戌: '辰', 巳: '亥', 亥: '巳' };
+const XING_PAIRS = ['寅巳', '巳申', '申寅', '丑戌', '戌未', '未丑', '子卯', '卯子', '辰辰', '午午', '酉酉', '亥亥'];
+const isXing = (a, b) => XING_PAIRS.includes(a + b) || XING_PAIRS.includes(b + a);
+/** 规则 8 的类神：按占类，取六亲与天将（王雷之、伍剑虹两书各章所用） */
+const LEISHEN = {
+  wealth: { qin: ['财'], jiang: ['青龙'], note: '财爻、青龙' },
+  stock: { qin: ['财'], jiang: ['青龙'], note: '财爻、青龙' },
+  career: { qin: ['官', '鬼'], jiang: [], note: '官鬼' },
+  study: { qin: ['父母'], jiang: ['朱雀'], note: '印（父母）、朱雀' },
+  relationship: { qin: [], jiang: ['六合', '天后', '青龙'], note: '六合、天后、青龙' },
+  traveler: { qin: [], jiang: ['六合'], note: '六合' },
+  find_person: { qin: [], jiang: ['六合'], note: '六合' },
+  pregnancy: { qin: ['子孙'], jiang: ['六合'], note: '子孙、六合' },
+};
+/** 规则 9 只用于求人办事的占类 */
+const GUI_DOMAINS = ['career', 'study', 'lawsuit', 'wealth'];
+/** 奇门一宫受制：空亡、入墓、击刑、门迫任一 */
+function gongHurt(ws, g) {
+  const w = (ws && ws.gongs && ws.gongs[g]) || {};
+  const why = [];
+  if (w.kongWang) why.push('空亡'); if (w.ruMu) why.push('入墓'); if (w.jiXing) why.push('击刑'); if (w.menPo) why.push('门迫');
+  return { hurt: why.length > 0, why, state: w.gongState || '' };
+}
+function findGong(m, v) { for (const k in (m || {})) if (m[k] === v) return String(k); return ''; }
+/** 时干落宫（转盘）：甲时取值符宫，余照天盘、再地盘找——与 Qimen-pwa 五行推理 v1 同一取法 */
+function shiGanGongZ(ch) {
+  const t = String((ch.siZhu || {}).time || ''), g = t.charAt(0);
+  if (g === '甲') return ch.zhiFuGong != null ? String(ch.zhiFuGong) : '';
+  return findGong(ch.tianPan, g) || findGong(ch.diPan, g);
+}
+/** 两边同向才投票：同为 +1 → +1，同为 −1 → −1；一正一负 → 混；有一边为 0 → 弃权 */
+function agree(qm, lr) {
+  if (qm && lr && qm === lr) return { applicable: true, vote: qm, verdict: qm > 0 ? '两边同吉' : '两边同凶' };
+  if (qm && lr) return { applicable: false, vote: 0, verdict: '混', reason: '奇门与六壬相反，记「混」不投票' };
+  return { applicable: false, vote: 0, verdict: '', reason: '有一边不定，弃权' };
 }
 
 const abstain = (rule, reason, extra) => Object.assign({ rule, applicable: false, vote: 0, reason }, extra || {});
@@ -198,6 +244,91 @@ function evaluate(a) {
     }
   }
 
+
+  // ════════ v2：规则 7–10 ════════
+  const riZhi = String(sz.day || '').charAt(1);
+  const ws = a.wangshuai;
+
+  // 规则 7：应期融合·穿壬（不投是非票，出应期日支）
+  {
+    const parts = {};
+    const qf = school === 'zhuanpan' && YingQi && YingQi.fusionV1 ? YingQi.fusionV1(ch, a.domain || '') : null;
+    if (qf && qf.picks.length) parts['奇门融合法v1'] = qf.picks.slice();
+    parts['末传合'] = [LIU_HE[sc.chuan[2]]];
+    parts['初传合'] = [LIU_HE[sc.chuan[0]]];
+    const kongIn = [...new Set(sc.chuan.filter((z) => xk.includes(z)))];
+    if (kongIn.length) parts['三传旬空填实'] = kongIn;
+    const votes = {};
+    for (const k in parts) for (const z of new Set(parts[k])) votes[z] = (votes[z] || 0) + 1;
+    const max = Math.max(0, ...Object.values(votes));
+    const picks = ZHI_ORDER.filter((z) => max > 0 && votes[z] === max);
+    const lrSet = new Set([].concat(parts['末传合'], parts['初传合'], parts['三传旬空填实'] || []));
+    const overlap = qf ? qf.picks.filter((z) => lrSet.has(z)) : [];
+    rules.push({ rule: 7, applicable: true, vote: 0, picks, maxVotes: max, votes, parts, overlap,
+      qimenPicks: qf ? qf.picks : null,
+      reason: qf ? '' : '飞盘无奇门应期融合法（只在转盘检验过），只用六壬三法' });
+  }
+
+  // 规则 8：类神入传（判「事是否成形／发生」，计分对「发生」而非「如愿」）
+  {
+    const L = LEISHEN[a.domain];
+    if (!L) rules.push(abstain(8, '本占类未定类神（只用于求财、股市、事业、学业、婚姻、行人、寻人、怀孕）'));
+    else if (!Y) rules.push(abstain(8, '事宫未定'));
+    else {
+      const isLei = (z) => L.qin.includes(XiangYi.liuQin(riGan, z)) || L.jiang.includes(ln.jiangOf(z));
+      const inChuan = sc.chuan.filter(isLei), inKe = sc.ke.map((k) => k.shang).filter(isLei);
+      let lr, lrWhy;
+      if (inChuan.some((z) => !xk.includes(z))) { lr = 1; lrWhy = '类神入传且不空，事已成形'; }
+      else if (inChuan.length) { lr = -1; lrWhy = '类神入传而落旬空，虚而不实'; }
+      else if (inKe.length) { lr = 0; lrWhy = '类神只在四课未入传，事在酝酿'; }
+      else { lr = -1; lrWhy = '类神不入课传，事未形成'; }
+      const h = gongHurt(ws, Y);
+      let qm, qmWhy;
+      if (h.hurt) { qm = -1; qmWhy = '用神宫' + h.why.join('、'); }
+      else if (h.state === '旺' || h.state === '相') { qm = 1; qmWhy = '用神宫' + h.state + '而无空墓刑迫'; }
+      else { qm = 0; qmWhy = '用神宫' + (h.state || '旺衰未明') + '，不定'; }
+      const ag = agree(qm, lr);
+      rules.push(Object.assign({ rule: 8, target: 'happened', leiShen: L.note, inChuan, inKe, lr, lrWhy, qm, qmWhy, Y }, ag));
+    }
+  }
+
+  // 规则 9：贵人互参
+  {
+    if (!GUI_DOMAINS.includes(a.domain)) rules.push(abstain(9, '只用于事业、学业、官司、求财'));
+    else {
+      const guiKong = xk.includes(ln.guiRen), guiYu = ln.guiRenOverDi === '辰' || ln.guiRenOverDi === '戌';
+      const lr = guiKong || guiYu ? -1 : 1;
+      const lrWhy = guiKong || guiYu ? '贵人' + [guiKong ? '空亡' : '', guiYu ? '坐狱（临' + ln.guiRenOverDi + '）' : ''].filter(Boolean).join('、') : '贵人不空不坐狱';
+      const zf = String(ch.zhiFuLuoGong || ch.zhiFuGong || '');
+      const h = zf ? gongHurt(ws, zf) : { hurt: false, why: [] };
+      const qm = !zf ? 0 : h.hurt ? -1 : 1;
+      const qmWhy = !zf ? '值符宫未定' : h.hurt ? '值符宫' + h.why.join('、') : '值符宫无空墓刑迫';
+      rules.push(Object.assign({ rule: 9, guiRen: ln.guiRen, guiRenOverDi: ln.guiRenOverDi, lr, lrWhy, qm, qmWhy, zhiFuGong: zf }, agree(qm, lr)));
+    }
+  }
+
+  // 规则 10：我彼双读
+  {
+    const gs = sc.ke[0].shang, zs = sc.ke[2].shang;
+    const he = LIU_HE[gs] === zs, bi = ZHI_WX[gs] === ZHI_WX[zs];
+    const sheng = SHENG[ZHI_WX[gs]] === ZHI_WX[zs] || SHENG[ZHI_WX[zs]] === ZHI_WX[gs];
+    const chong = CHONG[gs] === zs, xing = isXing(gs, zs);
+    const keR = KE[ZHI_WX[gs]] === ZHI_WX[zs] || KE[ZHI_WX[zs]] === ZHI_WX[gs];
+    const good = [he && '六合', sheng && '相生', bi && '比和'].filter(Boolean);
+    const bad = [chong && '六冲', xing && '相刑', keR && '相克'].filter(Boolean);
+    const lr = good.length && !bad.length ? 1 : bad.length && !good.length ? -1 : 0;
+    const lrWhy = `干上${gs}、支上${zs}：${[...good, ...bad].join('、') || '无关'}${lr === 0 && good.length ? '（吉中带凶，不定）' : ''}`;
+    const S = school === 'feipan' ? String((a.feipan || {}).shiGanGong || '') : shiGanGongZ(ch);
+    let qm = 0, qmWhy = '我宫或时干宫未定';
+    if (R && S) {
+      const r = GONG_WX[R], t = GONG_WX[S];
+      if (R === S || r === t) { qm = 1; qmWhy = '我宫与时干宫同宫或比和'; }
+      else if (SHENG[r] === t || SHENG[t] === r) { qm = 1; qmWhy = '我宫与时干宫相生'; }
+      else { qm = -1; qmWhy = '我宫与时干宫相克'; }
+    }
+    rules.push(Object.assign({ rule: 10, ganShang: gs, zhiShang: zs, lr, lrWhy, qm, qmWhy, R, S }, agree(qm, lr)));
+  }
+
   return {
     version: VERSION, appliesTo: APPLIES_TO, school,
     yueJiang: yj,
@@ -210,5 +341,5 @@ function evaluate(a) {
   };
 }
 
-return { VERSION, APPLIES_TO, evaluate, wuxingScore, relationVote, ZHI_WX };
+return { VERSION, APPLIES_TO, evaluate, wuxingScore, relationVote, ZHI_WX, LEISHEN, GUI_DOMAINS };
 });

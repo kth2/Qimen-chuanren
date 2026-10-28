@@ -46,7 +46,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(d.querySelectorAll('.cr-board .cr-center .gong').length === 9, label + '：合盘中间不是九宫');
     assert(d.querySelectorAll('.cr-ob.ob-gui').length === 1, label + '：贵人不是正好一格');
     const rows = d.querySelectorAll('.rule-table tbody tr');
-    assert(rows.length === 6, label + '：规则表不是六行');
+    assert(rows.length === 10, label + '：规则表不是十行');
     assert(d.querySelectorAll('.xj-gong').length === 9 && d.querySelectorAll('.xj-lr').length === 13, label + '：九宫详解应九宫、十二支加中五一行');
     assert(/格局/.test(d.getElementById('chuanren').textContent), label + '：缺格局');
     assert(/月将/.test(d.getElementById('chuanren').textContent), label + '：缺月将');
@@ -56,6 +56,18 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
 
   d.getElementById('inDate').value = '2026-10-28';
   d.getElementById('inTime').value = '15:30';
+  // 占类自动判定：留「跟随问句自动判定」，问句含「考试」→ 学业（引擎功名）；显式选择优先
+  d.getElementById('inDate').value = '2026-10-28';
+  d.getElementById('inTime').value = '15:30';
+  d.getElementById('inDomain').value = '';
+  d.getElementById('aiQuestion').value = '这次考试能考上吗？';
+  d.getElementById('castBtn').click();
+  assert(/「学业」/.test(d.getElementById('domainTag').textContent) && /自动判定/.test(d.getElementById('domainTag').textContent), '自动判定占类不对：' + d.getElementById('domainTag').textContent);
+  assert(w._chuanrenCtx.ui === '学业' && w._chuanrenCtx.domainSource === 'auto', '自动占类未用于排盘');
+  d.getElementById('aiQuestion').value = '';
+  d.getElementById('castBtn').click();
+  assert(/综合/.test(d.getElementById('domainTag').textContent), '无问句应暂按综合');
+  console.log('✓ 占类自动判定：' + '学业／空问句综合');
   d.getElementById('inDomain').value = '财运';
   d.getElementById('inNianMing').value = '庚午';
   d.getElementById('castBtn').click();
@@ -98,7 +110,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     const name = sch === 'feipan' ? '飞盘' : '转盘';
     const other = sch === 'feipan' ? '转盘奇门·解断方法纲要' : '飞盘奇门·解断方法纲要';
     assert(m.system.includes('解断方法纲要') && !m.system.includes(other), name + '：纲要串派或缺失');
-    assert(m.user.includes('【穿壬·六壬层】') && m.user.includes('规则1') && m.user.includes('规则3') && m.user.includes('规则4') && m.user.includes('规则6'), name + '：缺穿壬段');
+    assert(m.user.includes('【穿壬·六壬层】') && m.user.includes('规则1') && m.user.includes('规则3') && m.user.includes('规则4') && m.user.includes('规则6') && m.user.includes('规则7') && m.user.includes('规则10'), name + '：缺穿壬段');
     assert(m.user.includes('【旺衰与四害'), name + '：缺旺衰块');
     assert(/三传（.+）：初传/.test(m.user) && m.user.includes('四课：第一课'), name + '：提示词缺四课三传');
     assert(m.category === '求财', name + '：占类应为求财，实为 ' + m.category);

@@ -39,15 +39,15 @@ test('移植的五行打分与上游 WuXing.score() 逐盘逐宫一致（宫五�
   assert.ok(n > 10000, '比对数量 ' + n);
 });
 
-test('规则 1–6 在真实转盘上都给出合法输出', () => {
+test('规则 1–10 在真实转盘上都给出合法输出', () => {
   const iso = '2026-10-28T15:30:00+08:00';
   const ch = zhuan(iso);
   const r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: 'wealth', date: new Date(iso), nianMing: '戊辰' });
   assert.equal(r.appliesTo, 'chuanren-exp');
   assert.equal(r.yueJiang.yueJiang, '卯');         // 霜降后卯将
   assert.equal(r.yueJiang.status, '待核');
-  assert.deepEqual(r.rules.map((x) => x.rule), [1, 2, 3, 4, 5, 6]);
-  for (const x of r.rules.filter((x) => x.rule !== 5)) assert.ok([-1, 0, 1].includes(x.vote), JSON.stringify(x));
+  assert.deepEqual(r.rules.map((x) => x.rule), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  for (const x of r.rules.filter((x) => x.rule !== 5 && x.rule !== 7)) assert.ok([-1, 0, 1].includes(x.vote), JSON.stringify(x));
   const r5 = r.rules.find((x) => x.rule === 5);           // 规则 5 只出方位，不投票
   assert.ok(r5.secondGongs.length >= 1 && r5.secondGongs.length <= 2);
   assert.equal(r.quYong.Y, String(Object.keys(ch.baMen).find((g) => ch.baMen[g] === '生门'))); // 求财取生门宫
@@ -74,13 +74,14 @@ test('规则 6：本命上神对事宫天盘支查生克计票表，并记原始
 });
 
 test('批量：各规则票值只取 −1/0/+1，弃权必附理由', () => {
-  const tally = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+  const tally = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0 };
   for (const iso of sampleDates(200)) {
     const ch = zhuan(iso);
     const r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: 'career', date: new Date(iso), nianMing: '庚午' });
     for (const x of r.rules) {
       if (x.applicable) tally[x.rule]++;
       else assert.ok(x.reason, JSON.stringify(x));
+      assert.ok([-1, 0, 1].includes(x.vote || 0), JSON.stringify(x));
     }
   }
   for (const k in tally) assert.ok(tally[k] > 0, '规则 ' + k + ' 从未适用');
@@ -88,7 +89,7 @@ test('批量：各规则票值只取 −1/0/+1，弃权必附理由', () => {
 
 test('规则 1、2、5、6 不读三传：结果与三传无关', () => {
   const src = fs.readFileSync(path.join(__dirname, '../core/rules.js'), 'utf8');
-  const i1 = src.indexOf('// 规则 1：'), i3 = src.indexOf('// 第二层：四课三传'), i5 = src.indexOf('// 规则 5：'), iEnd = src.indexOf('  return {\n    version');
+  const i1 = src.indexOf('// 规则 1：'), i3 = src.indexOf('// 第二层：四课三传'), i5 = src.indexOf('// 规则 5：'), iEnd = src.indexOf('// ════════ v2');
   for (const seg of [src.slice(i1, i3), src.slice(i5, iEnd)]) assert.doesNotMatch(seg, /\bsc\b|sanChuan|SanChuan|\bmo\b|moGong/);
 });
 
