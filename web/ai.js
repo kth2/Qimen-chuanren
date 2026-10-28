@@ -207,6 +207,8 @@
       _raw = head(m.category) + ((!streamed || !ans) ? (ans || '（无内容）') : ans);
       paint();
       $('aiStatus').textContent = '完成';
+      const u = (LLM.lastUsed && LLM.lastUsed()) || LLM.info();
+      window._lastAI = { ctx, answer: ans || '', model: `${u.provider}/${u.model}` };   // 供「存为案例」取用，只认同一张盘
     } catch (e) {
       $('aiStatus').textContent = '失败：' + e.message;
       console.error(e);

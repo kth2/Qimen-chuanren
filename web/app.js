@@ -369,7 +369,7 @@
       renderChuanRen(pan, res);
       window._chuanren = res;
       // 供 AI 解读（web/ai.js）取用：同一张盘、同一份穿壬结果，不重算
-      window._chuanrenCtx = { pan, res, school, date, ui, nianMing, engineCategory: engineCategoryOf(ui, school) };
+      window._chuanrenCtx = { pan, res, school, date, ui, nianMing, engineCategory: engineCategoryOf(ui, school), dateStr: `${$('inDate').value} ${$('inTime').value}` };
     } catch (e) {
       renderBoard(pan, null);
       $('chuanren').innerHTML = `<div class="panel">穿壬层计算出错：${esc(e.message)}</div>`;

@@ -94,6 +94,19 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   assert(/穿壬旁证/.test(d.getElementById('aiAnswer').textContent), 'AI 答案未显示');
   console.log('✓ AI 解读：假模型流式作答，答案已渲染');
 
+  // 案例本：存 → 回填归档 → 准确率
+  d.getElementById('caseSaveBtn').click();
+  for (let i = 0; i < 40 && !d.querySelector('.case-card'); i++) await sleep(50);
+  assert(/含 AI 解读/.test(d.getElementById('caseSaveTag').textContent), '存案例未带 AI 解读：' + d.getElementById('caseSaveTag').textContent);
+  const fb = d.querySelector('.case-card .fb');
+  fb.querySelector('input[value="hope"]').checked = true; fb.querySelector('input[value="yes"]').checked = true; fb.querySelector('input[value="wish"]').checked = true;
+  fb.querySelector('button[data-act="archive"]').click();
+  for (let i = 0; i < 40 && /待回填 1/.test(d.getElementById('caseCountTag').textContent); i++) await sleep(50);
+  assert(/共 1 条，待回填 0/.test(d.getElementById('caseCountTag').textContent), '归档失败：' + d.getElementById('caseCountTag').textContent);
+  d.querySelector('#caseTabSeg button[data-tab="stats"]').click();
+  assert(/可计分的是非题 1 题/.test(d.getElementById('caseBody').textContent) && /未到评估点/.test(d.getElementById('caseBody').textContent), '准确率页不对');
+  console.log('✓ 案例本：存（含 AI 解读）→ 回填归档 → 准确率页');
+
   d.querySelector('#viewSeg button[data-view="qimen"]').click();
   assert(!d.querySelector('.cr-board') && d.querySelectorAll('#chart .gong').length === 9, '只看奇门：应无外圈');
   console.log('✓ 只看奇门：外圈收起');

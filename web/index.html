@@ -131,6 +131,12 @@
     .xj-lr { margin-top: 2px; padding-left: 8px; border-left: 2px solid #e6e0d0; }
     .xj-mark { font-size: 11px; color: #6f5499; border: 1px solid #d6cdea; border-radius: 3px; padding: 0 3px; }
     .geju-list li, .suggestion-list li { margin: 3px 0; }
+    .case-card { border-bottom: 1px solid #eee; padding: 6px 0; font-size: 13px; }
+    .case-card > summary { cursor: pointer; }
+    .case-card .tag { font-size: 11px; border-radius: 3px; padding: 0 4px; margin-left: 4px; background: #eee; color: #666; }
+    .case-card .tag.ok { background: #e5f4e4; color: #3c763d; } .case-card .tag.bad { background: #fbebeb; color: #a94442; }
+    .case-ai { white-space: pre-wrap; background: #f7f7f7; border-radius: 6px; padding: 6px; max-height: 240px; overflow: auto; font-size: 12px; }
+    .fb { margin-top: 6px; display: grid; gap: 4px; } .fb label { margin-right: 8px; }
     .rule-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .rule-table th, .rule-table td { border-bottom: 1px solid #eee; padding: 5px 4px; text-align: left; vertical-align: top; }
     .rule-table th { color: #666; font-weight: 600; }
@@ -252,8 +258,25 @@
       <button class="btn" id="aiRawToggle" style="padding:2px 8px;font-size:12px;">查看原文</button>
     </div>
     <div id="aiAnswer"></div>
+    <div style="margin-top:8px;">
+      <button class="btn" id="caseSaveBtn">📝 存为案例（日后回填结果，记准确率）</button>
+      <span class="muted" id="caseSaveTag"></span>
+    </div>
     <p class="muted" style="margin:8px 0 0;">设置与 Qimen-pwa 共用（同一网站，同一份本机设置），key 只存在本机。
       奇门部分照 Qimen-pwa 的纲要与盘面数据；Qimen-pwa 的结构化证据包这里尚未接入。</p>
+  </div>
+
+  <div class="panel" id="casePanel">
+    <h3>案例本　<span class="muted" id="caseCountTag"></span></h3>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px;">
+      <span class="seg" id="caseTabSeg">
+        <button data-tab="open" class="on">待回填</button><button data-tab="done">已归档</button><button data-tab="stats">准确率</button>
+      </span>
+      <button class="btn" id="caseExportBtn" style="background:#666;padding:4px 12px;font-size:13px;">导出</button>
+      <label class="btn" style="background:#666;padding:4px 12px;font-size:13px;">导入<input type="file" id="caseImportInput" accept="application/json,.json" style="display:none;"></label>
+    </div>
+    <div id="caseBody"></div>
+    <p class="muted" style="margin:6px 0 0;">只存在这台设备的浏览器里，与奇门 app 的案例本分开；换设备或清浏览器数据前请先导出。</p>
   </div>
 
   <p class="muted" style="text-align:center;margin:16px 0;">
@@ -275,6 +298,9 @@
   <script src="core/rules.js"></script>
   <script src="app.js"></script>
   <script src="ai.js"></script>
+  <script src="vendor/qimen-pwa/core/casestore.js"></script>
+  <script src="core/casebook.js"></script>
+  <script src="cases.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('[sw] 注册失败：', e.message); });
