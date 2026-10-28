@@ -11,6 +11,8 @@
   const RULES = window.ChuanRenRules;
   const TDP = window.LiurenTianDiPan;
   const XY = window.LiurenXiangYi;
+  const CM = window.LiurenCaseMatch;
+  let BOOK = null;      // knowledge/liuren-cases.json：书中六壬案例（盘式照录＋摘要）
   const $ = (id) => document.getElementById(id);
   let school = 'zhuanpan';
   let DOMAINS = null;   // Qimen-pwa knowledge/domains.json：占类 → 五行推理占类键、飞盘引擎占类
@@ -299,6 +301,61 @@
       ${sc.flags.length ? `<p class="muted" style="margin:4px 0 0;color:#8a6d3b;">${sc.flags.map(esc).join('；')}</p>` : ''}</div>`;
   }
 
+
+  /* ---------- 书中同课案例 ---------- */
+  function bookCaseHtml(c, lv, open) {
+    const title = (BOOK && BOOK._books && BOOK._books[c.book]) || c.book;
+    const short = c.book === 'wang' ? '王雷之' : c.book === 'wu' ? '伍剑虹' : c.book;
+    const jiang = c.yueJiang ? `${c.yueJiang}将${c.yueJiangDerived ? '<span class="muted">(推)</span>' : ''}` : '';
+    const shi = c.shiZhi ? `${c.shiZhi}时` : '';
+    const chuan = c.chuanBook || c.chuanEngine;
+    const lvTag = lv ? `<span class="bk-lv ${lv.key}">${lv.label}</span>` : '';
+    const notes = [];
+    if (c.flags.includes('活动时')) notes.push('日柱与书记公历日不同，当为活动时（抽签取干支）');
+    if (c.flags.includes('书中三传与本 app 不同')) notes.push(`本 app 起得 ${c.chuanEngine}（${c.keTiEngine}）`);
+    if (c.bookNote) notes.push(c.bookNote);
+    return `<details class="bk-case"${open ? ' open' : ''}><summary>${lvTag}<b>${esc(c.q)}</b>
+        <span class="bk-meta">　${esc(short)} ${esc(c.id.replace(/^[^-]+-/, '例'))}·p${esc(c.page)}${c.cat ? '·' + esc(c.cat) : ''}</span></summary>
+      <div class="bk-meta">${esc(c.riZhu)}日 ${jiang}${shi}${c.zhouYe ? '（' + esc(c.zhouYe) + '）' : ''}　三传 ${esc(chuan)}${c.keTiBook ? '　' + esc(c.keTiBook) : ''}
+        ${c.date ? '　' + esc(c.date) : ''}${c.ganzhiNote ? '　' + esc(c.ganzhiNote) : ''}${c.src ? '　出自' + esc(c.src) : ''}</div>
+      ${c.read ? `<div><b>断</b> ${esc(c.read)}</div>` : ''}
+      ${c.out ? `<div><b>验</b> ${esc(c.out)}</div>` : ''}
+      ${notes.length ? `<div class="bk-flag">${notes.map(esc).join('；')}</div>` : ''}
+      <div class="muted">${esc(title)}（摘要，非原文）</div></details>`;
+  }
+
+  function renderBookMatches(pan, res) {
+    const box = $('bookCases');
+    if (!box) return;
+    if (!BOOK) { box.innerHTML = '<div class="panel"><h3>书中同课案例</h3><p class="muted">案例库载入中…</p></div>'; return; }
+    const cur = { riZhu: pan.siZhu.day, yueJiang: res.yueJiang.yueJiang, shiZhi: pan.siZhu.time[1], chuan: res.sanChuan && res.sanChuan.chuan };
+    const m = CM.match(BOOK.cases, cur);
+    let html = `<div class="panel"><h3>书中同课案例 <span class="exp-badge">${m.total ? m.total + ' 例' : '无'}</span></h3>`;
+    if (!m.total) {
+      html += `<p class="muted" style="margin:0;">两本书 ${BOOK.cases.length} 例中，没有与本课（${esc(cur.riZhu)}日 ${esc(cur.yueJiang)}将${esc(cur.shiZhi)}时，三传 ${esc((cur.chuan || []).join(''))}）同课或同三传的案例。</p>`;
+    }
+    for (const lv of CM.LEVELS) {
+      const list = m[lv.key];
+      if (!list.length) continue;
+      html += `<div class="muted" style="margin-top:6px;">${lv.label}：${esc(lv.note)}</div>`;
+      html += list.map(c => bookCaseHtml(c, lv, lv.key !== 'tongChuan')).join('');
+    }
+    html += `<details id="bkBrowse" style="margin-top:8px;"><summary>浏览全部书中案例（${BOOK.cases.length} 例）</summary>
+      <input id="bkSearch" class="bk-search" placeholder="搜问事、日柱、三传、课体…"><div id="bkAll"></div></details>
+      <p class="muted" style="margin:6px 0 0;">${Object.values(BOOK._books || {}).map(esc).join('、')}。盘式照书录入，问事、断法、应验是摘要，注明页码，请以原书为准。
+      同课＝日柱与天地盘相同，四课三传全同；同三传＝三传相同而日柱不同。</p></div>`;
+    box.innerHTML = html;
+    const all = $('bkAll'), q = $('bkSearch');
+    const draw = () => {
+      const k = (q.value || '').trim();
+      const hit = BOOK.cases.filter(c => !k || [c.q, c.read, c.out, c.riZhu, c.chuanBook, c.chuanEngine, c.keTiBook, c.cat, c.id].join(' ').includes(k));
+      const g = CM.byCategory(hit);
+      all.innerHTML = Object.keys(g).map(cat => `<div class="muted" style="margin-top:6px;">${esc(cat)}（${g[cat].length}）</div>` + g[cat].map(c => bookCaseHtml(c, null, false)).join('')).join('') || '<p class="muted">没有符合的案例。</p>';
+    };
+    q.addEventListener('input', draw);
+    $('bkBrowse').addEventListener('toggle', function once() { draw(); }, { once: true });
+  }
+
   function renderChuanRen(pan, res) {
     const R = String(res.quYong.R || ''), Y = String(res.quYong.Y || '');
     const yj = res.yueJiang, L = res.liuren;
@@ -313,6 +370,7 @@
       </div></div>`;
 
     html += sanChuanPanel(pan, res);
+    html += '<div id="bookCases"></div>';
     html += qimenAnalysisPanels(pan);
     html += jiuGongPanel(pan, res);
 
@@ -325,6 +383,7 @@
       <p class="muted" style="margin:6px 0 0;">自创实验流派（appliesTo: ${esc(res.appliesTo)}）。+1／−1 只是关系分值，不等于吉或成功；
       各规则分开计票、不相加，冲突原样保留。规则 3、4 依第二层三传（涉害取深浅法）。</p></div>`;
     $('chuanren').innerHTML = html;
+    renderBookMatches(pan, res);
   }
 
   function renderBasicInfo(pan) {
@@ -407,6 +466,9 @@
   ['inDomain', 'inNianMing'].forEach(id => $(id).addEventListener('change', cast));
 
   fillNianMing(); setNow();
+  fetch('knowledge/liuren-cases.json').then(r => r.json())
+    .then(d => { BOOK = d; const c = window._chuanrenCtx; if (c && c.res) renderBookMatches(c.pan, c.res); })
+    .catch(e => console.warn('[书中案例] 载入失败：', e.message));
   fetch('vendor/qimen-pwa/knowledge/domains.json').then(r => r.json())
     .then(d => { DOMAINS = d; })
     .catch(e => console.warn('[domains] 载入失败，占类一律按时干宫取：', e.message))

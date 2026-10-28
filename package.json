@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "build": "node scripts/build.js",
-    "smoke": "node scripts/smoke.js"
+    "smoke": "node scripts/smoke.js",
+    "gen:cases": "node scripts/gen-cases.js"
   },
   "engines": {
     "node": ">=20"

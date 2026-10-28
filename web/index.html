@@ -144,6 +144,14 @@
     .rule-table td:nth-child(2) { width: 2.5em; }
     .vote { font-weight: 700; white-space: nowrap; }
     .vote.p { color: #3c763d; } .vote.n { color: #a94442; } .vote.z { color: #888; }
+    .bk-case { border-top: 1px dashed #ddd; padding: 6px 0; font-size: 13px; line-height: 1.7; }
+    .bk-case:first-of-type { border-top: 0; }
+    .bk-case summary { color: #333; }
+    .bk-lv { display: inline-block; font-size: 11px; border-radius: 4px; padding: 0 5px; margin-right: 4px; color: #fff; background: #3c763d; }
+    .bk-lv.tongKe { background: #5b8c5a; } .bk-lv.tongChuan { background: #999; }
+    .bk-meta { color: #666; font-size: 12px; }
+    .bk-flag { color: #8a6d3b; font-size: 12px; }
+    .bk-search { width: 100%; box-sizing: border-box; padding: 6px 8px; margin: 6px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -295,6 +303,7 @@
   <script src="core/liuren/yuejiang.js"></script>
   <script src="core/liuren/sanchuan.js"></script>
   <script src="core/liuren/xiangyi.js"></script>
+  <script src="core/liuren/casematch.js"></script>
   <script src="core/rules.js"></script>
   <script src="app.js"></script>
   <script src="ai.js"></script>

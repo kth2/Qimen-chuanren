@@ -67,6 +67,24 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     console.log('✓ 四课三传：' + S.name + ' ' + shown); }
   assert(/卯/.test(d.getElementById('chuanren').textContent), '霜降后应为卯将');
 
+  // 书中同课案例：等案例库载入；2024-01-07 02:30 为庚午日丑将丑时，与伍剑虹书伍-10 全同
+  for (let i = 0; i < 60 && /载入中/.test(d.getElementById('bookCases').textContent); i++) await new Promise((r) => setTimeout(r, 50));
+  assert(/书中同课案例/.test(d.getElementById('bookCases').textContent), '缺书中同课案例面板');
+  d.getElementById('inDate').value = '2024-01-07';
+  d.getElementById('inTime').value = '02:30';
+  d.getElementById('castBtn').click();
+  { const bc = d.getElementById('bookCases');
+    assert(bc.querySelector('.bk-lv.quanTong') && /家中被盗/.test(bc.textContent), '庚午日丑将丑时应列出伍-10（全同）：' + d.getElementById('basicInfo').textContent + ' ｜ ' + bc.textContent.slice(0, 200));
+    d.getElementById('bkBrowse').open = true; d.getElementById('bkBrowse').dispatchEvent(new w.Event('toggle'));
+    const n = d.querySelectorAll('#bkAll .bk-case').length;
+    assert(n === JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '../knowledge/liuren-cases.json'), 'utf8')).cases.length, '浏览全部案例条数不对：' + n);
+    d.getElementById('bkSearch').value = '海湾'; d.getElementById('bkSearch').dispatchEvent(new w.Event('input'));
+    assert(d.querySelectorAll('#bkAll .bk-case').length === 1, '搜索「海湾」应得一例');
+    console.log(`✓ 书中同课案例：全同 ${bc.querySelectorAll('.bk-lv.quanTong').length}、同课 ${bc.querySelectorAll('.bk-lv.tongKe').length}、同三传 ${bc.querySelectorAll('.bk-lv.tongChuan').length}；浏览 ${n} 例`); }
+  d.getElementById('inDate').value = '2026-10-28';
+  d.getElementById('inTime').value = '15:30';
+  d.getElementById('castBtn').click();
+
   d.querySelector('#schoolSeg button[data-school="feipan"]').click();
   check('飞盘 同一时刻');
 
