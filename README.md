@@ -7,7 +7,7 @@
 - 规格：[奇门穿壬 v1 · 冻结规格](https://claude.ai/artifact/QXZoZZ2tCdDzprmidLBQB6)
 - 奇门部分：[kth2/Qimen-pwa](https://github.com/kth2/Qimen-pwa)（本仓库不复制、不改动它）
 - 六壬基准：袁树珊《大六壬探原》卷上推演篇
-- PWA：<https://kth2.github.io/qimen-chuanren/>（须先在仓库 Settings → Pages 把 Source 设为 GitHub Actions）
+- PWA：<https://kth2.github.io/Qimen-chuanren/>
 
 <img src="docs/screenshot-zhuanpan.png" width="300" alt="转盘截图">
 
