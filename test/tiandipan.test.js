@@ -82,3 +82,26 @@ test('遁干：按日旬配十支，旬空两支为 null', () => {
   assert.equal(d.申, null); assert.equal(d.酉, null);
   assert.deepEqual(Object.entries(L.dunGan('甲子')).filter(([, v]) => v === null).map(([k]) => k), ['戌', '亥']);
 });
+
+test('王雷之《大六壬实占百例精解》19 例天地盘与天将：按书注昼夜逐支一致', () => {
+  // 只有占时与实际时刻不同的「抽时」之例，书中昼夜不按占时定；那是流派差异，用 zhouYe 显式传入。
+  const F = require('./fixtures/wang-leizhi-100.json');
+  const JG = { 甲: '寅', 乙: '辰', 丙: '巳', 丁: '未', 戊: '巳', 己: '未', 庚: '申', 辛: '戌', 壬: '亥', 癸: '丑' };
+  let byShi = 0, byBook = 0;
+  for (const k of F.cases) {
+    const ok = (zy) => {
+      const p = L.build({ riGan: k.riZhu[0], yueJiang: k.yueJiang, shiZhi: k.shiZhi, zhouYe: zy });
+      return Object.entries(k.top).every(([d, [t, j]]) => p.tianOver(d) === t && p.jiangOf(t) === j);
+    };
+    if (ok(undefined)) byShi++;
+    if (ok(k.zhouYe)) byBook++; else assert.equal(k.id, '例66', k.id + ' 按书注昼夜也对不上'); // 例66 书本身不一致
+    if (k.siKe) {
+      const p = L.build({ riGan: k.riZhu[0], yueJiang: k.yueJiang, shiZhi: k.shiZhi, zhouYe: k.zhouYe });
+      const k1 = p.tianOver(JG[k.riZhu[0]]), k3 = p.tianOver(k.riZhu[1]);
+      assert.deepEqual([k1, p.tianOver(k1), k3, p.tianOver(k3)], k.siKe.map((x) => x[0]), k.id + ' 四课');
+    }
+  }
+  assert.equal(F.cases.length, 19);
+  assert.equal(byBook, 18);
+  assert.equal(byShi, 14); // 其余 5 例都是「昼占抽夜时」
+});

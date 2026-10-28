@@ -46,14 +46,21 @@
    * @param {{riGan:string, yueJiang:string, shiZhi:string}} p
    *   riGan 日干；yueJiang 月将（地支）；shiZhi 占时时支（与奇门盘同一时辰）
    */
+  /**
+   * @param {{riGan:string, yueJiang:string, shiZhi:string, zhouYe?:'昼'|'夜'}} p
+   *   zhouYe 可选：不传则照《探原》由占时定昼夜（卯至申昼、酉至寅夜）。
+   *   抽签起课（占时与实际时刻不同）时，有的流派按实际天色定昼夜，可由调用方显式传入；
+   *   这属流派差异，默认不启用。
+   */
   function build(p) {
     const { riGan, yueJiang, shiZhi } = p;
     if (!DAY_GUI[riGan]) throw new Error('不是天干：' + riGan);
+    if (p.zhouYe != null && p.zhouYe !== '昼' && p.zhouYe !== '夜') throw new Error('zhouYe 只能是「昼」或「夜」');
     const offset = (((idx(yueJiang) - idx(shiZhi)) % 12) + 12) % 12;
     const tianOver = (diZhi) => at(idx(diZhi) + offset); // 地盘某支之上的天盘支
     const diUnder = (tianZhi) => at(idx(tianZhi) - offset); // 天盘某支所加的地盘支
 
-    const zhou = ZHOU_SHI.includes(shiZhi);
+    const zhou = p.zhouYe ? p.zhouYe === '昼' : ZHOU_SHI.includes(shiZhi);
     const guiRen = zhou ? DAY_GUI[riGan] : NIGHT_GUI[riGan];
     const guiRenOverDi = diUnder(guiRen);
     const shun = SHUN_DI.includes(guiRenOverDi);
