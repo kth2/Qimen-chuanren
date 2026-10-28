@@ -10,7 +10,7 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+    caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith('qimen-chuanren-') && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
       .then(() => self.clients.matchAll({ type: 'window' }))
       .then((cs) => cs.forEach((c) => c.postMessage({ type: 'sw-updated', cache: CACHE })))
