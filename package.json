@@ -1,0 +1,12 @@
+{
+  "name": "qimen-chuanren",
+  "version": "0.1.0",
+  "private": true,
+  "description": "奇门穿壬：以奇门遁甲为框架、叠加大六壬的实验性占断应用",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
