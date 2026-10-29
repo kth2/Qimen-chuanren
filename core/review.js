@@ -58,13 +58,28 @@
     return out;
   }
 
-  /** 实况是否如愿、是否发生（与 casebook 同口径；这里不依赖它，免循环） */
-  function truthOf(rec) {
+  /** 标注（新版 labels，旧版 type/want/happened）——与 casebook.labels 同口径；这里不依赖它，免循环 */
+  function labelsOf(rec) {
     const f = rec.feedback || {};
-    const happened = f.type === 'yesno' ? (f.happened === 'yes' ? true : f.happened === 'no' ? false : null) : null;
-    const want = f.want;
-    const wish = happened == null || !want ? null : want === 'hope' ? happened : !happened;
+    return f.labels || (f.type ? { type: f.type, want: f.want, happened: f.happened } : null);
+  }
+  /** 实况是否如愿、是否发生 */
+  function truthOf(rec) {
+    const l = labelsOf(rec) || {};
+    const happened = l.type === 'yesno' ? (l.happened === 'yes' ? true : l.happened === 'no' ? false : null) : null;
+    const want = l.want;
+    const wish = happened == null || !want || want === '?' ? null : want === 'hope' ? happened : !happened;
     return { happened, wish };
+  }
+  /** AI 结论的方向：旧版取勾选，新版由应验程度推出 */
+  function aiPredOf(rec, t) {
+    const f = rec.feedback || {};
+    if (f.aiVerdict === 'wish') return true;
+    if (f.aiVerdict === 'unwish') return false;
+    if (!rec.ai || t.wish == null) return null;
+    if (f.verdict === 'happened') return t.wish;
+    if (f.verdict === 'not_happened' || f.verdict === 'opposite') return !t.wish;
+    return null;
   }
 
   /**
@@ -74,9 +89,14 @@
    */
   function ruleCheck(rec) {
     const f = rec.feedback || {}, t = truthOf(rec), out = [];
-    const ai = f.aiVerdict === 'wish' ? true : f.aiVerdict === 'unwish' ? false : null;
-    out.push({ id: 'ai', label: 'AI 结论', result: ai == null || t.wish == null ? '—' : ai === t.wish ? '对' : '错',
-      why: ai == null ? '未断或未标' : t.wish == null ? '实况未定如愿与否' : (ai ? '断如愿' : '断不如愿') + '，实际' + (t.wish ? '如愿' : '不如愿') });
+    const VL = { happened: '完全应验', partial: '部分应验', not_happened: '未应验', opposite: '结果相反' };
+    if (rec.ai && VL[f.verdict]) {
+      out.push({ id: 'ai', label: 'AI 解读', result: f.verdict === 'happened' ? '对' : f.verdict === 'partial' ? '半对' : '错', why: VL[f.verdict] });
+    } else {
+      const ai = aiPredOf(rec, t);
+      out.push({ id: 'ai', label: 'AI 结论', result: ai == null || t.wish == null ? '—' : ai === t.wish ? '对' : '错',
+        why: ai == null ? '未断或未标' : t.wish == null ? '实况未定如愿与否' : (ai ? '断如愿' : '断不如愿') + '，实际' + (t.wish ? '如愿' : '不如愿') });
+    }
     if (rec.wuxing && rec.wuxing.score) {
       const p = rec.wuxing.score > 0;
       out.push({ id: 'wx', label: '五行推理 v1', result: t.wish == null ? '—' : p === t.wish ? '对' : '错', why: (p ? '断如愿' : '断不如愿') });
@@ -106,12 +126,14 @@
   }
 
   function actualText(rec) {
-    const f = rec.feedback || {};
+    const f = rec.feedback || {}, l = labelsOf(rec) || {};
+    const VL = { happened: '完全应验', partial: '部分应验', not_happened: '未应验', opposite: '结果相反' };
     const bits = [];
     if (f.note) bits.push(f.note);
-    if (f.type === 'yesno') {
-      bits.push('（' + (f.want === 'fear' ? '所问为怕发生之事' : f.want === 'hope' ? '所问为盼发生之事' : '盼怕未标') + '；' +
-        (f.happened === 'yes' ? '实际发生了' : f.happened === 'no' ? '实际没发生' : f.happened === 'partial' ? '部分发生' : '是否发生不清楚') + '）');
+    if (VL[f.verdict]) bits.push('（用户标：当时解读' + VL[f.verdict] + '）');
+    if (l.type === 'yesno') {
+      bits.push('（' + (l.want === 'fear' ? '所问为怕发生之事' : l.want === 'hope' ? '所问为盼发生之事' : '盼怕未定') + '；' +
+        (l.happened === 'yes' ? '实际发生了' : l.happened === 'no' ? '实际没发生' : l.happened === 'partial' ? '部分发生' : '是否发生不清楚') + '）');
     }
     if (f.actualGong) bits.push('实际方位：' + f.actualGong + ' 宫');
     if (f.actualDate) bits.push('实际应期：' + f.actualDate + (f.actualDayZhi ? '（' + f.actualDayZhi + '日）' : ''));

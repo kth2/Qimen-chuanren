@@ -129,13 +129,22 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   for (let i = 0; i < 40 && !d.querySelector('.case-card'); i++) await sleep(50);
   assert(/含 AI 解读/.test(d.getElementById('caseSaveTag').textContent), '存案例未带 AI 解读：' + d.getElementById('caseSaveTag').textContent);
   const fb = d.querySelector('.case-card .fb');
-  fb.querySelector('input[value="hope"]').checked = true; fb.querySelector('input[value="yes"]').checked = true; fb.querySelector('input[value="wish"]').checked = true;
+  // 回填同奇门 app：只写实况、选应验程度；是非题／盼怕／发生由 AI 标注员只看问句与实况代标
   fb.querySelector('button[data-act="archive"]').click();
-  for (let i = 0; i < 40 && /待回填 1/.test(d.getElementById('caseCountTag').textContent); i++) await sleep(50);
+  assert(/请先写 ① 实际发生了什么/.test(fb.textContent), '没写实况也能归档');
+  w.eval(`window._labelCalls = 0; const _ans = LLM.chat; LLM.chat = async (s, u, a, b) => /标注员/.test(s)
+    ? (window._labelCalls++, window._labelSeen = u, '{"isYesNo":true,"event":"投资赚钱","want":"hope","happened":"yes"}') : _ans(s, u, a, b);`);
+  fb.querySelector('[data-k="note"]').value = '赚了两万';
+  fb.querySelector('input[value="happened"]').checked = true;
+  fb.querySelector('button[data-act="archive"]').click();
+  for (let i = 0; i < 60 && /待回填 1/.test(d.getElementById('caseCountTag').textContent); i++) await sleep(50);
+  assert(w._labelCalls === 1 && !/生门|规则|结论/.test(w._labelSeen), '标注员没调用，或看到了盘与断语');
   assert(/共 1 条，待回填 0/.test(d.getElementById('caseCountTag').textContent), '归档失败：' + d.getElementById('caseCountTag').textContent);
   d.querySelector('#caseTabSeg button[data-tab="stats"]').click();
   assert(/可计分的是非题 1 题/.test(d.getElementById('caseBody').textContent) && /未到评估点/.test(d.getElementById('caseBody').textContent), '准确率页不对');
-  console.log('✓ 案例本：存（含 AI 解读）→ 回填归档 → 准确率页');
+  assert(/完全应验 1/.test(d.getElementById('caseBody').textContent) && /应验分 100\.0%/.test(d.getElementById('caseBody').textContent), '准确率页缺应验分');
+  { const s0 = w.ChuanRenCases.stats(); assert(s0.ai.n === 1 && s0.ai.acc === 1, 'AI 结论方向未由应验推出'); }
+  console.log('✓ 案例本：存（含 AI 解读）→ 只填实况与应验 → AI 盲标 → 准确率页');
 
   // 问句方向：怕发生之事要在提示词里点出；盼发生之事不点
   { const mFear = await AI.buildMessages(w._chuanrenCtx, '这次会不会被裁员');
@@ -152,15 +161,13 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   for (let i = 0; i < 40 && !/已存/.test(d.getElementById('caseSaveTag').textContent + '') ; i++) await sleep(50);
   for (let i = 0; i < 40 && !/问句已改/.test(d.getElementById('caseSaveTag').textContent); i++) await sleep(50);
   assert(/问句已改，未含/.test(d.getElementById('caseSaveTag').textContent), '改问句后仍收了旧解读：' + d.getElementById('caseSaveTag').textContent);
-  { const fear = [...d.querySelectorAll('.case-card .fb input[value="fear"]')].some((x) => x.checked);
-    assert(fear, '怕发生之事未预选「怕」'); }
-  console.log('✓ 改问句：旧解读标灰、不入案例；回填预选「怕」');
+  console.log('✓ 改问句：旧解读标灰、不入案例');
 
   // AI 复盘：已归档案例写好实况 → 按复盘 → 假模型回 JSON → 存进案例并显示；准确率页有复盘汇总
   d.querySelector('#caseTabSeg button[data-tab="done"]').click();
   { let card = d.querySelector('.case-card .fb');
     card.querySelector('[data-k="note"]').value = '没赚到，亏了三千';
-    card.querySelector('input[value="no"]').checked = true;
+    card.querySelector('input[value="not_happened"]').checked = true;
     card.querySelector('button[data-act="archive"]').click();
     for (let i = 0; i < 40 && !/没赚到/.test(d.getElementById('caseBody').innerHTML); i++) await sleep(50);
     w.eval(`LLM.chat = async (s, u) => JSON.stringify({ misreads: [{ claim: '可成。', basedOn: 'r8', actual: '亏了三千', why: '只看了生门旺相' }],
@@ -178,6 +185,15 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     d.querySelector('#caseTabSeg button[data-tab="stats"]').click();
     assert(/复盘汇总（1 例）/.test(d.getElementById('caseBody').textContent) && /规则8/.test(d.getElementById('caseBody').textContent), '准确率页缺复盘汇总');
     console.log('✓ AI 复盘：断错分析、当时该怎么断、偏差、心得已存进案例；准确率页有复盘汇总'); }
+  // 判读不对可手改：改成怕发生 → 记为手改，如愿翻转
+  d.querySelector('#caseTabSeg button[data-tab="done"]').click();
+  { const card = d.querySelector('.case-card .fb');
+    card.querySelector('[data-lab="want"]').value = 'fear';
+    card.querySelector('[data-lab="happened"]').value = 'no';
+    card.querySelector('button[data-act="label-save"]').click();
+    for (let i = 0; i < 40 && !/你改过/.test(d.getElementById('caseBody').textContent); i++) await sleep(50);
+    assert(/怕它发生 · 没发生/.test(d.getElementById('caseBody').textContent) && /如愿/.test(d.querySelector('.case-card .lab').textContent), '手改判读未生效');
+    console.log('✓ 判读手改：盼怕、发生可改，如愿随之重算'); }
 
   d.querySelector('#viewSeg button[data-view="qimen"]').click();
   assert(!d.querySelector('.cr-board') && d.querySelectorAll('#chart .gong').length === 9, '只看奇门：应无外圈');

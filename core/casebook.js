@@ -2,6 +2,9 @@
  * 奇门穿壬 · 案例本（纯函数：记录怎样组、准确率怎样算）。存取交给 Qimen-pwa 的 CaseStore。
  *
  * 记分口径照《奇门穿壬 v1 · 冻结规格》「验证」一节：
+ *   · 用户只填：实况描述＋应验程度（完全应验／部分应验／未应验／结果相反，同奇门 app）＋选填的实际日期、方位。
+ *   · 是非题、盼怕、是否发生三项由 AI 标注员只看「问句＋实况」代标（看不到盘与任何断语），可手改（feedback.labels）。
+ *     旧版记录的 type/want/happened 字段照旧认。AI 结论的方向由「应验程度」推出：应验＝断对，未应验或相反＝断反。
  *   · 是非题：如愿＝盼的发生了，或怕的没发生。主指标为平衡准确率（如愿题判对率与不如愿题判对率的平均，瞎猜恒为 50%）。
  *   · 各规则分开记，弃权不计；同题重录（问题加实况相同）只算一次。
  *   · 评估点只看两次：≥40 题且两类各 ≥10；≥100 题且两类各 ≥25。未到评估点只报数，不下结论。
@@ -42,13 +45,65 @@
     };
   }
 
+  const VERDICT_LABEL = { happened: '完全应验', partial: '部分应验', not_happened: '未应验', opposite: '结果相反' };
+  const VERDICT_SCORE = { happened: 1, partial: 0.5, not_happened: 0, opposite: 0 };
+
+  /** 是非题／盼怕／是否发生：新版取 AI 标注员代标（可手改）的 labels，旧版记录取用户当时勾的 type/want/happened */
+  function labels(rec) {
+    const f = rec.feedback;
+    if (!f) return null;
+    if (f.labels) return f.labels;
+    if (f.type) return { type: f.type, want: f.want, happened: f.happened, by: 'legacy' };
+    return null;
+  }
+
   /** 回填后：是否如愿。不是是非题或标「?」返回 null */
   function outcome(rec) {
-    const f = rec.feedback;
-    if (!f || f.type !== 'yesno' || !f.want || !f.happened || f.happened === '?') return null;
-    if (f.happened === 'partial') return null;
-    const happened = f.happened === 'yes';
-    return f.want === 'hope' ? happened : !happened;
+    const l = labels(rec);
+    if (!l || l.type !== 'yesno' || !l.want || l.want === '?' || !l.happened || l.happened === '?') return null;
+    if (l.happened === 'partial') return null;
+    const happened = l.happened === 'yes';
+    return l.want === 'hope' ? happened : !happened;
+  }
+
+  /** AI 结论断的是如愿还是不如愿：旧版取用户勾的 aiVerdict；新版由应验程度推出（应验＝与实况同向，未应验或相反＝反向，部分不计） */
+  function aiPred(rec) {
+    const f = rec.feedback || {};
+    if (f.aiVerdict === 'wish') return true;
+    if (f.aiVerdict === 'unwish') return false;
+    if (!rec.ai || !f.verdict) return null;
+    const o = outcome(rec);
+    if (o == null) return null;
+    if (f.verdict === 'happened') return o;
+    if (f.verdict === 'not_happened' || f.verdict === 'opposite') return !o;
+    return null;
+  }
+
+  /** 标注员提示：只给问句与实况，不给盘与任何断语（同奇门 app 的盲标口径） */
+  function labelPrompt(question, actual) {
+    return {
+      system: '你是占例标注员。只根据问句与实况文字做标注，看不到盘，也看不到任何断语，不得猜测吉凶。只输出 JSON。',
+      user: [
+        '【问句】' + String(question || '').trim(),
+        '【实况】' + String(actual || '').trim(),
+        '',
+        '标三项：',
+        '1. isYesNo：主问是不是「某件事会不会发生／能不能成」的是非题。问何时、在哪里、多少、是什么、选哪个的为 false；一问兼有几问，只看主问。',
+        '2. want：求测人盼这件事发生填 hope，怕它发生填 fear，看不出填 ?。注意问句是否问「会不会被……」「会不会出事」这类怕发生之事。',
+        '3. happened：照实况，这件事发生了填 yes，没发生填 no，只发生一部分填 partial，实况没说清填 ?。不要推测。',
+        '只输出 JSON：{"isYesNo":true,"event":"所问之事（十字内）","want":"hope|fear|?","happened":"yes|no|partial|?"}',
+      ].join('\n'),
+    };
+  }
+  function parseLabel(text) {
+    const raw = String(text || ''), s = raw.indexOf('{'), e = raw.lastIndexOf('}');
+    if (s < 0 || e <= s) return { ok: false, error: '未找到 JSON' };
+    let o; try { o = JSON.parse(raw.slice(s, e + 1)); } catch (err) { return { ok: false, error: 'JSON 解析失败' }; }
+    if (typeof o.isYesNo !== 'boolean') return { ok: false, error: 'isYesNo 不合法' };
+    if (!['hope', 'fear', '?'].includes(o.want)) return { ok: false, error: 'want 不合法：' + o.want };
+    if (!['yes', 'no', 'partial', '?'].includes(o.happened)) return { ok: false, error: 'happened 不合法：' + o.happened };
+    return { ok: true, labels: { type: o.isYesNo ? 'yesno' : 'other', want: o.want, happened: o.happened,
+      event: typeof o.event === 'string' ? o.event.slice(0, 20) : '' } };
   }
 
   function dedupe(recs) {
@@ -80,9 +135,9 @@
   const major = (v) => String(v || '').split('.')[0];
   /** 实况是否发生（规则 8 用）；部分、不清楚返回 null */
   function happened(rec) {
-    const f = rec.feedback;
-    if (!f || f.type !== 'yesno') return null;
-    return f.happened === 'yes' ? true : f.happened === 'no' ? false : null;
+    const l = labels(rec);
+    if (!l || l.type !== 'yesno') return null;
+    return l.happened === 'yes' ? true : l.happened === 'no' ? false : null;
   }
 
   /** 统计。返回各路判断的计分与评估点进度；判定（通过/停止/继续）只在到达评估点时给出。
@@ -95,8 +150,12 @@
     const truthPos = yn.filter((r) => outcome(r)).length, truthNeg = yn.length - truthPos;
     const st = stage(yn.length, truthPos, truthNeg);
 
-    const ai = score(yn.filter((r) => r.feedback.aiVerdict === 'wish' || r.feedback.aiVerdict === 'unwish')
-      .map((r) => ({ pred: r.feedback.aiVerdict === 'wish', truth: outcome(r) })));
+    const ai = score(yn.filter((r) => aiPred(r) !== null).map((r) => ({ pred: aiPred(r), truth: outcome(r) })));
+    // 应验分（同奇门 app：完全应验 1、部分 0.5、未应验与相反 0），不必标注就能算
+    const vs = done.filter((r) => r.ai && VERDICT_SCORE[r.feedback.verdict] != null);
+    const aiHit = { n: vs.length, avg: vs.length ? vs.reduce((t, r) => t + VERDICT_SCORE[r.feedback.verdict], 0) / vs.length : null,
+      counts: Object.fromEntries(Object.keys(VERDICT_LABEL).map((k) => [k, vs.filter((r) => r.feedback.verdict === k).length])) };
+    const unlabeled = done.filter((r) => !labels(r)).length;
     const wx = score(yn.filter((r) => r.wuxing && r.wuxing.score !== 0).map((r) => ({ pred: r.wuxing.score > 0, truth: outcome(r) })));
 
     const rules = {};
@@ -141,8 +200,9 @@
     }
     d7.expect = +d7.expect.toFixed(2);
     return { total: records.length, archived: done.length, yesno: yn.length, pos: truthPos, neg: truthNeg,
-      stage: st, ai, wuxing: wx, rules, rule5: d5, rule4YingQi: d4, rule7: d7 };
+      stage: st, ai, aiHit, unlabeled, wuxing: wx, rules, rule5: d5, rule4YingQi: d4, rule7: d7 };
   }
 
-  return { FORMAT, VERSION, EVAL, makeRecord, outcome, happened, dedupe, score, stats };
+  return { FORMAT, VERSION, EVAL, VERDICT_LABEL, VERDICT_SCORE, makeRecord, labels, outcome, aiPred, happened,
+    labelPrompt, parseLabel, dedupe, score, stats };
 });
