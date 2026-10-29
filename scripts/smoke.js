@@ -156,6 +156,29 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(fear, '怕发生之事未预选「怕」'); }
   console.log('✓ 改问句：旧解读标灰、不入案例；回填预选「怕」');
 
+  // AI 复盘：已归档案例写好实况 → 按复盘 → 假模型回 JSON → 存进案例并显示；准确率页有复盘汇总
+  d.querySelector('#caseTabSeg button[data-tab="done"]').click();
+  { let card = d.querySelector('.case-card .fb');
+    card.querySelector('[data-k="note"]').value = '没赚到，亏了三千';
+    card.querySelector('input[value="no"]').checked = true;
+    card.querySelector('button[data-act="archive"]').click();
+    for (let i = 0; i < 40 && !/没赚到/.test(d.getElementById('caseBody').innerHTML); i++) await sleep(50);
+    w.eval(`LLM.chat = async (s, u) => JSON.stringify({ misreads: [{ claim: '可成。', basedOn: 'r8', actual: '亏了三千', why: '只看了生门旺相' }],
+      verdict: 'partly_derivable', correction: '用神宫虽旺，规则 8 两边同吉却挂在旬空……', misweighted: [{ itemId: 'yong', how: 'overrated', why: '旺而有阻' }],
+      lesson: '用神旺不等于得财', observations: [] })`);
+    card = d.querySelector('.case-card .fb');
+    assert(/规则对错/.test(card.textContent), '缺规则对错');
+    card.querySelector('button[data-act="review"]').click();
+    for (let i = 0; i < 60 && !d.querySelector('.rv-box'); i++) await sleep(50);
+    const box = d.querySelector('.rv-box');
+    assert(box && /断错分析/.test(box.textContent) && /可成。/.test(box.textContent) && /部分可断出/.test(box.textContent) && /下次留意/.test(box.textContent),
+      '复盘未显示：' + (d.querySelector('[data-k="rvtag"]') || {}).textContent);
+    assert((await w.ChuanRenCases.store.list()).some((r) => r.review && r.review.verdict === 'partly_derivable'), '复盘未存进案例');
+    assert(!/未能重排/.test(box.textContent), '复盘时未能重排当时的盘');
+    d.querySelector('#caseTabSeg button[data-tab="stats"]').click();
+    assert(/复盘汇总（1 例）/.test(d.getElementById('caseBody').textContent) && /规则8/.test(d.getElementById('caseBody').textContent), '准确率页缺复盘汇总');
+    console.log('✓ AI 复盘：断错分析、当时该怎么断、偏差、心得已存进案例；准确率页有复盘汇总'); }
+
   d.querySelector('#viewSeg button[data-view="qimen"]').click();
   assert(!d.querySelector('.cr-board') && d.querySelectorAll('#chart .gong').length === 9, '只看奇门：应无外圈');
   console.log('✓ 只看奇门：外圈收起');

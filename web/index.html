@@ -156,6 +156,12 @@
     .q-bar textarea { width: 100%; box-sizing: border-box; font-size: 14px; padding: 6px 8px; border: 1px solid #ccc; border-radius: 6px; }
     #domainTag { margin-top: 2px; }
     #aiAnswer.ai-stale { opacity: .45; }
+    .rv { margin-top: 8px; border-top: 1px dashed #ddd; padding-top: 6px; font-size: 13px; }
+    .rv .ok-txt { color: #3c763d; } .rv .bad-txt { color: #a94442; }
+    .rv-box { border: 1px solid #c9dcc9; background: #f7fbf7; border-radius: 6px; padding: 6px; margin-top: 6px; }
+    .rv-box.rv-no { border-color: #c9c9c9; background: #fafafa; }
+    .rv-item { font-size: 12px; margin-top: 3px; }
+    .rv-warn { font-size: 11px; color: #a15c00; }
   </style>
 </head>
 <body>
@@ -328,6 +334,7 @@
   <script src="ai.js"></script>
   <script src="vendor/qimen-pwa/core/casestore.js"></script>
   <script src="core/casebook.js"></script>
+  <script src="core/review.js"></script>
   <script src="cases.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

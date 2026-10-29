@@ -21,6 +21,7 @@ const COPY = [
   ['web/ai.js', 'ai.js'],
   ['web/cases.js', 'cases.js'],
   ['core/casebook.js', 'core/casebook.js'],
+  ['core/review.js', 'core/review.js'],
   ['vendor/qimen-pwa/core/casestore.js', 'vendor/qimen-pwa/core/casestore.js'],
   ['web/manifest.json', 'manifest.json'],
   ['web/icon.svg', 'icon.svg'],
