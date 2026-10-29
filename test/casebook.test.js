@@ -61,3 +61,40 @@ test('v2：规则 8 对「实况发生」计分而非如愿；规则账本按版
   assert.equal(CB.stats(rs).rules[8].n, 3);   // 不给版本则全计（例 4 规则 8 弃权）
   assert.equal(CB.happened(rs[0]), true);
 });
+
+test('新版回填：AI 盲标的 labels 决定如愿与发生；AI 结论方向由应验程度推出；旧版勾选照认', () => {
+  const mk = (verdict, labels, ai = true) => ({ id: 'n' + verdict, question: 'q' + verdict + JSON.stringify(labels), ai: ai ? { answer: 'x' } : null,
+    feedback: { archived: true, note: 'n', verdict, labels }, votes: [] });
+  const hopeYes = { type: 'yesno', want: 'hope', happened: 'yes', by: 'ai' };
+  const fearYes = { type: 'yesno', want: 'fear', happened: 'yes', by: 'ai' };
+  assert.equal(CB.outcome(mk('happened', hopeYes)), true);
+  assert.equal(CB.outcome(mk('happened', fearYes)), false);
+  assert.equal(CB.happened(mk('happened', fearYes)), true);
+  assert.equal(CB.aiPred(mk('happened', hopeYes)), true);        // 应验：AI 断的方向＝实际如愿
+  assert.equal(CB.aiPred(mk('not_happened', hopeYes)), false);   // 未应验：AI 断反了
+  assert.equal(CB.aiPred(mk('opposite', fearYes)), true);
+  assert.equal(CB.aiPred(mk('partial', hopeYes)), null);         // 部分应验不计方向
+  assert.equal(CB.aiPred(mk('happened', hopeYes, false)), null); // 没有 AI 解读
+  assert.equal(CB.outcome(mk('happened', null)), null);          // 未判读：不计分
+  assert.equal(CB.outcome(mk('happened', { type: 'yesno', want: '?', happened: 'yes' })), null);
+  const legacy = { id: 'L', question: 'L', feedback: { archived: true, type: 'yesno', want: 'hope', happened: 'no', aiVerdict: 'wish' } };
+  assert.equal(CB.outcome(legacy), false);
+  assert.equal(CB.aiPred(legacy), true);
+  const s = CB.stats([mk('happened', hopeYes), mk('not_happened', fearYes), mk('partial', null)]);
+  assert.equal(s.aiHit.n, 3);
+  assert.equal(s.aiHit.avg, 0.5);
+  assert.equal(s.unlabeled, 1);
+  assert.equal(s.ai.n, 2);
+  assert.equal(s.ai.acc, 0.5);
+});
+
+test('标注员提示只含问句与实况；输出严格校验', () => {
+  const p = CB.labelPrompt('会不会被裁员', '名单出来了，没有我');
+  assert.ok(p.user.includes('会不会被裁员') && p.user.includes('没有我'));
+  assert.match(p.system, /看不到盘/);
+  const ok = CB.parseLabel('```{"isYesNo":true,"event":"被裁员","want":"fear","happened":"no"}```');
+  assert.deepEqual(ok, { ok: true, labels: { type: 'yesno', want: 'fear', happened: 'no', event: '被裁员' } });
+  assert.equal(CB.parseLabel('{"isYesNo":"yes","want":"fear","happened":"no"}').ok, false);
+  assert.equal(CB.parseLabel('{"isYesNo":true,"want":"maybe","happened":"no"}').ok, false);
+  assert.equal(CB.parseLabel('无').ok, false);
+});

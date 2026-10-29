@@ -78,30 +78,79 @@
     try { return QM.qimen.calculate(new Date(dateStr + 'T12:00'), { type: '四柱', method: '时家', purpose: '综合', location: '默认位置' }).siZhu.day.charAt(1); }
     catch (e) { return ''; }
   }
+  /* 回填（同奇门 app）：用户只填 ① 实况描述、② 应验程度，日期与方位选填。
+   * 是非题、盼怕、是否发生由 AI 标注员只看「问句＋实况」代标（看不到盘与断语），标错可手改。 */
+  const VERDICT_BTNS = [['happened', '完全应验'], ['partial', '部分应验'], ['not_happened', '未应验'], ['opposite', '结果相反']];
+  const WANT_L = { hope: '盼它发生', fear: '怕它发生', '?': '盼怕看不出' };
+  const HAP_L = { yes: '发生了', no: '没发生', partial: '部分发生', '?': '实况没说清' };
+  function askDayOf(c) { const m = String((c.input || {}).date || '').match(/^\d{4}-\d{2}-\d{2}/); return m ? m[0] : ''; }
+  function labelLine(c) {
+    const f = c.feedback || {}, l = CB.labels(c);
+    if (!f.archived) return '';
+    const o = CB.outcome(c);
+    const head = !l ? '<span class="muted">还没判读：这条暂不进规则计分。</span>'
+      : l.type !== 'yesno' ? '非是非题（不进是非计分）'
+        : `是非题 · ${esc(WANT_L[l.want] || '—')} · ${esc(HAP_L[l.happened] || '—')}`
+          + (o == null ? '' : ` → <b>${o ? '如愿' : '不如愿'}</b>`);
+    const by = !l ? '' : l.by === 'manual' ? '（你改过）' : l.by === 'legacy' ? '（旧版手填）' : '（AI 只看问句与实况代标）';
+    const sel = (k, opts, cur) => `<select data-lab="${k}">${opts.map(([v, t]) => `<option value="${v}"${cur === v ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
+    return `<div class="lab">自动判读：${head} <span class="muted">${by}</span>
+      <details class="lab-edit"><summary class="muted">判读不对？改一下</summary>
+        ${sel('type', [['yesno', '是非题'], ['other', '非是非题']], l ? l.type : 'yesno')}
+        ${sel('want', [['hope', '盼它发生'], ['fear', '怕它发生'], ['?', '看不出']], l ? l.want : (c.framing === 'adverse' ? 'fear' : 'hope'))}
+        ${sel('happened', [['yes', '发生了'], ['no', '没发生'], ['partial', '部分发生'], ['?', '不清楚']], l ? l.happened : '?')}
+        <button class="btn" data-act="label-save" style="padding:2px 8px;font-size:12px;">保存判读</button>
+        <button class="btn" data-act="relabel" style="padding:2px 8px;font-size:12px;background:#666;">请 AI 重新判读</button>
+        <div class="muted" style="font-size:11px;">这三项只用来给规则计分：规则的 +1 说的是「如愿」，所以要知道你是盼还是怕、事情发生没有。</div>
+      </details></div>`;
+  }
   function feedbackForm(c) {
     const f = c.feedback || {};
-    const opt = (name, val, label, cur) => `<label><input type="radio" name="${name}-${c.id}" value="${val}" ${cur === val ? 'checked' : ''}> ${label}</label>`;
+    const day = askDayOf(c);
     return `<div class="fb" data-id="${c.id}">
-      <div>题型 ${opt('type', 'yesno', '是非题', f.type || 'yesno')} ${opt('type', 'other', '非是非题', f.type)}</div>
-      <div>所盼 ${opt('want', 'hope', '盼它发生', f.want)} ${opt('want', 'fear', '怕它发生', f.want || (c.framing === 'adverse' ? 'fear' : ''))}${!f.want && c.framing === 'adverse' ? '<span class="muted">（问句检出怕发生之事，已预选，请核对）</span>' : ''}</div>
-      <div>实况 ${opt('hap', 'yes', '发生了', f.happened)} ${opt('hap', 'no', '没发生', f.happened)} ${opt('hap', 'partial', '部分', f.happened)} ${opt('hap', '?', '不清楚', f.happened)}</div>
-      <div>AI 结论 ${opt('ai', 'wish', '如愿', f.aiVerdict)} ${opt('ai', 'unwish', '不如愿', f.aiVerdict)} ${opt('ai', 'none', '未断／无 AI', f.aiVerdict)}</div>
-      <div>实际方位 <select data-k="gong"><option value="">不适用</option>${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => `<option value="${g}" ${String(f.actualGong) === String(g) ? 'selected' : ''}>${GONG[g]}</option>`).join('')}</select>
-        实际应期 <input type="date" data-k="date" value="${esc(f.actualDate || '')}"></div>
-      <textarea data-k="note" rows="2" style="width:100%;box-sizing:border-box;" placeholder="实况描述（同题重录以「问题＋实况」去重）">${esc(f.note || '')}</textarea>
+      <div class="muted">① 实际发生了什么？（用你自己的话写，越具体越好——判读与复盘全靠这段）</div>
+      <textarea data-k="note" rows="2" style="width:100%;box-sizing:border-box;" placeholder="例：最后没借到钱；周三下午对方才回电话">${esc(f.note || '')}</textarea>
+      <div>② ${c.ai ? '当时的 AI 解读' : '这一卦'}：${VERDICT_BTNS.map(([v, t]) => `<label><input type="radio" name="vd-${c.id}" value="${v}" ${f.verdict === v ? 'checked' : ''}> ${t}</label>`).join(' ')}</div>
+      <details class="fb-more"${f.actualDate || f.actualGong ? ' open' : ''}><summary class="muted">选填：实际日期、实际方位（核对应期、方位规则用）</summary>
+        实际日期 <input type="date" data-k="date" value="${esc(f.actualDate || '')}">
+        ${day ? `<button class="btn" type="button" data-day="0" style="padding:1px 6px;font-size:12px;background:#666;">占问当天</button>
+        <button class="btn" type="button" data-day="1" style="padding:1px 6px;font-size:12px;background:#666;">次日</button>` : ''}
+        实际方位 <select data-k="gong"><option value="">不适用</option>${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => `<option value="${g}" ${String(f.actualGong) === String(g) ? 'selected' : ''}>${GONG[g]}</option>`).join('')}</select>
+      </details>
       <button class="btn" data-act="archive" style="padding:4px 12px;font-size:13px;">${f.archived ? '更新' : '回填并归档'}</button>
       <button class="btn" data-act="del" style="padding:4px 12px;font-size:13px;background:#a94442;">删除</button>
+      <span class="muted" data-k="fbtag"></span>
+      ${labelLine(c)}
       ${reviewHtml(c)}
     </div>`;
   }
-  function readForm(box) {
-    const id = box.dataset.id, pick = (n) => { const e = box.querySelector(`input[name="${n}-${id}"]:checked`); return e ? e.value : ''; };
+  function readForm(box, old) {
+    const id = box.dataset.id, vd = box.querySelector(`input[name="vd-${id}"]:checked`);
     const date = box.querySelector('[data-k="date"]').value;
-    return { type: pick('type') || 'yesno', want: pick('want'), happened: pick('hap'), aiVerdict: pick('ai'),
+    const note = box.querySelector('[data-k="note"]').value.trim();
+    const o = old || {};
+    // 实况改了，旧判读就作废（手改过的也一样——依据变了），归档后重新判读
+    const keepLabels = o.labels && String(o.note || '').trim() === note;
+    return Object.assign({}, o, { verdict: vd ? vd.value : '', note,
       actualGong: box.querySelector('[data-k="gong"]').value, actualDate: date, actualDayZhi: dayZhiOf(date),
-      note: box.querySelector('[data-k="note"]').value.trim(), archived: true };
+      labels: keepLabels ? o.labels : null, archived: true });
   }
 
+  /** AI 标注员：只看问句与实况，判是非题、盼怕、是否发生。失败不阻断归档，只是这条暂不计分 */
+  async function autoLabel(c, tag) {
+    if (typeof LLM === 'undefined') { tag('AI 未设置，判读请在「判读不对？改一下」里手填'); return c; }
+    tag('AI 判读中（只看问句与实况）…');
+    try {
+      const pr = CB.labelPrompt(c.question, c.feedback.note);
+      const p = CB.parseLabel(await LLM.chat(pr.system, pr.user, null, (m) => tag(m)));
+      if (!p.ok) { tag('判读失败：' + p.error + '，可按「请 AI 重新判读」或手填'); return c; }
+      const u = (LLM.lastUsed && LLM.lastUsed()) || LLM.info();
+      c.feedback.labels = Object.assign(p.labels, { by: 'ai', model: u ? `${u.provider}/${u.model}` : '', at: new Date().toISOString() });
+      await store.save(c);
+      tag('');
+    } catch (e) { tag('判读失败：' + (e.message || e) + '；可稍后按「请 AI 重新判读」'); }
+    return c;
+  }
 
   /* ---------- AI 复盘 ----------
    * 照奇门 app 的「AI 代标·断错分析」与「复盘反推」，合成一次调用（core/review.js）：
@@ -144,7 +193,7 @@
     const f = c.feedback || {};
     if (!f.archived || !RV) return '';
     const rc = RV.ruleCheck(c).filter((r) => r.result !== '—');
-    const rcLine = rc.length ? rc.map((r) => `<span class="${r.result === '对' ? 'ok' : 'bad'}-txt">${esc(r.label)} ${r.result}</span>`).join('　') : '<span class="muted">（实况未定如愿／发生，或各条都弃权）</span>';
+    const rcLine = rc.length ? rc.map((r) => `<span class="${r.result === '对' ? 'ok' : r.result === '错' ? 'bad' : 'mid'}-txt">${esc(r.label)} ${r.result}</span>`).join('　') : '<span class="muted">（实况未定如愿／发生，或各条都弃权）</span>';
     const rv = c.review;
     let body = '';
     if (rv) {
@@ -164,14 +213,14 @@
       <div><b>规则对错</b>（按实况算，非 AI）：${rcLine}</div>
       <button class="btn" data-act="review" style="padding:4px 12px;font-size:13px;background:#8a6d3b;margin-top:4px;">🤖 AI 复盘：哪里断错、当时该怎么断</button>
       <span class="muted" data-k="rvtag"></span>
-      <div class="muted" style="font-size:11px;">要先在「实况描述」写清实际发生了什么并归档。只许用当时盘上已有的条目；断不出就如实说断不出。结果存进本案例，不动计分。</div>
+      <div class="muted" style="font-size:11px;">要先写好 ① 实际发生了什么并归档。只许用当时盘上已有的条目；断不出就如实说断不出。结果存进本案例，不动计分。</div>
       ${body}</div>`;
   }
 
   async function runReview(c, box) {
     const tag = (t) => { const e = box.querySelector('[data-k="rvtag"]'); if (e) e.textContent = t; };
     if (!c.feedback || !c.feedback.archived) { tag('请先回填并归档'); return; }
-    if (!String(c.feedback.note || '').trim()) { tag('请先在「实况描述」写清实际发生了什么，按「更新」后再复盘——复盘全靠这段'); return; }
+    if (!String(c.feedback.note || '').trim()) { tag('请先写好 ① 实际发生了什么，按「更新」后再复盘——复盘全靠这段'); return; }
     if (typeof LLM === 'undefined') { tag('AI 模块未载入'); return; }
     const btn = box.querySelector('button[data-act="review"]'); if (btn) btn.disabled = true;
     tag('复盘中…');
@@ -218,7 +267,8 @@
     const f = c.feedback, o = CB.outcome(c);
     return `<details class="case-card" data-id="${esc(c.id)}"${openId === c.id ? ' open' : ''}><summary><b>${esc(c.question)}</b>
       <span class="muted">${esc(c.input.date)} · ${c.input.school === 'feipan' ? '飞盘' : '转盘'} · ${esc(c.input.ui)} · ${esc(c.liuren.keTi)} ${esc(c.liuren.sanChuan.join(''))}</span>
-      ${f && f.archived ? `<span class="tag ${o === true ? 'ok' : o === false ? 'bad' : ''}">${o === true ? '如愿' : o === false ? '不如愿' : '已归档'}</span>` : '<span class="tag">待回填</span>'}</summary>
+      ${f && f.archived ? `<span class="tag ${f.verdict === 'happened' ? 'ok' : (f.verdict === 'not_happened' || f.verdict === 'opposite') ? 'bad' : ''}">${esc(CB.VERDICT_LABEL[f.verdict] || '已归档')}</span>`
+        + (o == null ? '' : `<span class="tag">${o ? '如愿' : '不如愿'}</span>`) : '<span class="tag">待回填</span>'}</summary>
       <div class="muted" style="margin:4px 0;">四柱 ${esc(Object.values(c.chart.siZhu || {}).join(' '))}　${esc(c.chart.juShu || '')}　规则票 ${voteLine(c)}　五行v1 ${c.wuxing ? esc(c.wuxing.verdict) : '—'}</div>
       ${c.ai ? `<details><summary class="muted">AI 解读（${esc(c.ai.model)}）</summary><div class="case-ai">${esc(c.ai.answer)}</div></details>` : ''}
       ${feedbackForm(c)}</details>`;
@@ -227,9 +277,12 @@
   function statsHtml() {
     const s = CB.stats(cache, { rulesVersion: window.ChuanRenRules && window.ChuanRenRules.VERSION }), st = s.stage;
     const nextTxt = st.next ? `离${st.next.label}：还差 ${Math.max(0, st.next.n - s.yesno)} 题（且如愿、不如愿各 ≥${st.next.each}，现 ${s.pos}／${s.neg}）` : '两次评估都已到';
-    let h = `<p>已归档 ${s.archived} 条（去重后），其中可计分的是非题 ${s.yesno} 题：如愿 ${s.pos}、不如愿 ${s.neg}。<br>${nextTxt}。</p>`;
+    const hc = s.aiHit.counts;
+    let h = `<p>AI 解读应验：${s.aiHit.n} 条，完全应验 ${hc.happened}、部分 ${hc.partial}、未应验 ${hc.not_happened}、相反 ${hc.opposite}；
+      应验分 <b>${s.aiHit.avg == null ? '—' : (s.aiHit.avg * 100).toFixed(1) + '%'}</b> <span class="muted">（完全 1、部分 0.5，同奇门 app）</span></p>`;
+    h += `<p>已归档 ${s.archived} 条（去重后），其中可计分的是非题 ${s.yesno} 题：如愿 ${s.pos}、不如愿 ${s.neg}。${s.unlabeled ? `<br><span class="muted">还有 ${s.unlabeled} 条没判读（AI 未设置或判读失败），暂不进规则计分。</span>` : ''}<br>${nextTxt}。</p>`;
     h += `<table class="rule-table"><thead><tr><th>判断</th><th>计分题数</th><th>平衡准确率</th><th>准确率</th><th>判定</th></tr></thead><tbody>`;
-    h += `<tr><td>AI 结论（奇门为主，基准）</td><td>${s.ai.n}</td><td>${pct(s.ai.balanced)}</td><td>${pct(s.ai.acc)}</td><td class="muted">—</td></tr>`;
+    h += `<tr><td>AI 结论（奇门为主，基准；方向由应验程度推出）</td><td>${s.ai.n}</td><td>${pct(s.ai.balanced)}</td><td>${pct(s.ai.acc)}</td><td class="muted">—</td></tr>`;
     h += `<tr><td>五行推理 v1</td><td>${s.wuxing.n}</td><td>${pct(s.wuxing.balanced)}</td><td>${pct(s.wuxing.acc)}</td><td class="muted">参照</td></tr>`;
     for (const k of [1, 2, 3, 4, 6, 8, 9, 10]) {
       const r = s.rules[k];
@@ -278,12 +331,35 @@
   $('caseExportBtn').addEventListener('click', exportCases);
   $('caseImportInput').addEventListener('change', (e) => { if (e.target.files[0]) importCases(e.target.files[0]); e.target.value = ''; });
   $('caseBody').addEventListener('click', async (e) => {
+    const dayBtn = e.target.closest('button[data-day]');
+    if (dayBtn) {
+      const box = dayBtn.closest('.fb'), c = cache.find((x) => x.id === box.dataset.id), d0 = c && askDayOf(c);
+      if (d0) { const d = new Date(d0 + 'T12:00:00'); d.setDate(d.getDate() + Number(dayBtn.dataset.day)); const p2 = (n) => String(n).padStart(2, '0');
+        box.querySelector('[data-k="date"]').value = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; }
+      return;
+    }
     const btn = e.target.closest('button[data-act]'); if (!btn) return;
     const box = btn.closest('.fb'), c = cache.find((x) => x.id === box.dataset.id); if (!c) return;
     if (btn.dataset.act === 'del') { if (confirm('删除这条案例？')) { await store.remove(c.id); await refresh(); } return; }
     if (btn.dataset.act === 'review') { await runReview(c, box); return; }
-    c.feedback = readForm(box); c.updatedAt = new Date().toISOString(); openId = c.id;
-    try { await store.save(c); await refresh(); } catch (err) { alert(err.message); }
+    const tag = (t) => { const e = box.querySelector('[data-k="fbtag"]'); if (e) e.textContent = t; };
+    openId = c.id;
+    if (btn.dataset.act === 'label-save') {
+      const v = (k) => box.querySelector(`[data-lab="${k}"]`).value;
+      c.feedback.labels = { type: v('type'), want: v('want'), happened: v('happened'), by: 'manual', at: new Date().toISOString() };
+      c.updatedAt = new Date().toISOString();
+      try { await store.save(c); await refresh(); } catch (err) { alert(err.message); }
+      return;
+    }
+    if (btn.dataset.act === 'relabel') { await autoLabel(c, tag); await refresh(); return; }
+    // 归档／更新
+    const fb = readForm(box, c.feedback);
+    if (!fb.note) { tag('请先写 ① 实际发生了什么'); return; }
+    if (!fb.verdict) { tag('请选 ② 应验程度'); return; }
+    c.feedback = fb; c.updatedAt = new Date().toISOString();
+    try { await store.save(c); } catch (err) { alert(err.message); return; }
+    if (!c.feedback.labels) await autoLabel(c, tag);
+    await refresh();
   });
 
   window.ChuanRenCases = { store, refresh, stats: () => CB.stats(cache) };
