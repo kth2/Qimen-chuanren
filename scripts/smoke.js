@@ -222,7 +222,12 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     d.querySelector('#calDay button[data-cal="use"]').click();
     assert(d.getElementById('inDate').value === '2024-02-10' && cp.style.display === 'none' && /2024-02-10/.test(d.getElementById('basicInfo').textContent), '用此日排盘未生效');
     d.getElementById('calBtn').click();
-    cp.querySelector('input[data-cal="q"]').value = '丙午 戊戌 丁丑 乙巳';
+    const pick = (k, v) => { const e = cp.querySelector(`select[data-cal="${k}"]`); e.value = v; e.dispatchEvent(new w.Event('change', { bubbles: true })); };
+    pick('fy', '丙午');
+    assert([...cp.querySelectorAll('select[data-cal="fm"] option')].map((o) => o.value).join(' ') === '庚寅 辛卯 壬辰 癸巳 甲午 乙未 丙申 丁酉 戊戌 己亥 庚子 辛丑', '丙年月柱应按五虎遁列 12 个');
+    pick('fm', '戊戌'); pick('fd', '丁丑');
+    assert([...cp.querySelectorAll('select[data-cal="fh"] option')].length === 13, '时柱应为不限加 12 个');
+    pick('fh', '乙巳');
     cp.querySelector('button[data-cal="find"]').click();
     assert(/共 3 处/.test(d.getElementById('calFind').textContent) && /2026-10-30/.test(d.getElementById('calFind').textContent), '四柱反查不对：' + d.getElementById('calFind').textContent);
     d.querySelector('#calFind button[data-cal="use"][data-date="2026-10-30"]').click();

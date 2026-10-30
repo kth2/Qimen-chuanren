@@ -1,7 +1,8 @@
 /* 奇门穿壬 · 万年历界面
  * 月历：公历、农历（初一显示月名）、节气、节日、日干支；点一天看年月日柱与十二时辰（含夜子时算次日）。
  * 「用此日排盘」把日期填回排盘栏；「设为年命」把那天的年柱填进年命（查出生那天即得年命，立春换年已算好）。
- * 四柱反查：输入年月日（时）干支，列出 1800–2200 年间对得上的日子与时辰，可直接排盘。
+ * 四柱反查：从下拉选年月日（时）干支——月柱随年干、时柱随日干只列配得上的，选不出错的组合——
+ *   列出 1800–2200 年间对得上的日子与时辰，可直接排盘。
  * 历法：core/calendar.js（tyme4ts，与排盘同一套）。 */
 (function () {
   const CAL = window.ChuanRenCalendar, T = window.tyme4ts;
@@ -11,7 +12,18 @@
 
   const now = new Date(), pad = (n) => String(n).padStart(2, '0');
   const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  let y, m, sel = '', findQ = '', findHtml = '';
+  let y, m, sel = '', findHtml = '';
+  // 四柱反查：四个下拉，只给合法的组合——月柱按年干（五虎遁）、时柱按日干（五鼠遁）只列 12 个
+  const nowH = T.SolarTime.fromYmdHms(now.getFullYear(), now.getMonth() + 1, now.getDate(), now.getHours(), now.getMinutes(), 0).getSixtyCycleHour();
+  const fsel = { y: nowH.getYear().getName(), m: nowH.getMonth().getName(), d: nowH.getDay().getName(), h: nowH.getSixtyCycle().getName() };
+  const keepZhi = (list, cur) => list.find((p) => p[1] === (cur || '')[1]) || list[0];
+  function findSelects() {
+    const opt = (list, cur) => list.map((p) => `<option${p === cur ? ' selected' : ''}>${p}</option>`).join('');
+    return `<label>年<select data-cal="fy">${opt(CAL.JIAZI, fsel.y)}</select></label>
+      <label>月<select data-cal="fm">${opt(CAL.monthPillars(fsel.y), fsel.m)}</select></label>
+      <label>日<select data-cal="fd">${opt(CAL.JIAZI, fsel.d)}</select></label>
+      <label>时<select data-cal="fh"><option value=""${fsel.h ? '' : ' selected'}>不限</option>${opt(CAL.hourPillars(fsel.d), fsel.h)}</select></label>`;
+  }
 
   function openAt(dateStr) {
     const d = /^\d{4}-\d{2}-\d{2}$/.test(dateStr || '') ? dateStr : todayStr;
@@ -39,10 +51,9 @@
         <button class="btn" type="button" data-cal="today" style="padding:2px 8px;background:#666;">今天</button>
         <button class="btn" type="button" data-cal="close" style="padding:2px 8px;background:#999;margin-left:auto;">✕ 收起</button>
       </div>
-      <div class="cal-find">
-        <input data-cal="q" value="${esc(findQ)}" placeholder="四柱反查：丙午 戊戌 丁丑 乙巳（时柱可省）">
-        <button class="btn" type="button" data-cal="find" style="padding:2px 10px;">查找</button>
-      </div>
+      <div class="cal-find"><span class="muted">四柱反查</span>${findSelects()}
+        <button class="btn" type="button" data-cal="find" style="padding:2px 10px;">查找</button></div>
+      <div class="muted" style="font-size:11px;">月柱随年干、时柱随日干只列配得上的 12 个；时柱可选「不限」只查日子。</div>
       <div id="calFind">${findHtml}</div>
       <div class="muted" style="margin-top:4px;">年柱 ${mo.yearGZs.map(esc).join(' → ')}${mo.terms.length ? '　本月交节：' + mo.terms.map((t) => `${esc(t.name)} ${+t.date.slice(8)} 日`).join('、') : ''}
         <span style="font-size:11px;">（年柱以立春换，月柱以节换）</span></div>
@@ -72,11 +83,7 @@
 
   /** 四柱反查：1800–2200 年间对得上的日子（给了时柱就到时辰） */
   function runFind() {
-    const inp = $('calPanel').querySelector('input[data-cal="q"]');
-    findQ = inp ? inp.value.trim() : findQ;
-    const p = CAL.parsePillars(findQ);
-    if (p.bad.length) { findHtml = `<div class="muted" style="color:#a94442;">${p.bad.map(esc).join('、')} 不是六十甲子（干支须同阴阳），请核对。</div>`; draw(); return; }
-    if (p.pillars.length < 3 || p.pillars.length > 4) { findHtml = '<div class="muted">请照年、月、日（、时）的顺序给三柱或四柱，例：丙午 戊戌 丁丑 乙巳。</div>'; draw(); return; }
+    const p = { pillars: [fsel.y, fsel.m, fsel.d].concat(fsel.h ? [fsel.h] : []) };
     const r = CAL.findByPillars(T, p.pillars, 1800, 2200);
     const head = `<b>${p.pillars.map(esc).join(' ')}</b>：`;
     if (!r.results.length) {
@@ -97,6 +104,10 @@
   });
   $('calPanel').addEventListener('change', (e) => {
     const k = e.target.dataset.cal;
+    if (k === 'fy') { fsel.y = e.target.value; fsel.m = keepZhi(CAL.monthPillars(fsel.y), fsel.m); draw(); return; }
+    if (k === 'fm') { fsel.m = e.target.value; return; }
+    if (k === 'fd') { fsel.d = e.target.value; if (fsel.h) fsel.h = keepZhi(CAL.hourPillars(fsel.d), fsel.h); draw(); return; }
+    if (k === 'fh') { fsel.h = e.target.value; return; }
     if (k === 'y') { y = +e.target.value; draw(); }
     if (k === 'm') { m = +e.target.value; draw(); }
   });
@@ -128,6 +139,5 @@
       b.textContent = '已设为年命 ✓';
     }
   });
-  $('calPanel').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.dataset.cal === 'q') { e.preventDefault(); runFind(); } });
-  window.ChuanRenCalendarUI = { openAt, runFind };
+  window.ChuanRenCalendarUI = { openAt, runFind, fsel };
 })();

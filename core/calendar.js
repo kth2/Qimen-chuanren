@@ -104,6 +104,13 @@
     }
     return { pillars: out, bad };
   }
+  /** 六十甲子，甲子起 */
+  const JIAZI = Array.from({ length: 60 }, (_, i) => GAN[i % 10] + ZHI[i % 12]);
+  /** 五虎遁：年干定十二月柱，寅月起（正月寅……十二月丑） */
+  function monthPillars(yearGZ) {
+    const start = ((GAN.indexOf(yearGZ[0]) % 5) * 2 + 2) % 10;   // 甲己丙寅、乙庚戊寅、丙辛庚寅、丁壬壬寅、戊癸甲寅
+    return Array.from({ length: 12 }, (_, i) => GAN[(start + i) % 10] + ZHI[(2 + i) % 12]);
+  }
   /** 五鼠遁：日干定十二时柱 */
   function hourPillars(dayGZ) {
     const start = (GAN.indexOf(dayGZ[0]) % 5) * 2;   // 甲己起甲子，乙庚起丙子……
@@ -155,5 +162,5 @@
     return { ok: true, error: '', results };
   }
 
-  return { month, day, cell, ymd, parsePillars, hourPillars, findByPillars };
+  return { month, day, cell, ymd, JIAZI, parsePillars, monthPillars, hourPillars, findByPillars };
 });

@@ -65,3 +65,18 @@ test('四柱反查：四柱到时辰；子时含前一天夜子；三柱只列�
   assert.equal(C.findByPillars(T, ['丙午', '甲子', '丁丑', '乙巳']).results.length, 0);   // 丙年无甲子月
   assert.equal(C.findByPillars(T, ['丙午', '戊戌']).ok, false);
 });
+
+test('下拉选项：六十甲子；五虎遁定月柱；五鼠遁定时柱；所列组合都查得到', () => {
+  assert.equal(C.JIAZI.length, 60);
+  assert.equal(C.JIAZI[59], '癸亥');
+  assert.deepEqual(C.monthPillars('丙午'), ['庚寅', '辛卯', '壬辰', '癸巳', '甲午', '乙未', '丙申', '丁酉', '戊戌', '己亥', '庚子', '辛丑']);
+  assert.equal(C.monthPillars('甲子')[0], '丙寅');
+  assert.equal(C.monthPillars('戊辰')[0], '甲寅');
+  // 每个年干的 12 个月柱，都至少在 1800–2200 年间某年出现（证明下拉不会给出不存在的组合）
+  for (const yg of ['甲子', '乙丑', '丙寅', '丁卯', '戊辰']) {
+    for (const mg of C.monthPillars(yg)) {
+      const r = C.findByPillars(T, [yg, mg, C.JIAZI.find((d) => C.findByPillars(T, [yg, mg, d], 1800, 2200).results.length)], 1800, 2200);
+      assert.ok(r.results.length > 0, yg + mg);
+    }
+  }
+});
