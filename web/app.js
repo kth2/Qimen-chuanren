@@ -583,6 +583,7 @@
   $('inNmZhi').addEventListener('change', () => { syncNianMing(); cast(); });
   // 供万年历调用：用某天排盘、把某年柱设为年命
   window.ChuanRenApp = { cast, setNianMing };
+  window.CalendarHost = { cast, setNianMing };   // 万年历（vendor/qimen-pwa/calendar-ui.js）的宿主钩子
 
   fillNianMing(); setNow();
   fetch('knowledge/liuren-cases.json').then(r => r.json())
