@@ -519,13 +519,35 @@
   }
 
   /* ---------- 初始化 ---------- */
+  /* 年命：先选年干（10 个），年支选填、只列与年干同阴阳的 6 个。
+   * 引擎只要年干（甲年须连支，以定所遁之仪）；规则 6 要年支，未选年支则规则 6 弃权。 */
+  const NM_GAN = '甲乙丙丁戊己庚辛壬癸', NM_ZHI = '子丑寅卯辰巳午未申酉戌亥';
+  const JIA_DUN = { 子: '戊', 戌: '己', 申: '庚', 午: '辛', 辰: '壬', 寅: '癸' };
   function fillNianMing() {
-    const G = '甲乙丙丁戊己庚辛壬癸', Z = '子丑寅卯辰巳午未申酉戌亥';
-    const sel = $('inNianMing');
-    for (let i = 0; i < 60; i++) {
-      const gz = G[i % 10] + Z[i % 12];
-      const o = document.createElement('option'); o.value = gz; o.textContent = gz; sel.appendChild(o);
-    }
+    $('inNmGan').innerHTML = '<option value="">不提供</option>' + NM_GAN.split('').map((g) => `<option>${g}</option>`).join('');
+    fillNmZhi();
+  }
+  function fillNmZhi() {
+    const g = $('inNmGan').value, cur = $('inNmZhi').value;
+    const yang = g && NM_GAN.indexOf(g) % 2 === 0;
+    const zs = !g ? [] : NM_ZHI.split('').filter((z, i) => (i % 2 === 0) === yang);
+    $('inNmZhi').innerHTML = `<option value="">${g === '甲' ? '年支（甲年必选）' : '年支（选填）'}</option>`
+      + zs.map((z) => `<option value="${z}"${z === cur ? ' selected' : ''}>${z}${g === '甲' ? '（遁' + JIA_DUN[z] + '）' : ''}</option>`).join('');
+    $('inNmZhi').disabled = !g;
+  }
+  /** 两个下拉 → 隐藏的 inNianMing（排盘、规则、案例都读它）。甲年未选年支：引擎定不了所遁之仪，当作不提供 */
+  function syncNianMing() {
+    const g = $('inNmGan').value, z = $('inNmZhi').value;
+    $('inNianMing').value = !g ? '' : g === '甲' && !z ? '' : g + z;
+    $('nmHint').textContent = g === '甲' && !z ? '甲年请选年支' : g && !z ? '未选年支：规则 6 弃权' : '';
+  }
+  /** 外部（万年历）设年命：传完整干支 */
+  function setNianMing(gz) {
+    $('inNmGan').value = gz ? gz[0] : '';
+    fillNmZhi();
+    $('inNmZhi').value = gz && gz[1] ? gz[1] : '';
+    syncNianMing();
+    cast();
   }
   function setNow() {
     const n = new Date(), p = (x) => String(x).padStart(2, '0');
@@ -556,7 +578,11 @@
       if (d.ui !== lastDomainUi) cast(); else renderDomainTag(d);
     }, 400);
   });
-  ['inDomain', 'inNianMing'].forEach(id => $(id).addEventListener('change', cast));
+  $('inDomain').addEventListener('change', cast);
+  $('inNmGan').addEventListener('change', () => { fillNmZhi(); syncNianMing(); cast(); });
+  $('inNmZhi').addEventListener('change', () => { syncNianMing(); cast(); });
+  // 供万年历调用：用某天排盘、把某年柱设为年命
+  window.ChuanRenApp = { cast, setNianMing };
 
   fillNianMing(); setNow();
   fetch('knowledge/liuren-cases.json').then(r => r.json())

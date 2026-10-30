@@ -69,7 +69,17 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   assert(/综合/.test(d.getElementById('domainTag').textContent), '无问句应暂按综合');
   console.log('✓ 占类自动判定：' + '学业／空问句综合');
   d.getElementById('inDomain').value = '财运';
-  d.getElementById('inNianMing').value = '庚午';
+  { const g = d.getElementById('inNmGan'), z = d.getElementById('inNmZhi');
+    assert(g.options.length === 11, '年干应为 10 个加「不提供」');
+    g.value = '庚'; g.dispatchEvent(new w.Event('change'));
+    assert([...z.options].map((o) => o.value).filter(Boolean).join('') === '子寅辰午申戌', '庚年年支只列阳支');
+    z.value = '午'; z.dispatchEvent(new w.Event('change'));
+    assert(d.getElementById('inNianMing').value === '庚午', '年命未合成干支');
+    g.value = '甲'; g.dispatchEvent(new w.Event('change'));
+    z.value = ''; z.dispatchEvent(new w.Event('change'));
+    assert(d.getElementById('inNianMing').value === '' && /甲年请选年支/.test(d.getElementById('nmHint').textContent), '甲年未选支应提示');
+    g.value = '庚'; g.dispatchEvent(new w.Event('change')); z.value = '午'; z.dispatchEvent(new w.Event('change'));
+    console.log('✓ 年命：年干 10 个，年支按阴阳只列 6 个'); }
   d.getElementById('castBtn').click();
   check('转盘 2026-10-28 15:30 财运 年命庚午');
   // 2026-10-28 15:30：乙亥日、卯将、申时（offset 7）。课一 乙寄辰上亥，下贼上之类由引擎定；只核对三传与引擎一致
@@ -194,6 +204,24 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     for (let i = 0; i < 40 && !/你改过/.test(d.getElementById('caseBody').textContent); i++) await sleep(50);
     assert(/怕它发生 · 没发生/.test(d.getElementById('caseBody').textContent) && /如愿/.test(d.querySelector('.case-card .lab').textContent), '手改判读未生效');
     console.log('✓ 判读手改：盼怕、发生可改，如愿随之重算'); }
+
+  // 万年历：打开 → 月历格子 → 点一天看四柱时辰 → 用此日排盘、设为年命
+  d.getElementById('calBtn').click();
+  { const cp = d.getElementById('calPanel');
+    assert(cp.style.display === 'block' && cp.querySelectorAll('.cal-c').length % 7 === 0 && cp.querySelectorAll('.cal-c').length >= 28, '万年历未打开或格子不对');
+    cp.querySelector('select[data-cal="y"]').value = '2024'; cp.querySelector('select[data-cal="y"]').dispatchEvent(new w.Event('change', { bubbles: true }));
+    cp.querySelector('select[data-cal="m"]').value = '2'; cp.querySelector('select[data-cal="m"]').dispatchEvent(new w.Event('change', { bubbles: true }));
+    assert(/立春 4 日/.test(cp.textContent) && /癸卯 → 甲辰/.test(cp.textContent), '2024 年 2 月应见立春与年柱换年');
+    cp.querySelector('.cal-c[data-date="2024-02-04"]').click();
+    assert(/16:27 交立春/.test(d.getElementById('calDay').textContent) && d.querySelectorAll('#calDay button[data-cal="nm"]').length === 2, '立春当天应分交节前后两个年命');
+    cp.querySelector('.cal-c[data-date="2024-02-03"]').click();
+    assert(/年柱 癸卯/.test(d.getElementById('calDay').textContent) && /夜子/.test(d.getElementById('calDay').textContent), '立春前一天年柱应为癸卯');
+    d.querySelector('#calDay button[data-cal="nm"]').click();
+    assert(d.getElementById('inNmGan').value === '癸' && d.getElementById('inNmZhi').value === '卯', '设为年命未生效');
+    d.querySelector('.cal-c[data-date="2024-02-10"]').click();
+    d.querySelector('#calDay button[data-cal="use"]').click();
+    assert(d.getElementById('inDate').value === '2024-02-10' && cp.style.display === 'none' && /2024-02-10/.test(d.getElementById('basicInfo').textContent), '用此日排盘未生效');
+    console.log('✓ 万年历：月历、立春换年、四柱时辰、设为年命、用此日排盘'); }
 
   d.querySelector('#viewSeg button[data-view="qimen"]').click();
   assert(!d.querySelector('.cr-board') && d.querySelectorAll('#chart .gong').length === 9, '只看奇门：应无外圈');
