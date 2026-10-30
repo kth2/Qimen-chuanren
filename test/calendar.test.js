@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const T = require('tyme4ts');
-const C = require('../core/calendar.js');
+const C = require('../vendor/qimen-pwa/core/calendar.js')   // 与奇门 app 共用一份;
 
 global.window = global.window || {};
 require('../vendor/qimen-pwa/engine.bundle.js');
