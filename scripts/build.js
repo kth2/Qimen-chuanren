@@ -20,6 +20,8 @@ const COPY = [
   ['web/app.js', 'app.js'],
   ['web/ai.js', 'ai.js'],
   ['web/cases.js', 'cases.js'],
+  ['web/calendar-ui.js', 'calendar-ui.js'],
+  ['core/calendar.js', 'core/calendar.js'],
   ['core/casebook.js', 'core/casebook.js'],
   ['core/review.js', 'core/review.js'],
   ['vendor/qimen-pwa/core/casestore.js', 'vendor/qimen-pwa/core/casestore.js'],

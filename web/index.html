@@ -164,6 +164,21 @@
     .rv-box.rv-no { border-color: #c9c9c9; background: #fafafa; }
     .rv-item { font-size: 12px; margin-top: 3px; }
     .rv-warn { font-size: 11px; color: #a15c00; }
+    .cal .cal-nav { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .cal .cal-nav select { font-size: 14px; }
+    .cal .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 6px; }
+    .cal .cal-wh { text-align: center; font-size: 12px; color: #888; padding: 2px 0; }
+    .cal .cal-c { border: 1px solid #eee; border-radius: 4px; padding: 2px 1px; text-align: center; cursor: pointer; min-height: 52px; background: #fff; line-height: 1.25; }
+    .cal .cal-c .n { font-size: 15px; font-weight: bold; }
+    .cal .cal-c .l, .cal .cal-c .g { font-size: 11px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cal .cal-c .l.t { color: #3c763d; font-weight: bold; } .cal .cal-c .l.f { color: #a94442; }
+    .cal .cal-c.out { opacity: .4; } .cal .cal-c.today { border-color: #3c763d; } .cal .cal-c.sel { background: #e5f4e4; border-color: #3c763d; }
+    .cal .cal-c.we .n { color: #a94442; }
+    .cal .cal-find { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; margin-top: 6px; font-size: 13px; } .cal .cal-find select { font-size: 14px; margin-left: 2px; }
+    .cal .cal-fbox { margin-top: 10px; border: 1px solid #ddd; border-radius: 6px; padding: 6px; } .cal .cal-fbox > summary { cursor: pointer; }
+    .cal .cal-hit { font-size: 13px; padding: 3px 0; border-bottom: 1px dashed #eee; }
+    .cal .cal-d { margin-top: 8px; font-size: 13px; line-height: 1.7; }
+    .cal .cal-h { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 2px 8px; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -180,6 +195,7 @@
     </span>
     <label>日期 <input type="date" id="inDate"></label>
     <label>时间 <input type="time" id="inTime"></label>
+    <button class="btn" type="button" id="calBtn" style="background:#666;">📅 万年历</button>
     <label>局
       <select id="inJuShu">
         <option value="">跟随日期时间（自动起局）</option>
@@ -210,9 +226,13 @@
         </optgroup>
       </select>
     </label>
-    <label title="规则 6 要用年支，所以须选完整干支">年命 <select id="inNianMing"><option value="">不提供</option></select></label>
+    <label title="年干必选；年支选填（规则 6 要用；甲年必选，以定所遁之仪）。不知道年柱可在万年历里查出生那天，按「设为年命」">年命
+      <select id="inNmGan"></select><select id="inNmZhi"></select><input type="hidden" id="inNianMing" value="">
+      <span class="muted" id="nmHint"></span></label>
     <button class="btn" id="castBtn">排盘</button>
   </div>
+
+  <div id="calPanel" class="panel cal" style="display:none;"></div>
 
   <div class="q-bar">
     <textarea id="aiQuestion" rows="2" placeholder="问句（例：这次投资能赚钱吗？）——占类留「自动判定」时按问句判占类"></textarea>
@@ -332,7 +352,9 @@
   <script src="core/liuren/xiangyi.js"></script>
   <script src="core/liuren/casematch.js"></script>
   <script src="core/rules.js"></script>
+  <script src="core/calendar.js"></script>
   <script src="app.js"></script>
+  <script src="calendar-ui.js"></script>
   <script src="ai.js"></script>
   <script src="vendor/qimen-pwa/core/casestore.js"></script>
   <script src="core/casebook.js"></script>
