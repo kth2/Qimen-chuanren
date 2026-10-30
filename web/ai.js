@@ -14,7 +14,7 @@
  * 证据合流、吟局、八十一格、时格、取数）由 app.js 里约 300 行编排生成，没有导出，这里没有。
  */
 (function () {
-  const QM = window.QM, MD = window.MdLite, TDP = window.LiurenTianDiPan, FR = window.Framing;
+  const QM = window.QM, MD = window.MdLite, TDP = window.LiurenTianDiPan, FR = window.Framing, TL = window.LiurenTuiLi;
   const $ = (id) => document.getElementById(id);
   const esc = (s) => (s == null ? '' : String(s)).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
   const GONG_NAME = { 1: '坎一', 2: '坤二', 3: '震三', 4: '巽四', 5: '中五', 6: '乾六', 7: '兑七', 8: '艮八', 9: '离九' };
@@ -103,7 +103,8 @@
     '4. 年命、日干为甲者按所遁之仪取宫（甲子戊、甲戌己、甲申庚、甲午辛、甲辰壬、甲寅癸），不得以本盘旬首顶替；时干为甲者以值符落宫论。',
     '【穿壬·六壬层】',
     '5. 穿壬是自创的实验流派，各条规则尚未经案例检验。六壬层只作旁证：可以引用，不得据以推翻奇门的成败结论。',
-    '6. 六壬层只用【穿壬·六壬层】一段给出的事实（天盘支、天将、遁干、旬空、四课三传、规则票）。四课三传以该段为准，不得另起；不得引用毕法赋等未给出的内容。三传可读作起因、经过、结局，但成败仍以奇门为准。',
+    '6. 六壬层只用【穿壬·六壬层】一段给出的事实（天盘支、天将、遁干、旬空、四课三传、规则票）。四课三传以该段为准，不得另起；不得引用毕法赋等未给出的内容。三传可读作起因、经过、结局，但成败仍以奇门为准。'
+      + '「六壬推理」各句是伍剑虹书中原意，引用时注明书页；标〔本 app 取法〕或【待核】的不是书中原话，引用时须照样标明，不得说成书上所言。该段不给总吉凶，不得只凭天将吉凶下断（书页 96–97）。',
     '7. 规则票的 +1／−1 只是关系分值，不等于吉、成功或有利；各条分开看，不相加。',
     '8. 六壬层与奇门结论相左时，两边理由都写出，再给出唯一答案（以奇门为准），并注明哪条规则与之相左。',
     '9. 「穿壬事宫」按五行推理 v1 取用，可能与【用神落宫】不同；不同时两者都列，判断仍以【用神落宫】为准。',
@@ -120,7 +121,7 @@
   ].join('\n');
 
   /* ---------- 穿壬段 ---------- */
-  function chuanRenBlock(pan, res) {
+  function chuanRenBlock(pan, res, nianMing) {
     const ln = TDP.build({ riGan: pan.siZhu.day[0], yueJiang: res.yueJiang.yueJiang, shiZhi: pan.siZhu.time[1] });
     const dun = TDP.dunGan(pan.siZhu.day);
     const L = res.liuren, yj = res.yueJiang, q = res.quYong;
@@ -138,6 +139,13 @@
       out.push(`三传（${sc.name}；${sc.why}）：` + sc.chuan.map((z, i) =>
         `${'初中末'[i]}传 ${z}·${ln.jiangOf(z)}·${dun[z] || '旬空无遁干'}${L.xunKong.includes(z) ? '（六壬旬空）' : ''}，临地盘${ln.diUnder(z)}（${GONG_NAME[ZHI_GONG[ln.diUnder(z)]]}）`).join('；') + '。');
       if (sc.flags.length) out.push('三传取法待核处：' + sc.flags.join('；'));
+      // 六壬推理：与界面「六壬推理」面板同一份（core/liuren/tuili.js）
+      if (TL) {
+        try {
+          const tl = TL.analyze({ sc, riZhu: pan.siZhu.day, yueZhi: String(pan.siZhu.month || '')[1], xunKong: L.xunKong, nianMing });
+          out.push(...TL.toPromptLines(tl));
+        } catch (e) { /* 推理段出错不挡提示词，其余照给 */ }
+      }
     }
     out.push(`取用（照五行推理 v1）：我＝${q.rLabel}${q.R ? GONG_NAME[q.R] : '（未定）'}；事＝${q.yName || ''}宫${q.Y ? GONG_NAME[q.Y] : '（未定）'}。`);
     out.push('规则票：');
@@ -211,7 +219,7 @@
     const frLine = fr && fr.direction === 'adverse'
       ? `\n· ⚠ 问句方向：所问之事「${fr.event}」是求测人（或所问之人）不愿其发生之事（问句检出：「${fr.phrase}」）。奇门「事成」与穿壬规则 8 的 +1 于此题为凶，换算见纪律第 11 条。`
       : '';
-    const user = prompt.user + frLine + ws + yq + wx + '\n' + chuanRenBlock(pan, res) +
+    const user = prompt.user + frLine + ws + yq + wx + '\n' + chuanRenBlock(pan, res, nianMing) +
       `\n\n【再次提醒】占问：${q}。奇门为主，穿壬只作旁证；结尾单列「穿壬旁证」。`;
     return { system: prompt.system + '\n' + DISCIPLINE, user, category: (prompt.context && prompt.context.category) || engineCategory, framing: fr };
   }

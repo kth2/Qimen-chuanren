@@ -7,7 +7,7 @@
  */
 (function () {
   const CB = window.ChuanRenCasebook, CS = window.CaseStore, QM = window.QM, RV = window.ChuanRenReview;
-  const TDP = window.LiurenTianDiPan, SC = window.LiurenSanChuan;
+  const TDP = window.LiurenTianDiPan, SC = window.LiurenSanChuan, TL = window.LiurenTuiLi;
   const $ = (id) => document.getElementById(id);
   const esc = (s) => (s == null ? '' : String(s)).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const GONG = { 1: '坎一', 2: '坤二', 3: '震三', 4: '巽四', 5: '中五', 6: '乾六', 7: '兑七', 8: '艮八', 9: '离九' };
@@ -185,6 +185,15 @@
         { id: 'gui', text: `贵人（${ln.zhouYe}）${ln.guiRen} 加地盘 ${ln.guiRenOverDi}，${ln.shun ? '顺' : '逆'}行；月将 ${yj}` },
         { id: 'xk', text: '六壬日旬空 ' + (rec.liuren.xunKong || []).join('') },
       ];
+      // 六壬推理（与当时提示词同一算法）：每要素一条，合看一条
+      if (TL) {
+        try {
+          const tl = TL.analyze({ sc, riZhu: b.day, yueZhi: String(b.month || '')[1], xunKong: rec.liuren.xunKong || [], nianMing: rec.input.nianMing || '' });
+          const tag = (it) => (it.own ? '〔本 app 取法〕' : it.src ? `〔${it.src}〕` : '');
+          tl.steps.forEach((st) => lr.push({ id: 'tl-' + st.key, text: `六壬推理·${st.title}：` + st.items.map((it) => it.text + tag(it)).join(' ') }));
+          lr.push({ id: 'tl-he', text: '六壬推理·合看：' + tl.heKan.map((it) => it.text + tag(it)).join(' ') });
+        } catch (e) { /* 推理段算不出不挡复盘 */ }
+      }
       return { text, lr };
     } catch (e) { console.warn('[复盘] 重排盘失败：', e.message); return null; }
   }

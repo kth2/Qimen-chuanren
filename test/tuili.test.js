@@ -91,3 +91,14 @@ test('旺相休囚以月建为纲（书页 15）；初传旺相定现在、未�
   // 没给年支：变体不看
   assert.match(all(TL.analyze({ sc, riZhu: '丁丑', xunKong: [], nianMing: '庚' })), /未给年命地支/);
 });
+
+test('给 AI 的几行：与面板同一份；书页、本 app 取法逐句标明；含书页 96–97 的提醒', () => {
+  const sc = SC.compute({ riGan: '丁', riZhi: '丑', yueJiang: '卯', shiZhi: '午' });
+  const r = TL.analyze({ sc, riZhu: '丁丑', yueZhi: '戌', xunKong: TDP.xunKong('丁丑'), nianMing: '庚午' });
+  const lines = TL.toPromptLines(r), t = lines.join('\n');
+  assert.match(lines[0], /只作旁证，不投票/);
+  assert.equal(lines.length, 1 + r.steps.length + 2);
+  assert.match(t, /发端·初传：初传为发端之门.*〔书页 14〕/);
+  assert.match(t, /不下扶抑之断。【待核】〔本 app 取法〕/);
+  assert.match(t, /更次才是吉神凶神.*〔书页 96–97〕/);
+});

@@ -210,5 +210,18 @@
     };
   }
 
-  return { APPLIES_TO, SOURCE, KETI, QISHU, analyze, wangXiang, moves };
+  /**
+   * 给 AI 提示词用的几行：与面板同一份内容，每句后注〔书页 N〕或〔本 app 取法〕。
+   * 书中无逐字规定的句子标出来，让模型引用时分得清哪句是书、哪句是本 app 自定。
+   */
+  function toPromptLines(r) {
+    const tag = (it) => (it.own ? '〔本 app 取法〕' : it.src ? `〔${it.src}〕` : '');
+    const out = [`六壬推理（照${r.source}「六壬判断的基本要素」八项；只作旁证，不投票）：`];
+    for (const st of r.steps) out.push(`  ${st.title}：` + st.items.map((it) => it.text + tag(it)).join(' '));
+    out.push('  合看：' + r.heKan.map((it) => it.text + tag(it)).join(' '));
+    out.push(`  ${r.caution.text}〔${r.caution.src}〕`);
+    return out;
+  }
+
+  return { APPLIES_TO, SOURCE, KETI, QISHU, analyze, wangXiang, moves, toPromptLines };
 });
