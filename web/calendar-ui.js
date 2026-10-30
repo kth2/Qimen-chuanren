@@ -12,7 +12,7 @@
 
   const now = new Date(), pad = (n) => String(n).padStart(2, '0');
   const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-  let y, m, sel = '', findHtml = '';
+  let y, m, sel = '', findHtml = '', findOpen = false;
   // 四柱反查：四个下拉，只给合法的组合——月柱按年干（五虎遁）、时柱按日干（五鼠遁）只列 12 个
   const nowH = T.SolarTime.fromYmdHms(now.getFullYear(), now.getMonth() + 1, now.getDate(), now.getHours(), now.getMinutes(), 0).getSixtyCycleHour();
   const fsel = { y: nowH.getYear().getName(), m: nowH.getMonth().getName(), d: nowH.getDay().getName(), h: nowH.getSixtyCycle().getName() };
@@ -51,14 +51,16 @@
         <button class="btn" type="button" data-cal="today" style="padding:2px 8px;background:#666;">今天</button>
         <button class="btn" type="button" data-cal="close" style="padding:2px 8px;background:#999;margin-left:auto;">✕ 收起</button>
       </div>
-      <div class="cal-find"><span class="muted">四柱反查</span>${findSelects()}
-        <button class="btn" type="button" data-cal="find" style="padding:2px 10px;">查找</button></div>
-      <div class="muted" style="font-size:11px;">月柱随年干、时柱随日干只列配得上的 12 个；时柱可选「不限」只查日子。</div>
-      <div id="calFind">${findHtml}</div>
       <div class="muted" style="margin-top:4px;">年柱 ${mo.yearGZs.map(esc).join(' → ')}${mo.terms.length ? '　本月交节：' + mo.terms.map((t) => `${esc(t.name)} ${+t.date.slice(8)} 日`).join('、') : ''}
         <span style="font-size:11px;">（年柱以立春换，月柱以节换）</span></div>
       <div class="cal-grid">${mo.weekHead.map((w) => `<div class="cal-wh">${w}</div>`).join('')}${cells}</div>
-      <div class="cal-d" id="calDay">${sel ? dayHtml(sel) : '<span class="muted">点一天看四柱与十二时辰。</span>'}</div>`;
+      <div class="cal-d" id="calDay">${sel ? dayHtml(sel) : '<span class="muted">点一天看四柱与十二时辰。</span>'}</div>
+      <details class="cal-fbox" id="calFindBox"${findOpen ? ' open' : ''}><summary><b>🔎 四柱反查</b> <span class="muted">已知干支，找公历日期与时辰</span></summary>
+        <div class="cal-find">${findSelects()}
+          <button class="btn" type="button" data-cal="find" style="padding:2px 10px;">查找</button></div>
+        <div class="muted" style="font-size:11px;">月柱随年干、时柱随日干只列配得上的 12 个；时柱可选「不限」只查日子。</div>
+        <div id="calFind">${findHtml}</div>
+      </details>`;
   }
 
   function dayHtml(dateStr) {
@@ -126,7 +128,7 @@
     else if (k === 'next') shift(1);
     else if (k === 'today') openAt(todayStr);
     else if (k === 'close') $('calPanel').style.display = 'none';
-    else if (k === 'find') runFind();
+    else if (k === 'find') { findOpen = true; runFind(); }
     else if (k === 'goto') { sel = b.dataset.date; y = +sel.slice(0, 4); m = +sel.slice(5, 7); draw(); }
     else if (k === 'use') {
       $('inDate').value = b.dataset.date;
@@ -139,5 +141,6 @@
       b.textContent = '已设为年命 ✓';
     }
   });
+  $('calPanel').addEventListener('toggle', (e) => { if (e.target.id === 'calFindBox') findOpen = e.target.open; }, true);
   window.ChuanRenCalendarUI = { openAt, runFind, fsel };
 })();

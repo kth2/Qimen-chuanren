@@ -222,6 +222,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     d.querySelector('#calDay button[data-cal="use"]').click();
     assert(d.getElementById('inDate').value === '2024-02-10' && cp.style.display === 'none' && /2024-02-10/.test(d.getElementById('basicInfo').textContent), '用此日排盘未生效');
     d.getElementById('calBtn').click();
+    assert(cp.querySelector('.cal-grid') && cp.querySelector('#calFindBox'), '万年历应同时有月历与四柱反查');
     const pick = (k, v) => { const e = cp.querySelector(`select[data-cal="${k}"]`); e.value = v; e.dispatchEvent(new w.Event('change', { bubbles: true })); };
     pick('fy', '丙午');
     assert([...cp.querySelectorAll('select[data-cal="fm"] option')].map((o) => o.value).join(' ') === '庚寅 辛卯 壬辰 癸巳 甲午 乙未 丙申 丁酉 戊戌 己亥 庚子 辛丑', '丙年月柱应按五虎遁列 12 个');
