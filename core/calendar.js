@@ -93,5 +93,67 @@
     });
   }
 
-  return { month, day, cell, ymd };
+  const GAN = '甲乙丙丁戊己庚辛壬癸';
+  /** 从一段文字里取出干支（容忍空格、逗号、「年月日时」字样）；不是六十甲子的（如甲丑）记为错 */
+  function parsePillars(text) {
+    const out = [], bad = [];
+    const re = /([甲乙丙丁戊己庚辛壬癸])([子丑寅卯辰巳午未申酉戌亥])/g;
+    let m;
+    while ((m = re.exec(String(text || '')))) {
+      if (GAN.indexOf(m[1]) % 2 === ZHI.indexOf(m[2]) % 2) out.push(m[0]); else bad.push(m[0]);
+    }
+    return { pillars: out, bad };
+  }
+  /** 五鼠遁：日干定十二时柱 */
+  function hourPillars(dayGZ) {
+    const start = (GAN.indexOf(dayGZ[0]) % 5) * 2;   // 甲己起甲子，乙庚起丙子……
+    return ZHI.split('').map((z, i) => GAN[(start + i) % 10] + z);
+  }
+
+  /**
+   * 四柱反查日期：给年月日（三柱）或年月日时（四柱），在 fromY–toY 年间找出所有对得上的日子／时辰。
+   * 时柱为子时的，零点后的早子与前一天 23 点后的夜子都算（夜子算次日，与奇门引擎一致）。
+   * @returns { ok, error, results: [{ date, time, label, range }] }  date 为公历日（夜子是前一天的日期）
+   */
+  function findByPillars(T, pillars, fromY, toY) {
+    fromY = fromY || 1800; toY = toY || 2200;
+    if (!Array.isArray(pillars) || pillars.length < 3 || pillars.length > 4) return { ok: false, error: '请给年、月、日三柱，或年、月、日、时四柱', results: [] };
+    const [yg, mg, dg, hg] = pillars;
+    const hours = hg ? [hg] : hourPillars(dg);
+    const seen = new Set(), results = [];
+    const add = (st, isLate) => {
+      const date = ymd(st.getYear(), st.getMonth(), st.getDay());
+      const h = st.getHour();
+      const zi = ZHI[Math.floor(((h + 1) % 24) / 2)];
+      const key = hg ? date + ' ' + h : date;
+      if (seen.has(key)) return;
+      seen.add(key);
+      results.push({ date, time: `${pad(h)}:00`, zhi: zi,
+        label: isLate ? '夜子时（算次日）' : (h === 0 ? '早子时' : zi + '时'),
+        range: isLate ? '23:00–23:59' : h === 0 ? '00:00–00:59' : `${pad(h - 1)}:00–${pad(h)}:59` });
+    };
+    for (const hp of hours) {
+      let list = [];
+      try { list = new T.EightChar(yg, mg, dg, hp).getSolarTimes(fromY, toY); } catch (e) { list = []; }
+      for (const st of list) {
+        add(st, false);
+        if (hg && hp[1] === '子') {   // 只给三柱时不收夜子：那是前一天，日期会误导
+          // 前一天 23 点后的夜子时也是这一柱：照引擎口径核一遍再收
+          const prev = T.SolarDay.fromYmd(st.getYear(), st.getMonth(), st.getDay()).next(-1);
+          const lt = T.SolarTime.fromYmdHms(prev.getYear(), prev.getMonth(), prev.getDay(), 23, 0, 0);
+          const x = lt.getSixtyCycleHour();
+          if (x.getYear().getName() === yg && x.getMonth().getName() === mg && x.getDay().getName() === dg && x.getSixtyCycle().getName() === hp) add(lt, true);
+        }
+      }
+    }
+    results.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    if (!hg) {   // 三柱：一天只列一次
+      const byDay = []; const s2 = new Set();
+      for (const r of results) if (!s2.has(r.date)) { s2.add(r.date); byDay.push({ date: r.date, time: '', label: '', range: '' }); }
+      return { ok: true, error: '', results: byDay };
+    }
+    return { ok: true, error: '', results };
+  }
+
+  return { month, day, cell, ymd, parsePillars, hourPillars, findByPillars };
 });

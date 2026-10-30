@@ -49,3 +49,19 @@ test('交节当天：给出交节时刻与前后年月柱（立春 2024-02-04 16
   assert.equal(C.day(T, 2024, 2, 19).jie, null);   // 雨水是中气，不换月
   assert.equal(C.day(T, 2024, 2, 5).jie, null);
 });
+
+test('四柱反查：四柱到时辰；子时含前一天夜子；三柱只列日子；不相配的四柱查无', () => {
+  assert.deepEqual(C.parsePillars('丙午年 戊戌月，丁丑 乙巳 甲丑'), { pillars: ['丙午', '戊戌', '丁丑', '乙巳'], bad: ['甲丑'] });
+  assert.deepEqual(C.hourPillars('丁丑'), ['庚子', '辛丑', '壬寅', '癸卯', '甲辰', '乙巳', '丙午', '丁未', '戊申', '己酉', '庚戌', '辛亥']);
+  const r = C.findByPillars(T, ['丙午', '戊戌', '丁丑', '乙巳'], 1800, 2200);
+  assert.deepEqual(r.results.map((x) => x.date + ' ' + x.time), ['1846-10-14 10:00', '2026-10-30 10:00', '2086-10-15 10:00']);
+  const zi = C.findByPillars(T, ['丙午', '戊戌', '戊寅', '壬子'], 2000, 2100).results.map((x) => x.date + ' ' + x.time);
+  assert.deepEqual(zi, ['2026-10-30 23:00', '2026-10-31 00:00', '2086-10-15 23:00', '2086-10-16 00:00']);
+  for (const s of zi) {   // 逐一用奇门引擎排一次，四柱须完全对上
+    const sz = zhuan(new Date(s.replace(' ', 'T') + ':00'));
+    assert.equal([sz.year, sz.month, sz.day, sz.time].join(' '), '丙午 戊戌 戊寅 壬子', s);
+  }
+  assert.deepEqual(C.findByPillars(T, ['丙午', '戊戌', '丁丑'], 2000, 2100).results.map((x) => x.date), ['2026-10-30', '2086-10-15']);
+  assert.equal(C.findByPillars(T, ['丙午', '甲子', '丁丑', '乙巳']).results.length, 0);   // 丙年无甲子月
+  assert.equal(C.findByPillars(T, ['丙午', '戊戌']).ok, false);
+});

@@ -221,7 +221,13 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     d.querySelector('.cal-c[data-date="2024-02-10"]').click();
     d.querySelector('#calDay button[data-cal="use"]').click();
     assert(d.getElementById('inDate').value === '2024-02-10' && cp.style.display === 'none' && /2024-02-10/.test(d.getElementById('basicInfo').textContent), '用此日排盘未生效');
-    console.log('✓ 万年历：月历、立春换年、四柱时辰、设为年命、用此日排盘'); }
+    d.getElementById('calBtn').click();
+    cp.querySelector('input[data-cal="q"]').value = '丙午 戊戌 丁丑 乙巳';
+    cp.querySelector('button[data-cal="find"]').click();
+    assert(/共 3 处/.test(d.getElementById('calFind').textContent) && /2026-10-30/.test(d.getElementById('calFind').textContent), '四柱反查不对：' + d.getElementById('calFind').textContent);
+    d.querySelector('#calFind button[data-cal="use"][data-date="2026-10-30"]').click();
+    assert(d.getElementById('inDate').value === '2026-10-30' && d.getElementById('inTime').value === '10:00' && /丙午 戊戌 丁丑 乙巳/.test(d.getElementById('basicInfo').textContent), '反查后排盘四柱不对：' + d.getElementById('basicInfo').textContent);
+    console.log('✓ 万年历：月历、立春换年、四柱时辰、设为年命、用此日排盘、四柱反查'); }
 
   d.querySelector('#viewSeg button[data-view="qimen"]').click();
   assert(!d.querySelector('.cr-board') && d.querySelectorAll('#chart .gong').length === 9, '只看奇门：应无外圈');
