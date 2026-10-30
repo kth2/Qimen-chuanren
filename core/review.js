@@ -235,6 +235,7 @@
   /** 条目 id → 汇总用的类别（各宫象合为一类，免得九宫各算各的永远攒不起来） */
   function category(id) {
     if (/^g\d$/.test(id)) return '奇门·宫中门星神干';
+    if (/^tl-/.test(id)) return '六壬推理';
     return ({ zf: '奇门·值符值使', kw: '奇门·空亡', ma: '奇门·驿马', yong: '奇门·引擎用神', zt: '奇门·引擎总体',
       ke: '六壬·四课', sc: '六壬·三传', gui: '六壬·贵人', xk: '六壬·旬空', wx: '五行推理 v1' })[id]
       || (/^r\d+$/.test(id) ? '规则' + id.slice(1) + ' ' + (RULE_NAME[id.slice(1)] || '') : id || '（未挂依据）');
