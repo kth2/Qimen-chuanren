@@ -12,6 +12,7 @@
   const TDP = window.LiurenTianDiPan;
   const XY = window.LiurenXiangYi;
   const CM = window.LiurenCaseMatch;
+  const TL = window.LiurenTuiLi;
   let lastDomainUi = null;   // 上次排盘实际用的界面占类
   let BOOK = null;      // knowledge/liuren-cases.json：书中六壬案例（盘式照录＋摘要）
   const $ = (id) => document.getElementById(id);
@@ -344,6 +345,21 @@
       象义取 ${esc(XY.SOURCE)}，书中原则「以十二神与六亲的结合为准」。我＝我宫，事＝事宫，向＝规则 5 第二方位。</p></div>`;
   }
 
+  /** 六壬推理：照伍剑虹书页 13–14 八要素逐项讲；只显示，不投票，不进规则账本 */
+  function tuiliPanel(pan, res) {
+    if (!TL || !res.sanChuan) return '';
+    const r = TL.analyze({ sc: res.sanChuan, riZhu: pan.siZhu.day, yueZhi: String(pan.siZhu.month || '')[1],
+      xunKong: res.liuren.xunKong, nianMing: $('inNianMing') ? $('inNianMing').value : '' });
+    const gongLink = (t) => esc(t).replace(/奇门(\d)宫/g, (m, g) => `<a href="#xj-g${g}" class="tl-gong" data-gong="${g}">奇门${g}宫</a>`);
+    const item = (it) => `<li${it.own ? ' class="tl-own"' : ''}>${gongLink(it.text)}${it.src ? ` <span class="tl-src">${esc(it.src)}</span>` : ''}${it.own ? ' <span class="tl-src">本 app 取法</span>' : ''}</li>`;
+    const steps = r.steps.map((st) => `<div class="tl-step"><b>${esc(st.title)}</b><ul>${st.items.map(item).join('')}</ul></div>`).join('');
+    return `<div class="panel" id="tuiliPanel"><h3>六壬推理 <span class="exp-badge">只显示·不投票</span></h3>
+      ${steps}
+      <div class="tl-step tl-he"><b>合看</b><ul>${r.heKan.map(item).join('')}</ul></div>
+      <p class="muted" style="margin:6px 0 0;">${esc(r.caution.text)}（${esc(r.caution.src)}）<br>
+        出处：${esc(r.source)}，书页为该书页脚页码。「本 app 取法」＝书中无逐字规定、本 app 自定，可改。点「奇门N宫」跳到九宫详解。</p></div>`;
+  }
+
   /** 四课三传（版式同六壬书：四课右起第一课，上行天将、中行上神、下行下神） */
   function sanChuanPanel(pan, res) {
     const sc = res.sanChuan;
@@ -434,6 +450,7 @@
       </div></div>`;
 
     html += sanChuanPanel(pan, res);
+    html += tuiliPanel(pan, res);
     html += '<div id="bookCases"></div>';
     html += qimenAnalysisPanels(pan);
     html += jiuGongPanel(pan, res);
@@ -448,6 +465,12 @@
       各规则分开计票、不相加，冲突原样保留。规则 3、4 依第二层三传（涉害取深浅法）。
       规则 7–10 为 v2：奇门、六壬两边同向才投票，相反记「混」。</p></div>`;
     $('chuanren').innerHTML = html;
+    // 六壬推理里的「奇门N宫」：跳到九宫详解并闪一下
+    $('chuanren').querySelectorAll('.tl-gong').forEach((a) => a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const t = document.getElementById('xj-g' + a.dataset.gong);
+      if (t) { if (t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.classList.add('xj-hit'); setTimeout(() => t.classList.remove('xj-hit'), 1200); }
+    }));
     renderBookMatches(pan, res);
   }
 

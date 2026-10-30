@@ -88,6 +88,16 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(shown === S.chuan.join(''), '页面三传与引擎不符：' + shown + ' vs ' + S.chuan.join(''));
     console.log('✓ 四课三传：' + S.name + ' ' + shown); }
   assert(/卯/.test(d.getElementById('chuanren').textContent), '霜降后应为卯将');
+  { const tl = d.getElementById('tuiliPanel');
+    assert(tl, '缺六壬推理面板');
+    const titles = [...tl.querySelectorAll('.tl-step > b')].map((e) => e.textContent).join(' ');
+    assert(/大局·课体 先锋·占时 值事·月将 外事·日干（我） 内事·日支（事／对方） 发端·初传 移易·中传 归计·末传 变体·年命 合看/.test(titles), '六壬推理八要素不全：' + titles);
+    assert(/年命庚午，上神/.test(tl.textContent) && /书页 14/.test(tl.textContent) && /贵人.*行/.test(tl.textContent), '六壬推理内容不全');
+    const a = tl.querySelector('.tl-gong');
+    assert(a, '三传应可跳到九宫详解');
+    a.click();
+    assert(d.getElementById('xj-g' + a.dataset.gong).classList.contains('xj-hit'), '点「奇门N宫」未跳到九宫详解');
+    console.log('✓ 六壬推理：八要素＋合看，每句注书页，可跳九宫详解'); }
 
   // 书中同课案例：等案例库载入；2024-01-07 02:30 为庚午日丑将丑时，与伍剑虹书伍-10 全同
   for (let i = 0; i < 60 && /载入中/.test(d.getElementById('bookCases').textContent); i++) await new Promise((r) => setTimeout(r, 50));
