@@ -24,7 +24,7 @@
 })(typeof self !== 'undefined' ? self : this, function (WuXing, TianDiPan, YueJiang, SanChuan, YingQi, XiangYi) {
 'use strict';
 
-const VERSION = '2.1.0';
+const VERSION = '2.2.0';
 const APPLIES_TO = 'chuanren-exp';
 
 const ZHI_WX = { 子: '水', 亥: '水', 寅: '木', 卯: '木', 巳: '火', 午: '火', 申: '金', 酉: '金', 辰: '土', 戌: '土', 丑: '土', 未: '土' };
@@ -119,13 +119,16 @@ const LEISHEN = {
   stock: { qin: ['财'], jiang: ['青龙'], note: '财爻、青龙' },
   career: { qin: ['官', '鬼'], jiang: [], note: '官鬼' },
   study: { qin: ['父母'], jiang: ['朱雀'], note: '印（父母）、朱雀' },
+  // v2.2：伍剑虹《大六壬精义讲解》书页 134 第 137 条：一般财物「只看财爻」，「三传是否出现该财爻或类神，出现则为找到」。
+  // 珠宝金银取申酉、贵重财物取贵人所乘之财，须按所失之物另定，本 app 不知何物，一律取财爻。
+  lost_item: { qin: ['财'], jiang: [], note: '财爻（一般财物；伍剑虹书页 134）' },
   relationship: { qin: [], jiang: ['六合', '天后', '青龙'], note: '六合、天后、青龙' },
   traveler: { qin: [], jiang: ['六合'], note: '六合' },
   find_person: { qin: [], jiang: ['六合'], note: '六合' },
   pregnancy: { qin: ['子孙'], jiang: ['六合'], note: '子孙、六合' },
 };
 /** 规则 9 只用于求人办事的占类 */
-const GUI_DOMAINS = ['career', 'study', 'lawsuit', 'wealth'];
+const GUI_DOMAINS = ['career', 'study', 'lawsuit', 'wealth', 'stock'];   // v2.2 加股市：引擎按求财取用，规则 8 亦与求财同类
 /** 奇门一宫受制：空亡、入墓、击刑、门迫任一 */
 function gongHurt(ws, g) {
   const w = (ws && ws.gongs && ws.gongs[g]) || {};
@@ -157,6 +160,9 @@ const abstain = (rule, reason, extra) => Object.assign({ rule, applicable: false
  *   date        起局时刻（Date），用来定月将
  *   feipan      飞盘取用：{ nianMingGong, shiGanGong, yongGong, yongName }
  *   nianMing    求测人年命干支（如「甲子」）；只有天干或未提供，规则 6 弃权
+ *   yong        v2.2 转盘事宫：{ gong, name, source }，即 AI 解读【用神落宫】里第一个落在盘上的用神
+ *               （Qimen-pwa YongShen.pickMain）；不给则照五行推理 v1 取（无对应占类者取时干）
+ *   selfless    v2.2：占类表此占类无「我」（self 为空，如天气）→ 涉及我的规则 2、3、6、10 弃权
  *   yueJiang    可选：直接给月将，跳过按时间推算
  */
 function evaluate(a) {
@@ -170,11 +176,12 @@ function evaluate(a) {
   // 取用：照五行推理 v1
   const wx = WuXing.analyze({ chart: ch, wangshuai: a.wangshuai, domain: a.domain, feipan: a.feipan });
   const school = isFeipan(ch) ? 'feipan' : 'zhuanpan';
-  let R = wx.R || '', Y = wx.Y || '', yName = wx.yName || '';
+  let R = wx.R || '', Y = wx.Y || '', yName = wx.yName || '', ySource = Y ? 'wuxing-v1' : '';
+  if (school === 'zhuanpan' && a.yong && a.yong.gong) { Y = String(a.yong.gong); yName = a.yong.name || '用神'; ySource = a.yong.source || 'engine'; }
   if (school === 'feipan' && !Y) {
     const f = a.feipan || {};
-    if (f.yongGong) { Y = String(f.yongGong); yName = f.yongName || '用神'; }
-    else if (f.shiGanGong) { Y = String(f.shiGanGong); yName = '时干'; }
+    if (f.yongGong) { Y = String(f.yongGong); yName = f.yongName || '用神'; ySource = 'engine'; }
+    else if (f.shiGanGong) { Y = String(f.shiGanGong); yName = '时干'; ySource = 'shigan'; }
   }
 
   const rules = [];
@@ -189,7 +196,9 @@ function evaluate(a) {
   }
 
   // 规则 2：五行推理·天盘支变体
-  if (!R || !Y) rules.push(abstain(2, (wx.rLabel || '我宫') + '或事宫未定'));
+  const noSelf = !!a.selfless;
+  if (noSelf) rules.push(abstain(2, '本占类无「我」（占类表 self 为空，如天气），我彼诸条弃权'));
+  else if (!R || !Y) rules.push(abstain(2, (wx.rLabel || '我宫') + '或事宫未定'));
   else {
     const rT = gongTianWx(ln, R), yT = gongTianWx(ln, Y);
     if (!rT.wx || !yT.wx) rules.push(abstain(2, '我宫或事宫天盘支五行不一（或在中五），弃权', { rZhi: rT.zhi, yZhi: yT.zhi }));
@@ -206,7 +215,8 @@ function evaluate(a) {
   const moGong = TianDiPan.ZHI_GONG[ln.diUnder(mo)];
 
   // 规则 3：末传落宫——末传所加地盘之宫，其宫五行对我宫宫五行查计票表
-  if (!R) rules.push(abstain(3, (wx.rLabel || '我宫') + '未定'));
+  if (noSelf) rules.push(abstain(3, '本占类无「我」（占类表 self 为空，如天气），我彼诸条弃权'));
+  else if (!R) rules.push(abstain(3, (wx.rLabel || '我宫') + '未定'));
   else {
     const rv = relationVote(GONG_WX[R], GONG_WX[moGong]);
     rules.push({ rule: 3, applicable: true, vote: rv.vote, relation: rv.relation, mo, moDi: ln.diUnder(mo), moGong, R,
@@ -231,7 +241,8 @@ function evaluate(a) {
   // 规则 6：命干
   const nm = String(a.nianMing || '');
   const benMingZhi = nm.length === 2 && ZHI_WX[nm[1]] ? nm[1] : '';
-  if (!benMingZhi) rules.push(abstain(6, '未提供年命地支'));
+  if (noSelf) rules.push(abstain(6, '本占类无「我」（占类表 self 为空，如天气），我彼诸条弃权'));
+  else if (!benMingZhi) rules.push(abstain(6, '未提供年命地支'));
   else if (!Y) rules.push(abstain(6, '事宫未定'));
   else {
     const shangShen = ln.tianOver(benMingZhi);
@@ -275,7 +286,7 @@ function evaluate(a) {
   // 规则 8：类神入传（判「事是否成形／发生」，计分对「发生」而非「如愿」）
   {
     const L = LEISHEN[a.domain];
-    if (!L) rules.push(abstain(8, '本占类未定类神（只用于求财、股市、事业、学业、婚姻、行人、寻人、怀孕）'));
+    if (!L) rules.push(abstain(8, '本占类未定类神（只用于求财、股市、事业、学业、婚姻、行人、寻人、怀孕、失物）'));
     else if (!Y) rules.push(abstain(8, '事宫未定'));
     else {
       const isLei = (z) => L.qin.includes(XiangYi.liuQin(riGan, z)) || L.jiang.includes(ln.jiangOf(z));
@@ -297,7 +308,7 @@ function evaluate(a) {
 
   // 规则 9：贵人互参
   {
-    if (!GUI_DOMAINS.includes(a.domain)) rules.push(abstain(9, '只用于事业、学业、官司、求财'));
+    if (!GUI_DOMAINS.includes(a.domain)) rules.push(abstain(9, '只用于事业、学业、官司、求财、股市'));
     else {
       const guiKong = xk.includes(ln.guiRen), guiYu = ln.guiRenOverDi === '辰' || ln.guiRenOverDi === '戌';
       const lr = guiKong || guiYu ? -1 : 1;
@@ -311,7 +322,8 @@ function evaluate(a) {
   }
 
   // 规则 10：我彼双读
-  {
+  if (noSelf) rules.push(abstain(10, '本占类无「我」（占类表 self 为空，如天气），我彼诸条弃权'));
+  else {
     const gs = sc.ke[0].shang, zs = sc.ke[2].shang;
     const he = LIU_HE[gs] === zs, bi = ZHI_WX[gs] === ZHI_WX[zs];
     const sheng = SHENG[ZHI_WX[gs]] === ZHI_WX[zs] || SHENG[ZHI_WX[zs]] === ZHI_WX[gs];
@@ -337,7 +349,7 @@ function evaluate(a) {
     yueJiang: yj,
     liuren: { zhouYe: ln.zhouYe, guiRen: ln.guiRen, guiRenOverDi: ln.guiRenOverDi, shun: ln.shun,
       xunKong: TianDiPan.xunKong(sz.day) },   // 六壬日旬空，与奇门 kongWang 分开存
-    quYong: { R, Y, yName, rLabel: wx.rLabel || (school === 'feipan' ? '年命宫' : '日干宫') },
+    quYong: { R, Y, yName, ySource, rLabel: wx.rLabel || (school === 'feipan' ? '年命宫' : '日干宫') },
     wuxing: wx,   // 五行推理 v1 原结果（Qimen-pwa 同一实现），AI 提示词照引
     sanChuan: sc, // 第二层四课三传
     rules,

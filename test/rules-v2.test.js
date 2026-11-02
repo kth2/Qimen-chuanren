@@ -25,9 +25,9 @@ const run = (d, domain, purpose) => {
   return { ch, ws, r, by: Object.fromEntries(r.rules.map((x) => [x.rule, x])) };
 };
 
-test('版本 2.1.0；规则 7–10 齐全', () => {
+test('版本 2.2.0；规则 7–10 齐全', () => {
   const { r } = run(new Date('2026-10-28T15:30:00+08:00'), 'wealth', '财运');
-  assert.equal(r.version, '2.1.0');
+  assert.equal(r.version, '2.2.0');
   assert.deepEqual(r.rules.map((x) => x.rule), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 });
 
@@ -110,4 +110,57 @@ test('规则 10：干上神与支上神——合生比为＋，冲刑克为－�
     assert.ok([-1, 0, 1].includes(x.qm));
     if (x.applicable) assert.equal(x.vote, x.lr);
   }
+});
+
+/* ---------- v2.2（2026-11-02 占类检查） ---------- */
+const YS = require('../vendor/qimen-pwa/core/yongshen.js');
+YS.load(require('../vendor/qimen-pwa/knowledge/domains.json'));
+/** 照界面同一取法：引擎 buildPrompt 的用神 → YongShen.resolve → pickMain */
+function pick(ch, ui, nm) {
+  const ec = YS.toEngineCategory(ui, 'zhuanpan');
+  const ctx = (QM.zhuanpanPredict.buildPrompt(ch, '', { category: ec, fallbackCategory: ec, nianMingGan: nm || '' }) || {}).context || {};
+  return YS.pickMain(YS.resolve({ domain: ui, chart: ch, options: { engineYong: ctx.yong, school: 'zhuanpan', nianMingGan: nm || '' } }));
+}
+const D = new Date(2026, 9, 30, 12, 46);
+
+test('v2.2 转盘事宫＝【用神落宫】第一个在盘者：失物取玄武宫、出行取开门宫、股市取生门宫（原先都是时干）', () => {
+  for (const [ui, dk, name, find] of [['失物', 'lost_item', '玄武', (c) => c.baShen], ['出行', 'travel', '开门', (c) => c.baMen], ['股市', 'stock', '生门', (c) => c.baMen]]) {
+    const ch = zhuan(D, ui), y = pick(ch, ui);
+    assert.equal(y.name, name, ui);
+    const r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: dk, date: D, nianMing: '庚午', yong: { gong: y.gong, name: y.name, source: y.source } });
+    assert.equal(r.quYong.Y, String(y.gong), ui);
+    assert.equal(find(ch)[r.quYong.Y], name, ui + ' 事宫上须是该用神');
+    assert.equal(r.quYong.ySource, 'engine');
+    const old = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: dk, date: D, nianMing: '庚午' });
+    assert.equal(old.quYong.yName, '时干', ui + ' 不给 yong 时照五行推理 v1');
+  }
+});
+
+test('v2.2 引擎无此占类：终身局取年命宫、异梦取腾蛇宫（占类表）', () => {
+  const ch = zhuan(D, '终身局');
+  const y = pick(ch, '终身局', '丙');
+  assert.equal(y.name, '年命'); assert.equal(y.source, 'domain');
+  const r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: 'lifetime', date: D, nianMing: '丙午', yong: y });
+  assert.equal(r.quYong.ySource, 'domain');
+  assert.equal(ch.tianPan[r.quYong.Y], '丙');
+  assert.equal(pick(zhuan(D, '异梦'), '异梦').name, '腾蛇');
+});
+
+test('v2.2 规则 8 加失物（财爻，伍剑虹书页 134）；规则 9 加股市', () => {
+  const { by } = run(D, 'lost_item', '失物');
+  assert.match(by[8].leiShen || '', /财爻/);
+  assert.ok(by[8].lrWhy, '失物应有六壬一侧判断');
+  assert.notEqual(run(D, 'stock', '股市').by[9].reason, '只用于事业、学业、官司、求财、股市');
+  assert.ok(run(D, 'stock', '股市').by[9].lrWhy);
+  assert.match(run(D, 'health', '健康').by[8].reason, /未定类神/, '健康书中无类神入传之法，仍弃权');
+});
+
+test('v2.2 占类无「我」（天气）：规则 2、3、6、10 弃权；1、4、5、7 照常', () => {
+  const ch = zhuan(D, '天气');
+  const r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: 'weather', date: D, nianMing: '庚午', selfless: true });
+  const by = Object.fromEntries(r.rules.map((x) => [x.rule, x]));
+  for (const n of [2, 3, 6, 10]) { assert.equal(by[n].applicable, false, '规则' + n); assert.match(by[n].reason, /无「我」/); }
+  assert.ok(!/无「我」/.test(by[1].reason || '') && by[7].rule === 7);
+  assert.equal(!!YS.getDomain('weather').yongshen.self.length, false, '前提：占类表天气 self 为空');
+  assert.ok(YS.getDomain('shefu').yongshen.self.length, '射覆占类表有我（日干），不弃权');
 });
