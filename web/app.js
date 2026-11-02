@@ -302,13 +302,16 @@
   }
 
   /* ---------- 奇门分析：照 Qimen-pwa renderAnalysis 搬来（只展示引擎已算好的结果） ---------- */
-  function qimenAnalysisPanels(pan) {
+  function qimenAnalysisPanels(pan, res) {
     const a = pan.analysis || {};
     const purpose = (pan.basicInfo && pan.basicInfo.purpose) || '综合';
     let html = '';
     if (school === 'feipan') html += `<p class="muted">飞盘解断复用通用奇门基线(五行生克/十干克应/门迫/空亡/格局/用神)，飞盘专法(遁干81格/三乙四宫)以 AI 占断为准。</p>`;
     html += `<div class="panel"><h3>分析与建议 · 目的：${esc(purpose)}</h3>`;
+    const yp = res && res.yongPick;
     if (a.yongShen) html += `<p>用神（${esc(purpose)}）：<b>${esc(a.yongShen.name)}</b> 落 <b>${esc(a.yongShen.direction)}方(${esc(a.yongShen.gongName)}宫，${esc(a.yongShen.jiXiongText)})</b> <span class="muted">${esc(a.yongShen.tip)}</span></p>`;
+    else if (yp && yp.gong) html += `<p>用神（${esc(purpose)}）：<b>${esc(yp.name)}</b> 落 <b>${esc(yp.direction || '')}方(${esc(yp.gongName || '')}宫)</b> `
+      + `<span class="muted">${yp.source === 'engine' ? '按引擎占类「' + esc(yp.category || '') + '」取' : '按占类表取（引擎无此占类）'}，与 AI 解读所用同一取用（同奇门 app Phase 44）</span></p>`;
     else html += `<p class="muted">目的「${esc(purpose)}」无专一用神，综观全盘。</p>`;
     if (Array.isArray(a.suggestions) && a.suggestions.length) html += `<b>建议:</b><ul class="suggestion-list">${a.suggestions.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
     html += `</div><div class="panel"><h3>格局</h3>`;
@@ -349,7 +352,7 @@
   function tuiliPanel(pan, res) {
     if (!TL || !res.sanChuan) return '';
     const r = TL.analyze({ sc: res.sanChuan, riZhu: pan.siZhu.day, yueZhi: String(pan.siZhu.month || '')[1],
-      xunKong: res.liuren.xunKong, nianMing: $('inNianMing') ? $('inNianMing').value : '' });
+      xunKong: res.liuren.xunKong, nianMing: res.nianMing || '' });
     const gongLink = (t) => esc(t).replace(/奇门(\d)宫/g, (m, g) => `<a href="#xj-g${g}" class="tl-gong" data-gong="${g}">奇门${g}宫</a>`);
     const item = (it) => `<li${it.own ? ' class="tl-own"' : ''}>${gongLink(it.text)}${it.src ? ` <span class="tl-src">${esc(it.src)}</span>` : ''}${it.own ? ' <span class="tl-src">本 app 取法</span>' : ''}</li>`;
     const steps = r.steps.map((st) => `<div class="tl-step"><b>${esc(st.title)}</b><ul>${st.items.map(item).join('')}</ul></div>`).join('');
@@ -436,6 +439,8 @@
     $('bkBrowse').addEventListener('toggle', function once() { draw(); }, { once: true });
   }
 
+  const YSRC = { engine: '（事宫取 AI 解读【用神落宫】中第一个在盘者）', domain: '（引擎无此占类，按占类表取）',
+    'wuxing-v1': '（照五行推理 v1）', shigan: '（无专一用神，取时干）' };
   function renderChuanRen(pan, res) {
     const R = String(res.quYong.R || ''), Y = String(res.quYong.Y || '');
     const yj = res.yueJiang, L = res.liuren;
@@ -447,12 +452,15 @@
         <b>占时</b> ${esc(pan.siZhu.time[1])}　<b>${esc(L.zhouYe)}贵</b> ${esc(L.guiRen)} 加地盘 ${esc(L.guiRenOverDi)}，${L.shun ? '顺' : '逆'}行
         　<b>六壬日旬空</b> ${esc(L.xunKong.join(''))}<br>
         <b>取用</b> 我＝${esc(res.quYong.rLabel)}${R ? GONG_LABEL(R) : '（未定）'}　事＝${esc(res.quYong.yName || '')}宫${Y ? GONG_LABEL(Y) : '（未定）'}
+        <span class="muted">${esc(YSRC[res.quYong.ySource] || '')}</span>
+        ${res.nianMingAuto ? `<br><span class="muted">终身局按出生时间起盘，年命自动取本盘年柱 ${esc(res.nianMingAuto)}。</span>` : ''}
+        ${school === 'feipan' && !R ? `<br><b style="color:#a94442">飞盘以年命宫为「我」：未填年命，规则 2、3、6、10 弃权。</b><span class="muted">请在上方选年命。</span>` : ''}
       </div></div>`;
 
     html += sanChuanPanel(pan, res);
     html += tuiliPanel(pan, res);
     html += '<div id="bookCases"></div>';
-    html += qimenAnalysisPanels(pan);
+    html += qimenAnalysisPanels(pan, res);
     html += jiuGongPanel(pan, res);
 
     html += `<div class="panel"><h3>穿壬规则 <span class="exp-badge">未检验</span></h3>
@@ -508,7 +516,9 @@
     lastDomainUi = ui;
     renderDomainTag(dom);
     markUnsupportedDomains();
-    const nianMing = $('inNianMing').value;
+    // 终身局按出生年月日时起盘：命主之年命即本盘年柱，没选年命时自动取（同奇门 app Phase 42 effectiveNianMing）
+    const nmPicked = $('inNianMing').value;
+    let nianMing = nmPicked;
     const opts = school === 'feipan'
       ? { method: '时家', purpose: ui }
       : { type: '四柱', method: '时家', purpose: ui, location: '默认位置' };   // 同 Qimen-pwa：引擎按占类取用神
@@ -518,16 +528,34 @@
     if (!pan.jiuGongAnalysis) pan.jiuGongAnalysis = {};
     renderBasicInfo(pan);
 
+    if (!nianMing && ui === '终身局' && pan.siZhu && pan.siZhu.year) nianMing = pan.siZhu.year;
+
+    // 取用（v2.2）：事宫＝AI 解读【用神落宫】里第一个落在盘上的用神（Qimen-pwa YongShen.pickMain，两派同一取法）；
+    // 引擎无此占类（终身局、异梦）取占类表 primary；都没有则照五行推理 v1（时干）。飞盘三乙四宫亦取自同一 context。
+    const sk = schoolKey(), ec = engineCategoryOf(ui, sk), nmGan = nianMingGanForEngine(nianMing);
+    const builder = sk === 'feipan' ? QM.feipanPredict : QM.zhuanpanPredict;
+    let ctx = {};
+    try { ctx = (builder.buildPrompt(pan, '', { category: ec, fallbackCategory: ec, nianMingGan: nmGan }) || {}).context || {}; } catch (e) { ctx = {}; }
+    let yong = null, selfless = false;
+    if (YS && YS.isLoaded && YS.isLoaded() && YS.pickMain) {
+      try { yong = YS.pickMain(YS.resolve({ domain: ui, chart: pan, options: { engineYong: ctx.yong, school: sk, nianMingGan: nmGan } })); } catch (e) { yong = null; }
+      const dd = YS.getDomain(domainKeyOf(ui));
+      selfless = !!(dd && dd.yongshen && Array.isArray(dd.yongshen.self) && !dd.yongshen.self.length);
+    } else {
+      const loc = ((ctx.yong && ctx.yong.located) || []).find((x) => x && x.gong);
+      if (loc) yong = { name: loc.name, gong: loc.gong, source: 'engine' };
+    }
     let feipan = null;
-    if (school === 'feipan') {
-      // 飞盘取用照 Qimen-pwa：三乙四宫与《鸣法》用神都取自引擎 feipanPredict 的 context
-      const ctx = (QM.feipanPredict.buildPrompt(pan, '', { nianMingGan: nianMingGanForEngine(nianMing), fallbackCategory: feipanCategoryOf(ui) }) || {}).context || {};
-      const loc = ((ctx.yong && ctx.yong.located) || [])[0] || null;
+    if (sk === 'feipan') {
       feipan = { nianMingGong: ctx.sanyi && ctx.sanyi.nianMingGong, shiGanGong: ctx.sanyi && ctx.sanyi.shiGanGong,
-        yongGong: loc && loc.gong, yongName: loc && loc.name };
+        yongGong: yong && yong.gong, yongName: yong && yong.name };
     }
     try {
-      const res = RULES.evaluate({ chart: pan, wangshuai: WS.analyze(pan), domain: domainKeyOf(ui), date, feipan, nianMing });
+      const res = RULES.evaluate({ chart: pan, wangshuai: WS.analyze(pan), domain: domainKeyOf(ui), date, feipan, nianMing,
+        yong: sk === 'zhuanpan' && yong ? { gong: yong.gong, name: yong.name, source: yong.source } : null, selfless });
+      res.yongPick = yong;
+      res.nianMing = nianMing;
+      res.nianMingAuto = nianMing !== nmPicked ? nianMing : '';
       renderBoard(pan, res);
       renderChuanRen(pan, res);
       window._chuanren = res;

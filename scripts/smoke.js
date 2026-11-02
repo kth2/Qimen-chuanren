@@ -117,8 +117,27 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   d.getElementById('inTime').value = '15:30';
   d.getElementById('castBtn').click();
 
+  // v2.2 占类取用：股市在「分析与建议」有用神（按引擎占类求财取），事宫取【用神落宫】首个在盘者
+  { const dsel = d.getElementById('inDomain');
+    dsel.value = '股市'; dsel.dispatchEvent(new w.Event('change', { bubbles: true })); d.getElementById('castBtn').click();
+    const t = d.getElementById('chuanren').textContent;
+    assert(/用神（股市）：生门/.test(t) && /按引擎占类「求财」取/.test(t), '股市分析与建议缺用神：' + t.slice(0, 300));
+    assert(/事＝生门宫/.test(t) && /用神落宫】中第一个在盘者/.test(t), '股市事宫应取生门');
+    dsel.value = '天气'; dsel.dispatchEvent(new w.Event('change', { bubbles: true })); d.getElementById('castBtn').click();
+    assert([...d.querySelectorAll('.rule-table tbody tr')].filter((tr) => /无「我」/.test(tr.textContent)).length === 4, '天气应有 4 条规则因无「我」弃权');
+    dsel.value = '财运'; dsel.dispatchEvent(new w.Event('change', { bubbles: true })); d.getElementById('castBtn').click();
+    console.log('✓ 占类取用 v2.2：股市用神生门、事宫同 AI；天气我彼诸条弃权'); }
   d.querySelector('#schoolSeg button[data-school="feipan"]').click();
   check('飞盘 同一时刻');
+  { // 飞盘不填年命：提示规则 2、3、6、10 弃权
+    const g = d.getElementById('inNmGan'), keep = g.value;
+    g.value = ''; g.dispatchEvent(new w.Event('change', { bubbles: true })); d.getElementById('castBtn').click();
+    assert(/飞盘以年命宫为「我」：未填年命，规则 2、3、6、10 弃权/.test(d.getElementById('chuanren').textContent), '飞盘未填年命应提示');
+    g.value = keep; g.dispatchEvent(new w.Event('change', { bubbles: true }));
+    const z = d.getElementById('inNmZhi'); z.value = '午'; z.dispatchEvent(new w.Event('change', { bubbles: true }));
+    d.getElementById('castBtn').click();
+    assert(!/未填年命，规则/.test(d.getElementById('chuanren').textContent), '填了年命不应再提示');
+    console.log('✓ 飞盘未填年命：提示我彼诸条弃权'); }
 
   // AI：组出的提示词（两派各一次）+ 用假模型走一遍流式显示
   const AI = w.ChuanRenAI;
