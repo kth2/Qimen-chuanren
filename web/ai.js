@@ -143,7 +143,7 @@
       out.push(`四课：${kk}。`);
       out.push(`三传（${sc.name}；${sc.why}）：` + sc.chuan.map((z, i) =>
         `${'初中末'[i]}传 ${z}·${ln.jiangOf(z)}·${dun[z] || '旬空无遁干'}${L.xunKong.includes(z) ? '（六壬旬空）' : ''}，临地盘${ln.diUnder(z)}（${GONG_NAME[ZHI_GONG[ln.diUnder(z)]]}）`).join('；') + '。');
-      if (sc.flags.length) out.push('三传取法待核处：' + sc.flags.join('；'));
+      if (sc.flags.length) out.push('三传取法提示：' + sc.flags.join('；'));
       // 六壬推理：与界面「六壬推理」面板同一份（core/liuren/tuili.js）
       if (TL) {
         try {
