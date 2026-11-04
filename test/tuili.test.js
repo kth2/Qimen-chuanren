@@ -91,7 +91,7 @@ test('2026-10-30 午时丁丑日卯将（冬蛇掩目，子辰戌）：八门各
   assert.match(t, /初传子水，戌月死：用逢死气/);
   assert.match(t, /神克将为内战/);
   assert.match(t, /末戌克初子，为终来克始/);
-  assert.match(t, /年命上见月将：能解诸凶/);               // 午上卯，卯为月将
+  assert.match(t, /本命上见月将：能解诸凶/);               // 午上卯，卯为月将
   assert.match(t, /中黄歌：发用子，看天盘丑所临地盘辰为应期/);
   assert.match(t, /初传子所合丑为成期，末传戌所冲辰为散期/);
   assert.match(t, /子→辰进四位，辰→戌对冲/);
@@ -109,4 +109,41 @@ test('给 AI 的几行：与面板同一份；〔探原 N〕〔伍书 N〕〔本
   assert.match(t, /伍剑虹参照——.*〔伍书 10〕/);
   assert.match(t, /六壬一路只用规则 7 所列之支。〔本 app 取法〕/);
   assert.doesNotMatch(t, /【待核】/, '年命一项已照《探原》书页 66 补全');
+});
+
+test('行年（《探原》凡例：男一岁丙寅顺行，女一岁壬申逆行）：书中袁-4 三十四岁丙子命己亥行年、袁-8 五十一岁庚申命丙辰行年', () => {
+  assert.equal(TL.xuSui('己酉', '丙子'), 34);
+  assert.equal(TL.xingNian('男', 34), '己亥');
+  assert.equal(TL.xuSui('庚戌', '庚申'), 51);
+  assert.equal(TL.xingNian('男', 51), '丙辰');
+  assert.equal(TL.xingNian('女', 1), '壬申');
+  assert.equal(TL.xingNian('女', 2), '辛未');
+  assert.equal(TL.xingNian('男', 61), '丙寅');
+  assert.equal(TL.xuSui('庚戌', '庚申', true), 111);
+  assert.equal(TL.xingNian('', 30), '');
+  // 袁-4：行年亥上加白虎（书断「行年亥上加白虎」）
+  const r = fromCase('袁-4', { nianMing: '丙子', xingNian: '己亥', yueZhi: '丑', taiSui: '酉' });
+  const t = all(r);
+  assert.match(t, /行年己亥，上神.*乘白虎/);
+  assert.match(t, /本命丙子，上神.*乘天空/);   // 书断「本命子上加天空」
+  assert.match(t, /年＝行年，命＝本命/);
+});
+
+test('占类专项（集说篇书页 84–87）：按占类只列相关几节', () => {
+  const sc = SC.compute({ riGan: '丁', riZhi: '丑', yueJiang: '卯', shiZhi: '午' });   // 子辰戌
+  const base = { sc, riZhu: '丁丑', yueZhi: '戌', xunKong: TDP.xunKong('丁丑') };
+  const zx = (domain, extra) => { const r = TL.analyze(Object.assign({ domain }, base, extra || {})); const s = r.steps.find((x) => x.key === 'zhuanxiang'); return s ? s.items.map((x) => x.text).join('\n') : ''; };
+  assert.equal(zx('wealth'), '', '求财不列专项');
+  assert.match(zx('pregnancy'), /论男女：三传子辰戌，纯阳主男/);
+  const lost = zx('lost_item');
+  assert.match(lost, /论新旧：发用子为仲神/);
+  assert.match(lost, /论方所：发用子为江湖；论住居为房/);
+  assert.match(lost, /论远近：/);
+  assert.match(zx('lawsuit'), /论胜负：干枝相生，书未论胜负|论胜负：/);
+  assert.match(zx('find_person', { xingNian: '己亥' }), /论存亡：问人不知存亡，专视白虎/);
+  assert.match(zx('find_person', { xingNian: '己亥' }), /行年亥临/);
+  assert.match(zx('relationship'), /论亲疏：/);
+  // 迟速（书页 87）各占类都列在应期参照里
+  const r = TL.analyze(Object.assign({ domain: 'wealth' }, base));
+  assert.match(r.steps.find((x) => x.key === 'yingqi').items.map((x) => x.text).join(''), /迟速：.*主事(速|迟)/);
 });

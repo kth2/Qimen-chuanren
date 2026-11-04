@@ -32,7 +32,8 @@
       id, createdAt: now, updatedAt: now, app: 'qimen-chuanren', rulesVersion: res.version,
       question: String(question || '').trim(),
       framing: framing || '',   // Qimen-pwa Framing：'adverse'＝检出怕发生之事；回填时据此预选「怕」
-      input: { date: ctx.dateStr, school: ctx.school, ui: ctx.ui, domainSource: ctx.domainSource || '', nianMing: ctx.nianMing || '' },
+      input: { date: ctx.dateStr, school: ctx.school, ui: ctx.ui, domainSource: ctx.domainSource || '', nianMing: ctx.nianMing || '',
+        xingBie: ctx.xingBie || '', xingNian: ctx.xingNian || '', domain: ctx.domain || '' },
       chart: { siZhu: pan.siZhu, juShu: pan.juShu && pan.juShu.fullName },
       liuren: { yueJiang: res.yueJiang.yueJiang, xunKong: res.liuren.xunKong, sanChuan: res.sanChuan.chuan, keTi: res.sanChuan.name },
       quYong: res.quYong,
