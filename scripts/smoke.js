@@ -86,6 +86,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   { const S = w.LiurenSanChuan.compute({ riGan: '乙', riZhi: '亥', yueJiang: '卯', shiZhi: '申' });
     const shown = [...d.querySelectorAll('.chuan-table .ke-up')].map((e) => e.textContent.replace('空', '')).join('');
     assert(shown === S.chuan.join(''), '页面三传与引擎不符：' + shown + ' vs ' + S.chuan.join(''));
+    assert(d.getElementById('chuanren').textContent.includes('三传取法据《探原》'), '缺「三传取法据《探原》」标注');
     console.log('✓ 四课三传：' + S.name + ' ' + shown); }
   assert(/卯/.test(d.getElementById('chuanren').textContent), '霜降后应为卯将');
   { const tl = d.getElementById('tuiliPanel');

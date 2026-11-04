@@ -381,7 +381,7 @@
       <td class="muted">临${ln.diUnder(z)}·${GONG_LABEL(TDP.ZHI_GONG[ln.diUnder(z)])}</td></tr>`).join('')}</table>`;
     return `<div class="panel"><h3>四课三传 <span class="exp-badge">${esc(sc.name)}</span></h3>
       <div class="sc-wrap">${chHtml}${keHtml}</div>
-      <p class="muted" style="margin:6px 0 0;">${esc(sc.why)}。三传取法据伍剑虹《大六壬精义讲解》，涉害取深浅法；
+      <p class="muted" style="margin:6px 0 0;">${esc(sc.why)}。<span class="exp-badge">三传取法据《探原》</span>（袁树珊《大六壬探原》，720 课逐课核对）；
         「临」＝该支加在地盘何位、属奇门何宫。空＝六壬日旬空，○＝旬空无遁干。</p>
       ${sc.flags.length ? `<p class="muted" style="margin:4px 0 0;color:#8a6d3b;">${sc.flags.map(esc).join('；')}</p>` : ''}</div>`;
   }
@@ -472,7 +472,7 @@
     }
     html += `</tbody></table>
       <p class="muted" style="margin:6px 0 0;">自创实验流派（appliesTo: ${esc(res.appliesTo)}）。+1／−1 只是关系分值，不等于吉或成功；
-      各规则分开计票、不相加，冲突原样保留。规则 3、4 依第二层三传（涉害取深浅法）。
+      各规则分开计票、不相加，冲突原样保留。规则 3、4 依第二层三传（取法据《探原》）。
       规则 7–10 为 v2：奇门、六壬两边同向才投票，相反记「混」。</p></div>`;
     $('chuanren').innerHTML = html;
     // 六壬推理里的「奇门N宫」：跳到九宫详解并闪一下
