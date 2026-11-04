@@ -57,3 +57,37 @@ test('昴星（书页 18）戊寅日子将申时丑午酉；八专（书页 22�
   assert.equal(b.name, '八专');
   assert.deepEqual(b.flags, []);
 });
+
+test('《探原》720 课课名逐课与表一致（书页 30–31 按语之名：始入、重审、元首、比用、知一、涉害、见机、察微、缀瑕……）', () => {
+  const bad = [];
+  for (const day in T.keTi) T.keTi[day].split(' ').forEach((book, i) => {
+    const got = byGanShang(day, ZHI[i]).keTi;
+    if (got !== book) bad.push(`${day} 干上${ZHI[i]} 书${book} 得${got}`);
+  });
+  assert.deepEqual(bad, []);
+  // 改正涉害共 24 课（书页 31「中有涉害二十四课，当取受克深者为用」）
+  const n = Object.values(T.keTi).join(' ').split(' ').filter((x) => x === '改正涉害').length;
+  assert.equal(n, 24);
+  // 表与定义不合之课：照表，说明里注明
+  assert.match(byGanShang('丙辰', '子').why, /照《探原》表作「重审」；依书页 30 注之定义当名「比用」/);
+});
+
+test('《探原》占卜一斑录（书页 100–108）袁树珊自占 8 例：日柱由书题农历推得，三传、课名逐例与书同', () => {
+  const T2 = require('tyme4ts');
+  const BOOKC = require('../knowledge/liuren-cases.json').cases.filter((c) => c.book === 'yuan');
+  assert.equal(BOOKC.length, 8);
+  // 书题农历日 → 日柱（核对手录的公历与日柱）
+  const lunar = { '袁-1': [1909, 7, 17], '袁-2': [1909, 11, 20], '袁-3': [1909, 12, 13], '袁-4': [1909, 12, 15], '袁-5': [1910, 9, 25], '袁-6': [1910, 10, 27], '袁-7': [1910, 11, 21], '袁-8': [1910, 12, 3] };
+  for (const c of BOOKC) {
+    const l = T2.LunarDay.fromYmd(...lunar[c.id]);
+    assert.equal(l.getSixtyCycle().getName(), c.riZhu, c.id);
+    assert.equal(l.getSolarDay().toString().replace(/年|月/g, '-').replace('日', '').replace(/-(\d)(?=-|$)/g, '-0$1'), c.date, c.id);
+    const r = run(c.riZhu, c.yueJiang, c.shiZhi);
+    if (c.chuanBook) assert.equal(r.chuan.join(''), c.chuanBook, c.id);
+    assert.deepEqual(c.flags.filter((f) => f !== '活动时'), [], c.id);
+  }
+  const by = (id) => BOOKC.find((c) => c.id === id);
+  for (const id of ['袁-1', '袁-2', '袁-4', '袁-6', '袁-7', '袁-8']) assert.equal(by(id).keTiTanyuan, by(id).keTiBook, id);
+  assert.equal(by('袁-3').keTiTanyuan, '重审');            // 书题「铸印」为课体纲要之名
+  assert.equal(by('袁-5').chuanEngine, '丑戌未');          // 书中此例课图误植为下一例；按书题起课，合断语「丑支就干」
+});

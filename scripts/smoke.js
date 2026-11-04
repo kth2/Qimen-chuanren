@@ -92,8 +92,8 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   { const tl = d.getElementById('tuiliPanel');
     assert(tl, '缺六壬推理面板');
     const titles = [...tl.querySelectorAll('.tl-step > b')].map((e) => e.textContent).join(' ');
-    assert(/大局·课体 先锋·占时 值事·月将 外事·日干（我） 内事·日支（事／对方） 发端·初传 移易·中传 归计·末传 变体·年命 合看/.test(titles), '六壬推理八要素不全：' + titles);
-    assert(/年命庚午，上神/.test(tl.textContent) && /书页 14/.test(tl.textContent) && /贵人.*行/.test(tl.textContent), '六壬推理内容不全');
+    assert(/大局·课体 先锋门·占时 直事门·月将 外事门·日干（我） 内事门·日枝（彼） 发端门·初传 移易门·中传 归计门·末传 变体门·年命 应期（参照） 合看/.test(titles), '六壬推理八门不全：' + titles);
+    assert(/年命庚午，上神/.test(tl.textContent) && /探原 66/.test(tl.textContent) && /贵人.*(顺治|逆行)/.test(tl.textContent) && /课名/.test(tl.textContent), '六壬推理内容不全');
     const a = tl.querySelector('.tl-gong');
     assert(a, '三传应可跳到九宫详解');
     a.click();
@@ -153,7 +153,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(m.user.includes('【穿壬·六壬层】') && m.user.includes('规则1') && m.user.includes('规则3') && m.user.includes('规则4') && m.user.includes('规则6') && m.user.includes('规则7') && m.user.includes('规则10'), name + '：缺穿壬段');
     assert(m.user.includes('【旺衰与四害'), name + '：缺旺衰块');
     assert(/三传（.+）：初传/.test(m.user) && m.user.includes('四课：第一课'), name + '：提示词缺四课三传');
-    assert(m.user.includes('六壬推理（照') && /发端·初传：.*〔书页 14〕/.test(m.user) && m.system.includes('「六壬推理」各句是伍剑虹书中原意'), name + '：提示词缺六壬推理段或其纪律');
+    assert(m.user.includes('六壬推理（照') && /发端门·初传：.*〔探原 61、63〕/.test(m.user) && m.system.includes('〔探原 N〕为袁树珊《大六壬探原》书页'), name + '：提示词缺六壬推理段或其纪律');
     assert(m.category === '求财', name + '：占类应为求财，实为 ' + m.category);
     console.log(`✓ AI 提示词（${name}）：system ${m.system.length} 字，user ${m.user.length} 字，含纲要、旺衰、穿壬段、六壬推理`);
   }
@@ -246,7 +246,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
       '复盘未显示：' + (d.querySelector('[data-k="rvtag"]') || {}).textContent);
     assert((await w.ChuanRenCases.store.list()).some((r) => r.review && r.review.verdict === 'partly_derivable'), '复盘未存进案例');
     assert(!/未能重排/.test(box.textContent), '复盘时未能重排当时的盘');
-    assert(/- tl-fadian ｜ 六壬推理·发端·初传/.test(w._rvUser) && /- tl-he ｜ 六壬推理·合看/.test(w._rvUser), '复盘条目缺六壬推理');
+    assert(/- tl-fadian ｜ 六壬推理·发端门·初传/.test(w._rvUser) && /- tl-he ｜ 六壬推理·合看/.test(w._rvUser), '复盘条目缺六壬推理');
     d.querySelector('#caseTabSeg button[data-tab="stats"]').click();
     assert(/复盘汇总（1 例）/.test(d.getElementById('caseBody').textContent) && /规则8/.test(d.getElementById('caseBody').textContent), '准确率页缺复盘汇总');
     console.log('✓ AI 复盘：断错分析、当时该怎么断、偏差、心得已存进案例；准确率页有复盘汇总'); }

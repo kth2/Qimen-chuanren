@@ -104,7 +104,7 @@
     '【穿壬·六壬层】',
     '5. 穿壬是自创的实验流派，各条规则尚未经案例检验。六壬层只作旁证：可以引用，不得据以推翻奇门的成败结论。',
     '6. 六壬层只用【穿壬·六壬层】一段给出的事实（天盘支、天将、遁干、旬空、四课三传、规则票）。四课三传以该段为准，不得另起；不得引用毕法赋等未给出的内容。三传可读作起因、经过、结局，但成败仍以奇门为准。'
-      + '「六壬推理」各句是伍剑虹书中原意，引用时注明书页；标〔本 app 取法〕或【待核】的不是书中原话，引用时须照样标明，不得说成书上所言。该段不给总吉凶，不得只凭天将吉凶下断（书页 96–97）。',
+      + '「六壬推理」各句注明出处：〔探原 N〕为袁树珊《大六壬探原》书页（六壬基准），〔伍书 N〕为伍剑虹《大六壬精义讲解》书页（参照），引用时照样注明；标〔本 app 取法〕或【待核】的不是书中原话，引用时须照样标明，不得说成书上所言。该段不给总吉凶，不得只凭天将吉凶下断（《探原》书页 82：乘神生干则凶将亦吉，乘神克干则吉将亦凶）。',
     '7. 规则票的 +1／−1 只是关系分值，不等于吉、成功或有利；各条分开看，不相加。',
     '8. 六壬层与奇门结论相左时，两边理由都写出，再给出唯一答案（以奇门为准），并注明哪条规则与之相左。',
     '9. 「穿壬事宫」取【用神落宫】中第一个落在盘上的用神；引擎无此占类（如终身局、异梦）时按占类表取，此时以穿壬事宫为用神。五行推理 v1 一段另有其取用，可能与之不同；不同时两者都列，判断以【用神落宫】（或其缺席时的穿壬事宫）为准。',
@@ -141,13 +141,13 @@
     if (sc) {
       const kk = sc.ke.map((k) => `第${'一二三四'[k.n - 1]}课 ${k.xia}上${k.shang}·${ln.jiangOf(k.shang)}`).join('；');
       out.push(`四课：${kk}。`);
-      out.push(`三传（${sc.name}；${sc.why}）：` + sc.chuan.map((z, i) =>
+      out.push(`三传（${sc.name}${sc.keTi && sc.keTi !== sc.name ? '，《探原》课名' + sc.keTi : ''}；${sc.why}）：` + sc.chuan.map((z, i) =>
         `${'初中末'[i]}传 ${z}·${ln.jiangOf(z)}·${dun[z] || '旬空无遁干'}${L.xunKong.includes(z) ? '（六壬旬空）' : ''}，临地盘${ln.diUnder(z)}（${GONG_NAME[ZHI_GONG[ln.diUnder(z)]]}）`).join('；') + '。');
       if (sc.flags.length) out.push('三传取法提示：' + sc.flags.join('；'));
       // 六壬推理：与界面「六壬推理」面板同一份（core/liuren/tuili.js）
       if (TL) {
         try {
-          const tl = TL.analyze({ sc, riZhu: pan.siZhu.day, yueZhi: String(pan.siZhu.month || '')[1], xunKong: L.xunKong, nianMing });
+          const tl = TL.analyze({ sc, riZhu: pan.siZhu.day, yueZhi: String(pan.siZhu.month || '')[1], taiSui: String(pan.siZhu.year || '')[1], xunKong: L.xunKong, nianMing });
           out.push(...TL.toPromptLines(tl));
         } catch (e) { /* 推理段出错不挡提示词，其余照给 */ }
       }

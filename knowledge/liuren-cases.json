@@ -2,9 +2,10 @@
  "_what": "书中六壬案例：盘式照录，问事、断法、应验为摘要（非原文），注书名页码。用于排盘时列出书中同课案例。",
  "_books": {
   "wang": "王雷之《大六壬实占百例精解》",
-  "wu": "伍剑虹《大六壬精义讲解》"
+  "wu": "伍剑虹《大六壬精义讲解》",
+  "yuan": "袁树珊《大六壬探原》占卜一斑录"
  },
- "_count": 135,
+ "_count": 143,
  "cases": [
   {
    "id": "王-1",
@@ -27,6 +28,7 @@
    "keTiBook": "",
    "chuanEngine": "戌辰戌",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无依、始入",
    "bookNote": "",
    "flags": []
   },
@@ -51,6 +53,7 @@
    "keTiBook": "",
    "chuanEngine": "亥寅巳",
    "keTiEngine": "遥克（弹射）",
+   "keTiTanyuan": "弹射",
    "bookNote": "",
    "flags": []
   },
@@ -75,6 +78,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "巳亥巳",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无依、重审",
    "bookNote": "",
    "flags": []
   },
@@ -99,6 +103,7 @@
    "keTiBook": "",
    "chuanEngine": "未卯亥",
    "keTiEngine": "涉害",
+   "keTiTanyuan": "涉害",
    "bookNote": "",
    "flags": []
   },
@@ -123,6 +128,7 @@
    "keTiBook": "",
    "chuanEngine": "巳卯丑",
    "keTiEngine": "遥克（弹射）",
+   "keTiTanyuan": "弹射",
    "bookNote": "",
    "flags": []
   },
@@ -147,6 +153,7 @@
    "keTiBook": "",
    "chuanEngine": "卯亥未",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "知一",
    "bookNote": "",
    "flags": []
   },
@@ -171,6 +178,7 @@
    "keTiBook": "",
    "chuanEngine": "巳丑丑",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无亲、八专",
    "bookNote": "",
    "flags": []
   },
@@ -195,6 +203,7 @@
    "keTiBook": "",
    "chuanEngine": "子申辰",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -219,6 +228,7 @@
    "keTiBook": "",
    "chuanEngine": "申亥寅",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -243,6 +253,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "卯酉卯",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无依、比用",
    "bookNote": "",
    "flags": []
   },
@@ -267,6 +278,7 @@
    "keTiBook": "元首",
    "chuanEngine": "卯申丑",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -291,6 +303,7 @@
    "keTiBook": "涉害",
    "chuanEngine": "未卯亥",
    "keTiEngine": "涉害",
+   "keTiTanyuan": "见机",
    "bookNote": "",
    "flags": []
   },
@@ -315,6 +328,7 @@
    "keTiBook": "伏吟",
    "chuanEngine": "丑戌未",
    "keTiEngine": "伏吟",
+   "keTiTanyuan": "不虞、元首",
    "bookNote": "书中伏吟三传作丑戌未。《探原》书页 26–27 亦然（癸日取上克为初，中取初刑，末取中刑，名「不虞」），本 app 照《探原》得丑戌未。",
    "flags": []
   },
@@ -339,6 +353,7 @@
    "keTiBook": "",
    "chuanEngine": "子亥戌",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -363,6 +378,7 @@
    "keTiBook": "",
    "chuanEngine": "卯申丑",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -387,6 +403,7 @@
    "keTiBook": "",
    "chuanEngine": "巳戌卯",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -411,6 +428,7 @@
    "keTiBook": "遥克（蒿矢）",
    "chuanEngine": "未申酉",
    "keTiEngine": "遥克（蒿矢）",
+   "keTiTanyuan": "嚆矢",
    "bookNote": "",
    "flags": []
   },
@@ -435,6 +453,7 @@
    "keTiBook": "",
    "chuanEngine": "戌午寅",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -459,6 +478,7 @@
    "keTiBook": "",
    "chuanEngine": "申戌子",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -483,6 +503,7 @@
    "keTiBook": "伏吟",
    "chuanEngine": "辰亥巳",
    "keTiEngine": "伏吟",
+   "keTiTanyuan": "杜传、始入",
    "bookNote": "",
    "flags": []
   },
@@ -507,6 +528,7 @@
    "keTiBook": "",
    "chuanEngine": "未巳卯",
    "keTiEngine": "遥克（弹射）",
+   "keTiTanyuan": "弹射",
    "bookNote": "作者自注：此课三传本应取遥克弹射，误取为寅子戌，「将错就错，结果极验」。",
    "flags": [
     "书中三传与本 app 不同"
@@ -533,6 +555,7 @@
    "keTiBook": "",
    "chuanEngine": "午巳辰",
    "keTiEngine": "遥克（蒿矢）",
+   "keTiTanyuan": "嚆矢",
    "bookNote": "",
    "flags": []
   },
@@ -557,6 +580,7 @@
    "keTiBook": "",
    "chuanEngine": "亥子丑",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -581,6 +605,7 @@
    "keTiBook": "",
    "chuanEngine": "卯亥未",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -605,6 +630,7 @@
    "keTiBook": "",
    "chuanEngine": "未酉亥",
    "keTiEngine": "遥克（蒿矢）",
+   "keTiTanyuan": "嚆矢",
    "bookNote": "",
    "flags": []
   },
@@ -629,6 +655,7 @@
    "keTiBook": "涉害",
    "chuanEngine": "酉丑巳",
    "keTiEngine": "涉害",
+   "keTiTanyuan": "涉害",
    "bookNote": "",
    "flags": []
   },
@@ -653,6 +680,7 @@
    "keTiBook": "",
    "chuanEngine": "酉辰亥",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -677,6 +705,7 @@
    "keTiBook": "",
    "chuanEngine": "申亥寅",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -701,6 +730,7 @@
    "keTiBook": "八专",
    "chuanEngine": "亥戌戌",
    "keTiEngine": "八专",
+   "keTiTanyuan": "八专",
    "bookNote": "",
    "flags": []
   },
@@ -725,6 +755,7 @@
    "keTiBook": "",
    "chuanEngine": "寅子戌",
    "keTiEngine": "涉害",
+   "keTiTanyuan": "改正涉害",
    "bookNote": "四课两上克下（戌、寅）俱比，书取寅发用。此即《探原》「改正涉害」之一（书页 10–11：甲辰、甲午日干上子，「戌加子仅二重克，寅加辰有六重克，故取寅为初传」），本 app 照《探原》亦得寅子戌；孟仲法取戌，得戌申午。",
    "flags": []
   },
@@ -749,6 +780,7 @@
    "keTiBook": "伏吟",
    "chuanEngine": "亥戌未",
    "keTiEngine": "伏吟",
+   "keTiTanyuan": "杜传",
    "bookNote": "",
    "flags": []
   },
@@ -773,6 +805,7 @@
    "keTiBook": "",
    "chuanEngine": "巳戌卯",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -797,6 +830,7 @@
    "keTiBook": "",
    "chuanEngine": "戌巳子",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -821,6 +855,7 @@
    "keTiBook": "",
    "chuanEngine": "卯寅丑",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -845,6 +880,7 @@
    "keTiBook": "",
    "chuanEngine": "丑亥酉",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -869,6 +905,7 @@
    "keTiBook": "",
    "chuanEngine": "申巳寅",
    "keTiEngine": "遥克（蒿矢）",
+   "keTiTanyuan": "嚆矢",
    "bookNote": "",
    "flags": []
   },
@@ -893,6 +930,7 @@
    "keTiBook": "遥克（蒿矢）",
    "chuanEngine": "未申酉",
    "keTiEngine": "遥克（蒿矢）",
+   "keTiTanyuan": "嚆矢",
    "bookNote": "",
    "flags": []
   },
@@ -917,6 +955,7 @@
    "keTiBook": "元首",
    "chuanEngine": "寅亥申",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -941,6 +980,7 @@
    "keTiBook": "",
    "chuanEngine": "戌午寅",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -965,6 +1005,7 @@
    "keTiBook": "",
    "chuanEngine": "戌午寅",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -989,6 +1030,7 @@
    "keTiBook": "",
    "chuanEngine": "辰午申",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -1013,6 +1055,7 @@
    "keTiBook": "伏吟",
    "chuanEngine": "巳申寅",
    "keTiEngine": "伏吟",
+   "keTiTanyuan": "自信",
    "bookNote": "",
    "flags": []
   },
@@ -1037,6 +1080,7 @@
    "keTiBook": "",
    "chuanEngine": "巳寅亥",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "作者自注：起课时第四课上神写错（应为辰乘天后，误作酉乘天空），三传不受影响，断语按错课所作。",
    "flags": []
   },
@@ -1061,6 +1105,7 @@
    "keTiBook": "",
    "chuanEngine": "辰申子",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1085,6 +1130,7 @@
    "keTiBook": "",
    "chuanEngine": "午卯子",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1109,6 +1155,7 @@
    "keTiBook": "",
    "chuanEngine": "酉戌未",
    "keTiEngine": "伏吟",
+   "keTiTanyuan": "杜传",
    "bookNote": "",
    "flags": []
   },
@@ -1133,6 +1180,7 @@
    "keTiBook": "",
    "chuanEngine": "午丑申",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -1157,6 +1205,7 @@
    "keTiBook": "",
    "chuanEngine": "子巳戌",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -1181,6 +1230,7 @@
    "keTiBook": "",
    "chuanEngine": "子申辰",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -1205,6 +1255,7 @@
    "keTiBook": "",
    "chuanEngine": "辰申子",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1229,6 +1280,7 @@
    "keTiBook": "",
    "chuanEngine": "卯戌巳",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -1253,6 +1305,7 @@
    "keTiBook": "遥克",
    "chuanEngine": "亥未卯",
    "keTiEngine": "遥克（蒿矢）",
+   "keTiTanyuan": "嚆矢",
    "bookNote": "",
    "flags": []
   },
@@ -1277,6 +1330,7 @@
    "keTiBook": "",
    "chuanEngine": "戌巳子",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -1301,6 +1355,7 @@
    "keTiBook": "",
    "chuanEngine": "寅卯辰",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "知一",
    "bookNote": "",
    "flags": []
   },
@@ -1325,6 +1380,7 @@
    "keTiBook": "",
    "chuanEngine": "丑午酉",
    "keTiEngine": "昴星（虎视）",
+   "keTiTanyuan": "虎视",
    "bookNote": "",
    "flags": []
   },
@@ -1349,6 +1405,7 @@
    "keTiBook": "",
    "chuanEngine": "戌丑辰",
    "keTiEngine": "遥克（蒿矢）",
+   "keTiTanyuan": "嚆矢",
    "bookNote": "",
    "flags": []
   },
@@ -1373,6 +1430,7 @@
    "keTiBook": "",
    "chuanEngine": "巳寅亥",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1397,6 +1455,7 @@
    "keTiBook": "",
    "chuanEngine": "酉辰亥",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1421,6 +1480,7 @@
    "keTiBook": "",
    "chuanEngine": "寅午戌",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1445,6 +1505,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "巳丑辰",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无亲、井栏射",
    "bookNote": "",
    "flags": []
   },
@@ -1469,6 +1530,7 @@
    "keTiBook": "",
    "chuanEngine": "巳丑酉",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1493,6 +1555,7 @@
    "keTiBook": "",
    "chuanEngine": "戌未辰",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1517,6 +1580,7 @@
    "keTiBook": "",
    "chuanEngine": "子申辰",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -1541,6 +1605,7 @@
    "keTiBook": "",
    "chuanEngine": "午丑申",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -1565,6 +1630,7 @@
    "keTiBook": "",
    "chuanEngine": "亥子丑",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -1589,6 +1655,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "巳丑丑",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无亲、八专",
    "bookNote": "",
    "flags": []
   },
@@ -1613,6 +1680,7 @@
    "keTiBook": "",
    "chuanEngine": "亥子丑",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -1637,6 +1705,7 @@
    "keTiBook": "",
    "chuanEngine": "酉丑巳",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -1661,6 +1730,7 @@
    "keTiBook": "涉害",
    "chuanEngine": "未卯亥",
    "keTiEngine": "涉害",
+   "keTiTanyuan": "见机",
    "bookNote": "",
    "flags": []
   },
@@ -1685,6 +1755,7 @@
    "keTiBook": "",
    "chuanEngine": "酉辰亥",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1709,6 +1780,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "寅申寅",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无依、涉害",
    "bookNote": "",
    "flags": []
   },
@@ -1733,6 +1805,7 @@
    "keTiBook": "",
    "chuanEngine": "寅未子",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -1757,6 +1830,7 @@
    "keTiBook": "",
    "chuanEngine": "丑亥酉",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -1781,6 +1855,7 @@
    "keTiBook": "",
    "chuanEngine": "未子巳",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -1805,6 +1880,7 @@
    "keTiBook": "",
    "chuanEngine": "巳戌卯",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -1829,6 +1905,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "未丑未",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无依、元首",
    "bookNote": "",
    "flags": []
   },
@@ -1853,6 +1930,7 @@
    "keTiBook": "顾祖",
    "chuanEngine": "午辰寅",
    "keTiEngine": "涉害",
+   "keTiTanyuan": "涉害",
    "bookNote": "",
    "flags": []
   },
@@ -1877,6 +1955,7 @@
    "keTiBook": "",
    "chuanEngine": "寅卯辰",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1901,6 +1980,7 @@
    "keTiBook": "",
    "chuanEngine": "戌巳子",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -1925,6 +2005,7 @@
    "keTiBook": "伏吟",
    "chuanEngine": "未丑戌",
    "keTiEngine": "伏吟",
+   "keTiTanyuan": "自信",
    "bookNote": "",
    "flags": []
   },
@@ -1949,6 +2030,7 @@
    "keTiBook": "",
    "chuanEngine": "酉辰亥",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -1973,6 +2055,7 @@
    "keTiBook": "",
    "chuanEngine": "酉亥丑",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -1997,6 +2080,7 @@
    "keTiBook": "",
    "chuanEngine": "未戌丑",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -2021,6 +2105,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "寅申寅",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无依、比用",
    "bookNote": "",
    "flags": []
   },
@@ -2045,6 +2130,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "巳丑丑",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无亲、八专",
    "bookNote": "",
    "flags": []
   },
@@ -2069,6 +2155,7 @@
    "keTiBook": "",
    "chuanEngine": "午辰寅",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2093,6 +2180,7 @@
    "keTiBook": "",
    "chuanEngine": "戌午寅",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -2117,6 +2205,7 @@
    "keTiBook": "",
    "chuanEngine": "子巳戌",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -2141,6 +2230,7 @@
    "keTiBook": "",
    "chuanEngine": "巳戌卯",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -2165,6 +2255,7 @@
    "keTiBook": "",
    "chuanEngine": "辰申子",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2189,6 +2280,7 @@
    "keTiBook": "",
    "chuanEngine": "寅卯辰",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2213,6 +2305,7 @@
    "keTiBook": "",
    "chuanEngine": "丑卯巳",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2237,6 +2330,7 @@
    "keTiBook": "",
    "chuanEngine": "巳寅亥",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2261,6 +2355,7 @@
    "keTiBook": "",
    "chuanEngine": "卯亥未",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2285,6 +2380,7 @@
    "keTiBook": "",
    "chuanEngine": "寅子戌",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2309,6 +2405,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "午子午",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无依、比用",
    "bookNote": "",
    "flags": []
   },
@@ -2333,6 +2430,7 @@
    "keTiBook": "",
    "chuanEngine": "子亥戌",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -2357,6 +2455,7 @@
    "keTiBook": "",
    "chuanEngine": "午丑申",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -2381,6 +2480,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "未丑未",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无依、元首",
    "bookNote": "",
    "flags": []
   },
@@ -2405,6 +2505,7 @@
    "keTiBook": "",
    "chuanEngine": "寅申寅",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无依、比用",
    "bookNote": "",
    "flags": []
   },
@@ -2429,6 +2530,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "寅申寅",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无依、比用",
    "bookNote": "",
    "flags": []
   },
@@ -2453,6 +2555,7 @@
    "keTiBook": "",
    "chuanEngine": "午丑申",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -2477,6 +2580,7 @@
    "keTiBook": "遥克",
    "chuanEngine": "寅亥申",
    "keTiEngine": "遥克（蒿矢）",
+   "keTiTanyuan": "嚆矢",
    "bookNote": "",
    "flags": []
   },
@@ -2501,6 +2605,7 @@
    "keTiBook": "返吟",
    "chuanEngine": "亥未丑",
    "keTiEngine": "返吟",
+   "keTiTanyuan": "无亲、井栏射",
    "bookNote": "",
    "flags": []
   },
@@ -2525,6 +2630,7 @@
    "keTiBook": "元首",
    "chuanEngine": "辰申子",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2549,6 +2655,7 @@
    "keTiBook": "元首",
    "chuanEngine": "辰未戌",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2573,6 +2680,7 @@
    "keTiBook": "重审",
    "chuanEngine": "巳戌卯",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -2597,6 +2705,7 @@
    "keTiBook": "涉害",
    "chuanEngine": "未子巳",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": [
     "活动时"
@@ -2623,6 +2732,7 @@
    "keTiBook": "涉害",
    "chuanEngine": "未子巳",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "比用",
    "bookNote": "",
    "flags": []
   },
@@ -2647,6 +2757,7 @@
    "keTiBook": "伏吟",
    "chuanEngine": "亥申寅",
    "keTiEngine": "伏吟",
+   "keTiTanyuan": "杜传",
    "bookNote": "",
    "flags": []
   },
@@ -2671,6 +2782,7 @@
    "keTiBook": "涉害",
    "chuanEngine": "亥卯未",
    "keTiEngine": "涉害",
+   "keTiTanyuan": "改正涉害",
    "bookNote": "涉害两下贼上（亥、未）俱比，书取临仲之未（孟仲法）；本 app 照《探原》深浅法取亥，得亥卯未（《探原》书页 11「改正涉害」：己卯、己亥日干上亥，三传亥卯未，「有谓取仲上神为用，三传未亥卯者非是」）。",
    "flags": [
     "书中三传与本 app 不同"
@@ -2697,6 +2809,7 @@
    "keTiBook": "伏吟",
    "chuanEngine": "申寅巳",
    "keTiEngine": "伏吟",
+   "keTiTanyuan": "自任",
    "bookNote": "",
    "flags": []
   },
@@ -2721,6 +2834,7 @@
    "keTiBook": "",
    "chuanEngine": "酉丑巳",
    "keTiEngine": "涉害",
+   "keTiTanyuan": "涉害",
    "bookNote": "",
    "flags": []
   },
@@ -2745,6 +2859,7 @@
    "keTiBook": "",
    "chuanEngine": "巳寅亥",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2769,6 +2884,7 @@
    "keTiBook": "",
    "chuanEngine": "辰酉寅",
    "keTiEngine": "知一（比用）",
+   "keTiTanyuan": "知一",
    "bookNote": "",
    "flags": []
   },
@@ -2793,6 +2909,7 @@
    "keTiBook": "",
    "chuanEngine": "巳戌卯",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -2817,6 +2934,7 @@
    "keTiBook": "",
    "chuanEngine": "丑亥酉",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -2841,6 +2959,7 @@
    "keTiBook": "九丑",
    "chuanEngine": "卯戌巳",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": []
   },
@@ -2865,6 +2984,7 @@
    "keTiBook": "贼克",
    "chuanEngine": "戌午寅",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": [
     "活动时"
@@ -2891,6 +3011,7 @@
    "keTiBook": "元首",
    "chuanEngine": "巳寅亥",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -2915,6 +3036,7 @@
    "keTiBook": "比用",
    "chuanEngine": "辰申子",
    "keTiEngine": "涉害",
+   "keTiTanyuan": "察微",
    "bookNote": "",
    "flags": [
     "活动时"
@@ -2941,6 +3063,7 @@
    "keTiBook": "伏吟",
    "chuanEngine": "卯子午",
    "keTiEngine": "伏吟",
+   "keTiTanyuan": "杜传",
    "bookNote": "书中伏吟三传作卯子卯（中子刑卯，末复归卯）。《探原》书页 27 注：「丁己辛三卯日，初传卯，中传子，末传午，中传虽非自刑，亦当取中冲为末传」，本 app 照《探原》得卯子午。",
    "flags": [
     "书中三传与本 app 不同",
@@ -2968,6 +3091,7 @@
    "keTiBook": "八专",
    "chuanEngine": "亥戌戌",
    "keTiEngine": "八专",
+   "keTiTanyuan": "八专",
    "bookNote": "课图日干印作「辛」、日支作「丑」，但三传亥为财、戌为比，日干当为土；以三传与四课上神反推为己未日、天盘逆移三位，待核。",
    "flags": [
     "活动时"
@@ -2994,6 +3118,7 @@
    "keTiBook": "元首",
    "chuanEngine": "卯寅丑",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -3018,6 +3143,7 @@
    "keTiBook": "",
    "chuanEngine": "午辰寅",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -3042,6 +3168,7 @@
    "keTiBook": "伏吟",
    "chuanEngine": "亥戌未",
    "keTiEngine": "伏吟",
+   "keTiTanyuan": "杜传",
    "bookNote": "书中伏吟三传作亥巳申（初自刑则中取冲），与本书第一章伏吟口诀所得亥戌未不同；《探原》书页 26–27（阴日初自刑，中取干上）与 720 课表亦作亥戌未，本 app 照《探原》。",
    "flags": [
     "书中三传与本 app 不同"
@@ -3068,6 +3195,7 @@
    "keTiBook": "遥克·别责",
    "chuanEngine": "亥丑卯",
    "keTiEngine": "遥克（弹射）",
+   "keTiTanyuan": "弹射",
    "bookNote": "",
    "flags": [
     "活动时"
@@ -3094,6 +3222,7 @@
    "keTiBook": "",
    "chuanEngine": "戌未辰",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -3118,6 +3247,7 @@
    "keTiBook": "知一",
    "chuanEngine": "亥午丑",
    "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
    "bookNote": "",
    "flags": [
     "活动时"
@@ -3144,6 +3274,7 @@
    "keTiBook": "重审",
    "chuanEngine": "申亥寅",
    "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
    "bookNote": "",
    "flags": []
   },
@@ -3168,6 +3299,7 @@
    "keTiBook": "别责",
    "chuanEngine": "寅午午",
    "keTiEngine": "别责",
+   "keTiTanyuan": "别责",
    "bookNote": "",
    "flags": []
   },
@@ -3192,6 +3324,7 @@
    "keTiBook": "",
    "chuanEngine": "辰未戌",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "书中四课（辰加癸）与伍-4 同课，常法应得元首辰未戌；书中三传作未戌丑，系作者讲天干作用时另取，待核。",
    "flags": [
     "书中三传与本 app 不同"
@@ -3218,6 +3351,7 @@
    "keTiBook": "遥克（弹射）",
    "chuanEngine": "子辰申",
    "keTiEngine": "遥克（弹射）",
+   "keTiTanyuan": "弹射",
    "bookNote": "",
    "flags": []
   },
@@ -3242,6 +3376,7 @@
    "keTiBook": "死奇",
    "chuanEngine": "辰申子",
    "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   },
@@ -3266,6 +3401,207 @@
    "keTiBook": "灾厄",
    "chuanEngine": "未卯亥",
    "keTiEngine": "涉害",
+   "keTiTanyuan": "见机",
+   "bookNote": "",
+   "flags": []
+  },
+  {
+   "id": "袁-1",
+   "book": "yuan",
+   "page": 100,
+   "src": "占卜一斑录（作者自占）",
+   "cat": "谋望",
+   "q": "投笔从戎，前途如何",
+   "read": "支上子为甲木之印（父），与午命相冲，此举与父意不合；初传寅为月破，宁镇之友皆不足恃。伏吟动辄得咎、静乃安全，贵人逆行、蛇临命，雄飞不得。中传巳朱雀带太阳、末传申官鬼为月建，利文不利武，宜静不宜动。",
+   "out": "问者自承父意相同、访友不遇，当晚决定返乡读书。书中未记后来应验（作者自言「若谓占验，则吾岂敢」）。",
+   "date": "1909-09-01",
+   "ganzhiNote": "己酉年七月十七日；十八岁甲午命",
+   "riZhu": "甲子",
+   "diff": 0,
+   "yueJiang": "巳",
+   "yueJiangDerived": false,
+   "shiZhi": "巳",
+   "zhouYe": "",
+   "chuanBook": "寅巳申",
+   "keTiBook": "自任",
+   "chuanEngine": "寅巳申",
+   "keTiEngine": "伏吟",
+   "keTiTanyuan": "自任",
+   "bookNote": "",
+   "flags": []
+  },
+  {
+   "id": "袁-2",
+   "book": "yuan",
+   "page": 101,
+   "src": "占卜一斑录（作者自占）",
+   "cat": "家宅",
+   "q": "家务（兄弟家产）",
+   "read": "干支上皆帝旺、将带龙常，兄弟多、家产不薄；课名始入，卯木贼辰土发用，卑陵尊、幼犯长。太岁酉冲支上卯，堂上见背；本命亥上子乘天后冲干上午，妇人长舌、兄弟参商。月建子，风波将决裂；干阴未乘勾陈与午合，西南有亲戚可调停。两年后壬子年析产分居难免。",
+   "out": "其人默然而去。书中未记后来应验。",
+   "date": "1910-01-01",
+   "ganzhiNote": "己酉年十一月二十日；三十五岁乙亥命",
+   "riZhu": "丙寅",
+   "diff": 1,
+   "yueJiang": "丑",
+   "yueJiangDerived": false,
+   "shiZhi": "子",
+   "zhouYe": "",
+   "chuanBook": "辰巳午",
+   "keTiBook": "始入",
+   "chuanEngine": "辰巳午",
+   "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
+   "bookNote": "",
+   "flags": []
+  },
+  {
+   "id": "袁-3",
+   "book": "yuan",
+   "page": 102,
+   "src": "占卜一斑录（作者自占）",
+   "cat": "求职",
+   "q": "谋事（改就官场）",
+   "read": "巳戌卯名铸印，外象利官人；但末传卯为酉年岁破，铸印不成。旬空、天空并临寅命，本非政治家。戊寄巳临子位，干加枝克枝名赘课，受他人之利；北上或临江滨海可得位置，布帛之类尤佳（发用巳遁癸水为戊之财、乘太常）。支课不备、天乙逆行，初入信用薄，须至庚戌二月方万全。",
+   "out": "问者本业绸布，拟改就官场，闻言作罢，春游津沽仍谋旧业。书中未记后来应验。",
+   "date": "1910-01-23",
+   "ganzhiNote": "己酉年十二月十三日；三十二岁戊寅命",
+   "riZhu": "戊子",
+   "diff": 5,
+   "yueJiang": "子",
+   "yueJiangDerived": false,
+   "shiZhi": "未",
+   "zhouYe": "",
+   "chuanBook": "巳戌卯",
+   "keTiBook": "铸印",
+   "chuanEngine": "巳戌卯",
+   "keTiEngine": "重审",
+   "keTiTanyuan": "重审",
+   "bookNote": "书中课名「铸印」系课体纲要之名（三传巳戌卯，书页 81）；《探原》720 课表此课作「重审」。",
+   "flags": []
+  },
+  {
+   "id": "袁-4",
+   "book": "yuan",
+   "page": 103,
+   "src": "占卜一斑录（作者自占）",
+   "cat": "借贷",
+   "q": "借债能否借到、数目多少",
+   "read": "一课酉金克三课卯木，借债当有着落，但卯酉相冲，彼畏我而勉强应酬、断难充分；二课戌与三课卯合，西北友人可居间；四课辰冲二课戌，居间与彼之腹心不和，须秘密进行，明日辛卯即可收受。数目：卯木财星生数三、成数八、真数六，残冬木落只从本数，多则八六、少则三六。本命子上天空、行年亥上白虎，本体已百孔千疮；末传午旬空，须防信用破产。",
+   "out": "书中未记应验。",
+   "date": "1910-01-25",
+   "ganzhiNote": "己酉年十二月十五日；三十四岁丙子命，己亥行年",
+   "riZhu": "庚寅",
+   "diff": 1,
+   "yueJiang": "子",
+   "yueJiangDerived": false,
+   "shiZhi": "亥",
+   "zhouYe": "",
+   "chuanBook": "辰巳午",
+   "keTiBook": "始入",
+   "chuanEngine": "辰巳午",
+   "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
+   "bookNote": "",
+   "flags": []
+  },
+  {
+   "id": "袁-5",
+   "book": "yuan",
+   "page": 104,
+   "src": "占卜一斑录（作者自占）",
+   "cat": "婚姻",
+   "q": "另谋娶妻（对方要求先离异元配）",
+   "read": "贵人顺行、天后临命，已于丁未年成婚；丑支就干为日财、乘青龙，所欢之人略有财色而品行卑污；丑土临干与天后未冲，心中不容元配；未为丑冲不能立足，丑之阴神变空亡，水性杨花，终舍乙木而去。九秋乙木力弱，制之不得。务宜斩除妄念、自保室家。",
+   "out": "问者自承与元配无缘，闻言姑从缓议。书中未记后来应验。",
+   "date": "1910-10-27",
+   "ganzhiNote": "庚戌年九月廿五日；廿五岁丙戌命",
+   "riZhu": "乙丑",
+   "diff": 9,
+   "yueJiang": "卯",
+   "yueJiangDerived": false,
+   "shiZhi": "午",
+   "zhouYe": "",
+   "chuanBook": "",
+   "keTiBook": "",
+   "chuanEngine": "丑戌未",
+   "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
+   "bookNote": "本书此例所印课图与三传（杜传，酉未丑，四课酉酉未未）与下一例（袁-6，丁酉日寅将寅时伏吟）完全相同，当是误植；按书题乙丑日（庚戌九月廿五日）卯将午时起课，得丑戌未，与断语「丑支就干」「丑临干与天后未冲」相合。",
+   "flags": []
+  },
+  {
+   "id": "袁-6",
+   "book": "yuan",
+   "page": 105,
+   "src": "占卜一斑录（作者自占）",
+   "cat": "谋望",
+   "q": "为人担保可否",
+   "read": "日生上神，虚耗百出，似今日担保、异日赔偿；干上未土泄丁火元气不妙，但六合午禄临命，合未助丁，断无实害。支上酉乘天乙，彼虽困难而人格颇高，因犯自刑力有不逮，得未土资生即可转败为功，宜援手。",
+   "out": "书中未记应验。",
+   "date": "1910-11-28",
+   "ganzhiNote": "庚戌年十月二十七日；四十一岁庚午命",
+   "riZhu": "丁酉",
+   "diff": 0,
+   "yueJiang": "寅",
+   "yueJiangDerived": false,
+   "shiZhi": "寅",
+   "zhouYe": "",
+   "chuanBook": "酉未丑",
+   "keTiBook": "杜传",
+   "chuanEngine": "酉未丑",
+   "keTiEngine": "伏吟",
+   "keTiTanyuan": "杜传",
+   "bookNote": "",
+   "flags": []
+  },
+  {
+   "id": "袁-7",
+   "book": "yuan",
+   "page": 106,
+   "src": "占卜一斑录（作者自占）",
+   "cat": "官运",
+   "q": "赴任",
+   "read": "初传寅月将值旬首、中传午贵人值官鬼、末传戌太岁值印绶，三传木火土递生日干辛金，课名「亨通」，赴任最宜，挂牌之期不出旬日；午官加寅，地在东北。支上丑与中传午害，「合中犯杀蜜中砒」：丑乘白虎、阴神乘天后，又值丑月，恐有盗案、杀伤妇女事牵涉武官，须宽猛兼施。本命丑上乘巳，为新岁破，十月又为月破，宦海升沉须相机因应。",
+   "out": "书中未记应验。",
+   "date": "1910-12-22",
+   "ganzhiNote": "庚戌年十一月二十一日；五十八岁癸丑命",
+   "riZhu": "辛酉",
+   "diff": 4,
+   "yueJiang": "寅",
+   "yueJiangDerived": false,
+   "shiZhi": "戌",
+   "zhouYe": "",
+   "chuanBook": "寅午戌",
+   "keTiBook": "始入",
+   "chuanEngine": "寅午戌",
+   "keTiEngine": "重审",
+   "keTiTanyuan": "始入",
+   "bookNote": "",
+   "flags": []
+  },
+  {
+   "id": "袁-8",
+   "book": "yuan",
+   "page": 107,
+   "src": "占卜一斑录（作者自占）",
+   "cat": "官司",
+   "q": "争讼（兄弟争田）",
+   "read": "勾陈之阴神为白虎又带官星，为田产争讼；干上辰与酉支合为癸之印，支上子与癸寄宫丑合为癸之比，课名交车，因弟恃母爱与弟争讼。未乘勾陈、阴神戌值旬空，戌本五数逢空力减，所争约二亩五分；三传纯土生数五，每亩约二十五圆。发用辰为岁破，虽贵人顺行，讼亦不直。月德临申命，西北有平辈调人。",
+   "out": "问者证实：争田二亩五分、每亩二十五圆、暮春县官判其败诉；闻劝息讼而归。",
+   "date": "1911-01-03",
+   "ganzhiNote": "庚戌年十二月初三日；五十一岁庚申命，丙辰行年",
+   "riZhu": "癸酉",
+   "diff": 3,
+   "yueJiang": "丑",
+   "yueJiangDerived": false,
+   "shiZhi": "戌",
+   "zhouYe": "",
+   "chuanBook": "辰未戌",
+   "keTiBook": "元首",
+   "chuanEngine": "辰未戌",
+   "keTiEngine": "元首",
+   "keTiTanyuan": "元首",
    "bookNote": "",
    "flags": []
   }

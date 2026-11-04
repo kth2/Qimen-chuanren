@@ -112,16 +112,17 @@
     const max = Math.max(...depths.map((x) => x.d));
     let pool = depths.filter((x) => x.d === max).map((x) => x.c);
     let why = `涉害深浅：${depths.map((x) => `${x.c.shang}${x.d}重`).join('、')}`;
+    let sub = '涉害';
     if (pool.length > 1) {
       const best = Math.min(...pool.map((c) => mzRank(c.xiaPos)));
       if (best < 2) {
         const p2 = pool.filter((c) => mzRank(c.xiaPos) === best);
-        if (p2.length < pool.length) why += `，同深取临${best === 0 ? '孟（见机）' : '仲（察微）'}`;
+        if (p2.length < pool.length && p2.length === 1) { why += `，同深取临${best === 0 ? '孟（见机）' : '仲（察微）'}`; sub = best === 0 ? '见机' : '察微'; }
         pool = p2;
       }
-      if (pool.length > 1) why += `，复等${gang ? '刚日取日上' : '柔日取辰上'}`;
+      if (pool.length > 1) { why += `，复等${gang ? '刚日取日上' : '柔日取辰上'}（缀瑕）`; sub = '缀瑕'; }
     }
-    return { pick: pool.length === 1 ? pool[0] : fuDeng(pool, gang), why };
+    return { pick: pool.length === 1 ? pool[0] : fuDeng(pool, gang), why, sub };
   }
 
   /** 从一组候选里定初传：一个即用；多个先比（阳日用阳、阴日用阴），再涉害 */
@@ -132,7 +133,24 @@
     const bi = uniq.filter((c) => yangZhi(c.shang) === gang);
     if (bi.length === 1) return { pick: bi[0], step: 'biyong', why: `比用：${gang ? '阳日取阳神' : '阴日取阴神'}` };
     const r = sheHai(bi.length ? bi : uniq, gang, method, ke4, dir);
-    return { pick: r.pick, step: 'shehai', why: (bi.length ? '俱比，' : '俱不比，') + r.why };
+    // 「改正涉害」：《探原》深浅法与只论孟仲之法（《经纬》等书）所取不同者（书页 10–12、31）
+    const alt = method === 'mengzhong' ? null : sheHai(bi.length ? bi : uniq, gang, 'mengzhong', ke4, dir);
+    const gaiZheng = !!(alt && r.sub === '涉害' && alt.pick.shang !== r.pick.shang);
+    return { pick: r.pick, step: 'shehai', sub: r.sub, gaiZheng, why: (bi.length ? '俱比，' : '俱不比，') + r.why };
+  }
+
+  /**
+   * 《探原》720 课表所载课名与书页 30 注之定义不合者（键＝日柱＋干上神）。课名照表，说明里注明定义所得。
+   * 书页 30–31 所列各名课数与表亦有一二课出入（始入、元首、比用、涉害），以表为准。
+   */
+  const KETI_BIAO = { 丁卯申: '涉害', 戊辰未: '重审', 戊辰戌: '始入', 乙卯亥: '改正涉害', 丙辰子: '重审' };
+
+  /** 《探原》贼克诸课之名（书页 30 按语及注）：始入、重审、元首、比用、知一、涉害（改正涉害）、见机、察微、缀瑕 */
+  // 始入＝「四课中并无上克下，只有一下贼上」：一课下贼、无上克；同一下贼见于两课（如甲子日干上辰，课一、课四俱辰加寅），表作重审
+  function zeiKeName(r, nXia, nShang) {
+    if (r.step === 'single') return nXia ? (nXia === 1 && !nShang ? '始入' : '重审') : '元首';
+    if (r.step === 'biyong') return nXia ? '比用' : '知一';
+    return r.sub === '涉害' ? (r.gaiZheng ? '改正涉害' : '涉害') : r.sub;
   }
 
   /**
@@ -149,7 +167,13 @@
     const gang = yangGan(riGan);
     const up = (z) => pan.tianOver(z);
     const flags = [];
-    const out = (chuan, name, why) => ({ ke: ke4, chuan, name, method: opts.sheHai ? method : 'shenqian', why, flags, liuren: pan });
+    // keTi＝《探原》书页 32–46 表中所载课名（书页 30–31 按语定义）；name＝九宗门大类
+    const out = (chuan, name, why, keTi) => {
+      keTi = keTi || name;
+      const biao = method === 'shenqian' && KETI_BIAO[riGan + riZhi + ke4[0].shang];
+      if (biao && biao !== keTi) { why += `（课名照《探原》表作「${biao}」；依书页 30 注之定义当名「${keTi}」）`; keTi = biao; }
+      return { ke: ke4, chuan, name, keTi, method: opts.sheHai ? method : 'shenqian', why, flags, liuren: pan };
+    };
     const normal = (first) => [first, up(first), up(up(first))];
 
     const xiaKe = ke4.filter((k) => ke(k.xia, k.shang));      // 下贼上
@@ -170,7 +194,7 @@
       } else if (riGan === '壬' && (riZhi === '辰' || riZhi === '午') && opts.fuYinRen === 'verse') {
         a = '亥'; b = '巳'; why = '伏吟壬辰、壬午：依口诀「亥巳申」（非《探原》基准，另择之法）';
         flags.push('壬辰、壬午伏吟：已按口诀「亥巳申」取；《探原》作亥辰戌／亥午子');
-        return out([a, b, '申'], '伏吟', why);
+        return out([a, b, '申'], '伏吟', why, '杜传');
       } else {
         a = gang ? ganShang : zhiShang;
         if (isZiXing(a)) { b = gang ? zhiShang : ganShang; why = `伏吟无克，${gang ? '阳日取干上' : '阴日取枝上'}神为初传；初传自刑，中传${gang ? '取枝上' : '取干上'}（杜传）`; }
@@ -179,7 +203,10 @@
       const c = moOf(a, b);
       if (isZiXing(b)) why += '；中传又自刑，取中冲为末';
       else if (XING[b] === a) why += '；中刑复归初传，取中冲为末（书页 27 注）';
-      return out([a, b, c], '伏吟', why);
+      // 书页 31 注：六癸「类元首」；凡初传自刑者皆杜传，「惟六乙日虽是杜传，取一下贼上为用，类始入」
+      // 丁己辛三卯日「名虽自信，而类杜传」（书页 31 注⑬），表作杜传
+      const keTi = youKe ? (isZiXing(a) ? '杜传、始入' : '不虞、元首') : isZiXing(a) || XING[b] === a ? '杜传' : gang ? '自任' : '自信';
+      return out([a, b, c], '伏吟', why, keTi);
     }
 
     // 返吟
@@ -187,9 +214,11 @@
       const pool = xiaKe.length ? xiaKe : shangKe;
       if (pool.length) {
         const r = choose(pool, gang, method, ke4, xiaKe.length ? 'xia' : 'shang');
-        return out(normal(r.pick.shang), '返吟', `返吟有克，${xiaKe.length ? '下贼上' : '上克下'}${r.why ? '，' + r.why : ''}，中末取上神（即冲）`);
+        return out(normal(r.pick.shang), '返吟', `返吟有克，${xiaKe.length ? '下贼上' : '上克下'}${r.why ? '，' + r.why : ''}，中末取上神（即冲）`,
+          '无依、' + zeiKeName(r, xiaKe.length, shangKe.length));
       }
-      return out([YIMA[riZhi], ke4[2].shang, ke4[0].shang], '返吟', '返吟无克，驿马发用，中取支上，末取干上');
+      return out([YIMA[riZhi], ke4[2].shang, ke4[0].shang], '返吟', '返吟无克，驿马发用，中取支上，末取干上',
+        JI_GONG[riGan] === riZhi ? '无亲、八专' : '无亲、井栏射');
     }
 
     // 有上下克：先下贼上，后上克下
@@ -198,7 +227,7 @@
       const r = choose(pool, gang, method, ke4, xiaKe.length ? 'xia' : 'shang');
       const kind = xiaKe.length ? '下贼上' : '上克下';
       const name = r.step === 'single' ? (xiaKe.length ? '重审' : '元首') : r.step === 'biyong' ? '知一（比用）' : '涉害';
-      return out(normal(r.pick.shang), name, `${kind}${r.why ? '，' + r.why : ''}（第${r.pick.n}课）`);
+      return out(normal(r.pick.shang), name, `${kind}${r.why ? '，' + r.why : ''}（第${r.pick.n}课）`, zeiKeName(r, xiaKe.length, shangKe.length));
     }
 
     const distinct = new Set(ke4.map((k) => k.shang + '/' + k.xiaPos)).size;
@@ -207,7 +236,8 @@
     // 八专（干支同位）无克
     if (baZhuan) {
       const first = gang ? at(zi(ke4[0].shang) + 2) : at(zi(ke4[3].shang) - 2);
-      return out([first, ke4[0].shang, ke4[0].shang], '八专', `八专无克，不取遥克，${gang ? '阳日干上神顺数三' : '阴日第四课上神逆数三'}，中末俱干上神`);
+      return out([first, ke4[0].shang, ke4[0].shang], '八专', `八专无克，不取遥克，${gang ? '阳日干上神顺数三' : '阴日第四课上神逆数三'}，中末俱干上神`,
+        first === ke4[0].shang ? '八专、独足' : '八专');
     }
 
     // 遥克：先神遥克日（蒿矢），无则日遥克神（弹射）
@@ -218,7 +248,7 @@
       const pool = shenKeRi.length ? shenKeRi : riKeShen;
       const r = choose(pool, gang, method, ke4);
       return out(normal(r.pick.shang), shenKeRi.length ? '遥克（蒿矢）' : '遥克（弹射）',
-        `四课无克，${shenKeRi.length ? '神遥克日' : '日遥克神'}${r.why ? '，' + r.why : ''}（第${r.pick.n}课）`);
+        `四课无克，${shenKeRi.length ? '神遥克日' : '日遥克神'}${r.why ? '，' + r.why : ''}（第${r.pick.n}课）`, shenKeRi.length ? '嚆矢' : '弹射');
     }
 
     // 别责（四课不备，只三课）
@@ -232,8 +262,8 @@
     if (distinct < 3) flags.push('四课只两课却非八专日，书中未载');
 
     // 昴星
-    if (gang) return out([up('酉'), ke4[2].shang, ke4[0].shang], '昴星（虎视）', '四课无克无遥，刚日仰取酉上神，中支上，末干上');
-    return out([pan.diUnder('酉'), ke4[0].shang, ke4[2].shang], '昴星（冬蛇掩目）', '四课无克无遥，柔日俯取酉下神，中干上，末支上');
+    if (gang) return out([up('酉'), ke4[2].shang, ke4[0].shang], '昴星（虎视）', '四课无克无遥，刚日仰取酉上神，中支上，末干上', '虎视');
+    return out([pan.diUnder('酉'), ke4[0].shang, ke4[2].shang], '昴星（冬蛇掩目）', '四课无克无遥，柔日俯取酉下神，中干上，末支上', '冬蛇掩目');
   }
 
   return { compute, siKe, sheHaiDepth, JI_GONG };
