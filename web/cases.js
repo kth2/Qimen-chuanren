@@ -291,14 +291,14 @@
     let h = `<p>AI 解读应验：${s.aiHit.n} 条，完全应验 ${hc.happened}、部分 ${hc.partial}、未应验 ${hc.not_happened}、相反 ${hc.opposite}；
       应验分 <b>${s.aiHit.avg == null ? '—' : (s.aiHit.avg * 100).toFixed(1) + '%'}</b> <span class="muted">（完全 1、部分 0.5，同奇门 app）</span></p>`;
     h += `<p>已归档 ${s.archived} 条（去重后），其中可计分的是非题 ${s.yesno} 题：如愿 ${s.pos}、不如愿 ${s.neg}。${s.unlabeled ? `<br><span class="muted">还有 ${s.unlabeled} 条没判读（AI 未设置或判读失败），暂不进规则计分。</span>` : ''}<br>${nextTxt}。</p>`;
-    h += `<table class="rule-table"><thead><tr><th>判断</th><th>计分题数</th><th>平衡准确率</th><th>准确率</th><th>判定</th></tr></thead><tbody>`;
+    h += `<div class="tbl-wrap"><table class="rule-table acc-table"><thead><tr><th>判断</th><th>题数</th><th>平衡准确率</th><th>准确率</th><th>判定</th></tr></thead><tbody>`;
     h += `<tr><td>AI 结论（奇门为主，基准；方向由应验程度推出）</td><td>${s.ai.n}</td><td>${pct(s.ai.balanced)}</td><td>${pct(s.ai.acc)}</td><td class="muted">—</td></tr>`;
     h += `<tr><td>五行推理 v1</td><td>${s.wuxing.n}</td><td>${pct(s.wuxing.balanced)}</td><td>${pct(s.wuxing.acc)}</td><td class="muted">参照</td></tr>`;
     for (const k of [1, 2, 3, 4, 6, 8, 9, 10]) {
       const r = s.rules[k];
       h += `<tr><td>规则 ${k} ${RULE_NAME[k]}</td><td>${r.n}</td><td>${pct(r.balanced)}</td><td>${pct(r.acc)}</td><td>${r.verdict ? `<b>${r.verdict}</b>` : '<span class="muted">未到评估点</span>'}</td></tr>`;
     }
-    h += `</tbody></table>`;
+    h += `</tbody></table></div>`;
     h += `<p style="margin-top:8px;">规则 5 方位（只计第二方位与奇门方位不同的方位题）：${s.rule5.n} 题，第二方位命中 ${s.rule5.second}，奇门方位命中 ${s.rule5.qimen}。<br>
       规则 4 应期候选（末传支日）：${s.rule4YingQi.n} 题有实际应期，命中 ${s.rule4YingQi.hit}。<br>
       规则 7 应期融合·穿壬：${s.rule7.n} 题有实际应期，命中 ${s.rule7.hit}（瞎猜期望 ${s.rule7.expect}）。<br>

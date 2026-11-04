@@ -148,6 +148,11 @@
     .rule-table th { color: #666; font-weight: 600; }
     .rule-table td:first-child { width: 7.5em; white-space: nowrap; }
     .rule-table td:nth-child(2) { width: 2.5em; }
+    /* 准确率表：第一栏是长句（如「AI 结论（奇门为主……）」），要能换行；数字与判定不换行；再宽就在框内横滑，不撑破页面 */
+    .tbl-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .acc-table td:first-child { width: auto; white-space: normal; min-width: 7em; }
+    .acc-table th:not(:first-child), .acc-table td:not(:first-child) { white-space: nowrap; }
+    .acc-table th:first-child { white-space: normal; }
     .vote { font-weight: 700; white-space: nowrap; }
     .vote.p { color: #3c763d; } .vote.n { color: #a94442; } .vote.z { color: #888; }
     .bk-case { border-top: 1px dashed #ddd; padding: 6px 0; font-size: 13px; line-height: 1.7; }
