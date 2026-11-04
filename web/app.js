@@ -354,7 +354,7 @@
   function tuiliPanel(pan, res) {
     if (!TL || !res.sanChuan) return '';
     const r = TL.analyze({ sc: res.sanChuan, riZhu: pan.siZhu.day, yueZhi: String(pan.siZhu.month || '')[1],
-      taiSui: String(pan.siZhu.year || '')[1], xunKong: res.liuren.xunKong, nianMing: res.nianMing || '' });
+      taiSui: String(pan.siZhu.year || '')[1], xunKong: res.liuren.xunKong, nianMing: res.nianMing || '', xingNian: res.xingNian || '', domain: res.domain || '' });
     const gongLink = (t) => esc(t).replace(/奇门(\d)宫/g, (m, g) => `<a href="#xj-g${g}" class="tl-gong" data-gong="${g}">奇门${g}宫</a>`);
     const item = (it) => `<li${it.own ? ' class="tl-own"' : ''}>${gongLink(it.text)}${it.src ? ` <span class="tl-src">${esc(it.src)}</span>` : ''}${it.own ? ' <span class="tl-src">本 app 取法</span>' : ''}</li>`;
     const steps = r.steps.map((st) => `<div class="tl-step"><b>${esc(st.title)}</b><ul>${st.items.map(item).join('')}</ul></div>`).join('');
@@ -558,11 +558,17 @@
       res.yongPick = yong;
       res.nianMing = nianMing;
       res.nianMingAuto = nianMing !== nmPicked ? nianMing : '';
+      res.domain = domainKeyOf(ui);
+      // 行年（《探原》凡例）：性别＋虚岁；虚岁＝起课年柱减本命年柱（六十甲子）加一，勾选「61 岁以上」再加六十
+      res.xingBie = $('inXingBie').value;
+      res.xuSui = nianMing && nianMing.length === 2 ? TL.xuSui(pan.siZhu.year, nianMing, $('inOver60').checked) : 0;
+      res.xingNian = res.xuSui ? TL.xingNian(res.xingBie, res.xuSui) : '';
+      $('xnHint').textContent = res.xingNian ? `虚岁 ${res.xuSui}，行年 ${res.xingNian}` : res.xingBie ? '须选年命（含年支）才算得出岁数' : '';
       renderBoard(pan, res);
       renderChuanRen(pan, res);
       window._chuanren = res;
       // 供 AI 解读（web/ai.js）取用：同一张盘、同一份穿壬结果，不重算
-      window._chuanrenCtx = { pan, res, school, date, ui, domainSource: dom.source, nianMing, engineCategory: engineCategoryOf(ui, school), dateStr: `${$('inDate').value} ${$('inTime').value}` };
+      window._chuanrenCtx = { pan, res, school, date, ui, domainSource: dom.source, nianMing, xingNian: res.xingNian, xingBie: res.xingBie, domain: res.domain, engineCategory: engineCategoryOf(ui, school), dateStr: `${$('inDate').value} ${$('inTime').value}` };
       markAIStale();
     } catch (e) {
       renderBoard(pan, null);
@@ -634,6 +640,8 @@
   $('inDomain').addEventListener('change', cast);
   $('inNmGan').addEventListener('change', () => { fillNmZhi(); syncNianMing(); cast(); });
   $('inNmZhi').addEventListener('change', () => { syncNianMing(); cast(); });
+  $('inXingBie').addEventListener('change', cast);
+  $('inOver60').addEventListener('change', cast);
   // 供万年历调用：用某天排盘、把某年柱设为年命
   window.ChuanRenApp = { cast, setNianMing };
   window.CalendarHost = { cast, setNianMing };   // 万年历（vendor/qimen-pwa/calendar-ui.js）的宿主钩子
