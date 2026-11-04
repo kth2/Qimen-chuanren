@@ -22,6 +22,7 @@ const zi = (z) => ZHI.indexOf(z);
 const BOOKS = {
   wang: { file: 'wang.json', title: '王雷之《大六壬实占百例精解》', short: '王雷之' },
   wu: { file: 'wu.json', title: '伍剑虹《大六壬精义讲解》', short: '伍剑虹' },
+  yuan: { file: 'yuan.json', title: '袁树珊《大六壬探原》占卜一斑录', short: '袁树珊' },
 };
 let T = null;
 try { T = require('tyme4ts'); } catch (e) { /* 无历法库则不核公历 */ }
@@ -70,7 +71,7 @@ function build() {
         date: c.date || '', ganzhiNote: c.ganzhiNote || '',
         riZhu: c.riZhu, diff, yueJiang, yueJiangDerived: derived, shiZhi: c.shiZhi || null, zhouYe: c.zhouYe || '',
         chuanBook: c.chuan || '', keTiBook: c.keTi || '',
-        chuanEngine, keTiEngine: r.name,
+        chuanEngine, keTiEngine: r.name, keTiTanyuan: r.keTi,
         bookNote: c.bookNote || '', flags,
       });
     }

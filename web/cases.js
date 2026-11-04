@@ -189,7 +189,7 @@
       // 六壬推理（与当时提示词同一算法）：每要素一条，合看一条
       if (TL) {
         try {
-          const tl = TL.analyze({ sc, riZhu: b.day, yueZhi: String(b.month || '')[1], xunKong: rec.liuren.xunKong || [], nianMing: rec.input.nianMing || '' });
+          const tl = TL.analyze({ sc, riZhu: b.day, yueZhi: String(b.month || '')[1], taiSui: String(b.year || '')[1], xunKong: rec.liuren.xunKong || [], nianMing: rec.input.nianMing || '' });
           const tag = (it) => (it.own ? '〔本 app 取法〕' : it.src ? `〔${it.src}〕` : '');
           tl.steps.forEach((st) => lr.push({ id: 'tl-' + st.key, text: `六壬推理·${st.title}：` + st.items.map((it) => it.text + tag(it)).join(' ') }));
           lr.push({ id: 'tl-he', text: '六壬推理·合看：' + tl.heKan.map((it) => it.text + tag(it)).join(' ') });

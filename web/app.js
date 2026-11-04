@@ -350,11 +350,11 @@
       象义取 ${esc(XY.SOURCE)}，书中原则「以十二神与六亲的结合为准」。我＝我宫，事＝事宫，向＝规则 5 第二方位。</p></div>`;
   }
 
-  /** 六壬推理：照伍剑虹书页 13–14 八要素逐项讲；只显示，不投票，不进规则账本 */
+  /** 六壬推理：照《探原》论断篇八门逐项讲（伍剑虹书作参照）；只显示，不投票，不进规则账本 */
   function tuiliPanel(pan, res) {
     if (!TL || !res.sanChuan) return '';
     const r = TL.analyze({ sc: res.sanChuan, riZhu: pan.siZhu.day, yueZhi: String(pan.siZhu.month || '')[1],
-      xunKong: res.liuren.xunKong, nianMing: res.nianMing || '' });
+      taiSui: String(pan.siZhu.year || '')[1], xunKong: res.liuren.xunKong, nianMing: res.nianMing || '' });
     const gongLink = (t) => esc(t).replace(/奇门(\d)宫/g, (m, g) => `<a href="#xj-g${g}" class="tl-gong" data-gong="${g}">奇门${g}宫</a>`);
     const item = (it) => `<li${it.own ? ' class="tl-own"' : ''}>${gongLink(it.text)}${it.src ? ` <span class="tl-src">${esc(it.src)}</span>` : ''}${it.own ? ' <span class="tl-src">本 app 取法</span>' : ''}</li>`;
     const steps = r.steps.map((st) => `<div class="tl-step"><b>${esc(st.title)}</b><ul>${st.items.map(item).join('')}</ul></div>`).join('');
@@ -362,7 +362,7 @@
       ${steps}
       <div class="tl-step tl-he"><b>合看</b><ul>${r.heKan.map(item).join('')}</ul></div>
       <p class="muted" style="margin:6px 0 0;">${esc(r.caution.text)}（${esc(r.caution.src)}）<br>
-        出处：${esc(r.source)}，书页为该书页脚页码。「本 app 取法」＝书中无逐字规定、本 app 自定，可改。点「奇门N宫」跳到九宫详解。</p></div>`;
+        出处：${esc(r.source)}。「探原 N」＝《大六壬探原》书页，「伍书 N」＝伍剑虹书页（参照），均为页脚页码。「本 app 取法」＝书中无逐字规定、本 app 自定，可改。点「奇门N宫」跳到九宫详解。</p></div>`;
   }
 
   /** 四课三传（版式同六壬书：四课右起第一课，上行天将、中行上神、下行下神） */
@@ -379,7 +379,7 @@
     const chHtml = `<table class="chuan-table">${sc.chuan.map((z, i) => `<tr><td class="muted">${'初中末'[i]}传</td>
       <td>${dun[z] || '<span class="muted">○</span>'}</td><td class="ke-up">${z}${kong.has(z) ? '<sup class="kong-mark">空</sup>' : ''}</td><td>${jx(z)}</td>
       <td class="muted">临${ln.diUnder(z)}·${GONG_LABEL(TDP.ZHI_GONG[ln.diUnder(z)])}</td></tr>`).join('')}</table>`;
-    return `<div class="panel"><h3>四课三传 <span class="exp-badge">${esc(sc.name)}</span></h3>
+    return `<div class="panel"><h3>四课三传 <span class="exp-badge">${esc(sc.name)}${sc.keTi && sc.keTi !== sc.name ? '·' + esc(sc.keTi) : ''}</span></h3>
       <div class="sc-wrap">${chHtml}${keHtml}</div>
       <p class="muted" style="margin:6px 0 0;">${esc(sc.why)}。<span class="exp-badge">三传取法据《探原》</span>（袁树珊《大六壬探原》，720 课逐课核对）；
         「临」＝该支加在地盘何位、属奇门何宫。空＝六壬日旬空，○＝旬空无遁干。</p>
@@ -390,7 +390,7 @@
   /* ---------- 书中同课案例 ---------- */
   function bookCaseHtml(c, lv, open) {
     const title = (BOOK && BOOK._books && BOOK._books[c.book]) || c.book;
-    const short = c.book === 'wang' ? '王雷之' : c.book === 'wu' ? '伍剑虹' : c.book;
+    const short = c.book === 'wang' ? '王雷之' : c.book === 'wu' ? '伍剑虹' : c.book === 'yuan' ? '袁树珊' : c.book;
     const jiang = c.yueJiang ? `${c.yueJiang}将${c.yueJiangDerived ? '<span class="muted">(推)</span>' : ''}` : '';
     const shi = c.shiZhi ? `${c.shiZhi}时` : '';
     const chuan = c.chuanBook || c.chuanEngine;
@@ -401,7 +401,7 @@
     if (c.bookNote) notes.push(c.bookNote);
     return `<details class="bk-case"${open ? ' open' : ''}><summary>${lvTag}<b>${esc(c.q)}</b>
         <span class="bk-meta">　${esc(short)} ${esc(c.id.replace(/^[^-]+-/, '例'))}·p${esc(c.page)}${c.cat ? '·' + esc(c.cat) : ''}</span></summary>
-      <div class="bk-meta">${esc(c.riZhu)}日 ${jiang}${shi}${c.zhouYe ? '（' + esc(c.zhouYe) + '）' : ''}　三传 ${esc(chuan)}${c.keTiBook ? '　' + esc(c.keTiBook) : ''}
+      <div class="bk-meta">${esc(c.riZhu)}日 ${jiang}${shi}${c.zhouYe ? '（' + esc(c.zhouYe) + '）' : ''}　三传 ${esc(chuan)}${c.keTiBook ? '　' + esc(c.keTiBook) : ''}${c.keTiTanyuan && c.keTiTanyuan !== c.keTiBook ? '<span class="muted">（《探原》课名 ' + esc(c.keTiTanyuan) + '）</span>' : ''}
         ${c.date ? '　' + esc(c.date) : ''}${c.ganzhiNote ? '　' + esc(c.ganzhiNote) : ''}${c.src ? '　出自' + esc(c.src) : ''}</div>
       ${c.read ? `<div><b>断</b> ${esc(c.read)}</div>` : ''}
       ${c.out ? `<div><b>验</b> ${esc(c.out)}</div>` : ''}
@@ -417,7 +417,7 @@
     const m = CM.match(BOOK.cases, cur);
     let html = `<div class="panel"><h3>书中同课案例 <span class="exp-badge">${m.total ? m.total + ' 例' : '无'}</span></h3>`;
     if (!m.total) {
-      html += `<p class="muted" style="margin:0;">两本书 ${BOOK.cases.length} 例中，没有与本课（${esc(cur.riZhu)}日 ${esc(cur.yueJiang)}将${esc(cur.shiZhi)}时，三传 ${esc((cur.chuan || []).join(''))}）同课或同三传的案例。</p>`;
+      html += `<p class="muted" style="margin:0;">书中 ${BOOK.cases.length} 例中，没有与本课（${esc(cur.riZhu)}日 ${esc(cur.yueJiang)}将${esc(cur.shiZhi)}时，三传 ${esc((cur.chuan || []).join(''))}）同课或同三传的案例。</p>`;
     }
     for (const lv of CM.LEVELS) {
       const list = m[lv.key];
