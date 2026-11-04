@@ -5,13 +5,14 @@ const S = require('../core/liuren/sanchuan.js');
 const F = require('./fixtures/sanchuan-cases.json');
 
 const run = (rz, yj, sz, opts) => S.compute({ riGan: rz[0], riZhi: rz[1], yueJiang: yj, shiZhi: sz }, opts);
-const KNOWN_CONFLICT = { '例 财产（p70）': '子辰戌' };   // 书中此例与本书口诀相反，见 sanchuan.js 注
+// 书中与《探原》（基准）不合者：p70 昴星柔日之例与口诀相反；伏吟辛卯、丁卯（p80）作卯子卯，《探原》书页 27 注作卯子午
+const KNOWN_CONFLICT = { '例 财产（p70）': '子辰戌', '伏吟 辛卯': '卯子午', '例 贷款伏吟（p80）': '卯子午' };
 
 test(`王雷之《实占百例》${F.wang.length} 例三传逐例一致`, () => {
   for (const [id, rz, yj, sz, exp] of F.wang) assert.equal(run(rz, yj, sz).chuan.join(''), exp, id + ' ' + rz);
 });
 
-test(`伍剑虹《精义讲解》${F.wu.length} 例：除一例书中自相矛盾外逐例一致`, () => {
+test(`伍剑虹《精义讲解》${F.wu.length} 例：除三例与《探原》不合外逐例一致`, () => {
   for (const [id, rz, yj, sz, exp] of F.wu) {
     const got = run(rz, yj, sz).chuan.join('');
     if (KNOWN_CONFLICT[id]) { assert.equal(got, KNOWN_CONFLICT[id], id); assert.notEqual(got, exp); continue; }
@@ -35,14 +36,14 @@ test('涉害两法：《六壬大全》之例（丁卯日）深浅法取亥，�
   }
 });
 
-test('伏吟壬辰、壬午两说', () => {
-  assert.equal(run('壬辰', '子', '子').chuan.join(''), '亥巳申');
-  assert.equal(run('壬辰', '子', '子', { fuYinRen: 'zhinan' }).chuan.join(''), '亥辰戌');
-  assert.equal(run('壬午', '子', '子', { fuYinRen: 'zhinan' }).chuan.join(''), '亥午子');
+test('伏吟壬辰、壬午：缺省照《探原》（亥辰戌、亥午子），口诀「亥巳申」为另择之法', () => {
+  assert.equal(run('壬辰', '子', '子').chuan.join(''), '亥辰戌');
+  assert.equal(run('壬午', '子', '子').chuan.join(''), '亥午子');
+  assert.equal(run('壬辰', '子', '子', { fuYinRen: 'verse' }).chuan.join(''), '亥巳申');
   assert.equal(run('壬子', '子', '子').chuan.join(''), '亥子卯');   // 其余四壬：日先辰后次末刑
   assert.equal(run('甲子', '子', '子').chuan.join(''), '寅巳申');   // 六甲伏吟寅巳申
   assert.equal(run('庚子', '子', '子').chuan.join(''), '申寅巳');
-  assert.equal(run('癸亥', '子', '子').chuan[0], '丑');             // 六癸克发用
+  assert.equal(run('癸亥', '子', '子').chuan.join(''), '丑戌未');   // 六癸克发用，中初刑、末中刑
 });
 
 test('全部 60 日 × 12 将 × 12 时都排得出三传，且三传都是地支', () => {

@@ -6,7 +6,7 @@
  * 天将吉凶二分：本规格自定，非《探原》原文。
  *
  * 本模块只依时间，不碰奇门的转盘／飞盘规则；月将由调用方传入
- * （月将切换时刻待核原文，见规格「未决事项」）。
+ * （月将「每交中气，立即变更」，《探原》书页 2，见 yuejiang.js）。
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();

@@ -1,25 +1,27 @@
 /**
  * 奇门穿壬 · 第二层：四课与三传（九宗门）。纯函数，无副作用。
  *
- * 出处：伍剑虹《大六壬精义讲解》第一章第三至五节（四课、三传、九大格局）及第二章问答
- *   （比用与涉害、伏吟两说）。《大六壬探原》推演篇原文仍未取得。
+ * 基准：袁树珊《大六壬探原》卷上推演篇（书页 3–31 九宗门，书页 32–46「六十花甲日三传」720 课表）。
+ * 720 课逐课与原书表一致（test/tanyuan.test.js）。伍剑虹《大六壬精义讲解》、王雷之《实占百例》
+ * 的书例另作对照（test/sanchuan.test.js）。
  *
- * 两处须选法（见 opts）：
- *   · 涉害：'shenqian'（默认）＝涉害深浅：被克之神从所临地盘位顺行回本家，数沿途受几重克
- *     （地盘支与寄宫天干都算），深者为用；同深则临孟（见机）、再临仲（察微），再同则刚日取日上、
- *     柔日取辰上。伍剑虹书中引《六壬大全》此法并举例（丁卯日亥、丑同下贼上，取克深之亥）；
- *     《探原》凡例亦主深浅、批评只论孟仲之法。
- *     'mengzhong'＝伍剑虹自用之法：只看所临孟仲季，孟先于仲，季不取，复等刚日取干上、柔日取支上。
- *   · 伏吟壬辰、壬午两日：'verse'（默认）＝书中口诀「壬辰壬午亥巳申」；'zhinan'＝书中所引
- *     《大六壬指南》通则（初自刑则中用支，中自刑则末取冲），得亥辰戌／亥午子。
- * 其余照书：
- *   · 返吟有克：照常法取克为初，中末取上神（返吟时即冲神）。王雷之《实占百例》例70、75、83、
- *     95、98–100 均如此；书中「中刑为末」一句与这些实例不合，不采。
- *   · 返吟无克：驿马发用，中取支上神，末取干上神。
- *   · 昴星：刚日仰取酉上神，中支上末干上；柔日俯取酉下神，中干上末支上（依口诀）。
- *     书中 p70 一例柔日昴星作中支上末干上，与口诀相反，未采，结果里另加提示。
- *   · 八专（干支同位）无上下克：阳日干上神顺数三位，阴日第四课上神逆数三位；中末俱干上神。
- *     书中只说「两课无克」，未说遥克是否先行；此处不先取遥克【待核】。
+ * 要点（均照《探原》原文）：
+ *   · 涉害（书页 9–12）：上神从所临地盘位顺行至本家，历数沿途地盘支与寄宫天干。下贼上，数克上神者；
+ *     上克下，数上神所克者（「戌加子仅二重克，寅加辰有六重克」）。深者为用；俱深取孟上神（见机），
+ *     无孟取仲上神（察微），再等阳日取干两课、阴日取枝两课先见者（缀瑕）。《探原》列出与《经纬》等书
+ *     不同的「改正涉害」二十四课，720 课表中标「改正涉害」。
+ *     另择之法 opts.sheHai='mengzhong'（伍剑虹自用，只看孟仲季）不是基准。
+ *   · 伏吟（书页 26–27）：有克只乙、癸二干，取克发用；癸日中取初刑、末取中刑（不虞）；乙日初辰自刑，
+ *     「必须取枝上神为中」。无克阳日取干上（自任）、阴日取枝上（自信）为初，初刑为中、中刑为末；
+ *     初自刑则阳日中取枝上、阴日中取干上（杜传）；中又自刑取中冲为末。丁己辛三卯日初卯中子，
+ *     子刑复归卯，「亦当取中冲为末传」（书页 27 注）。壬辰、壬午因此得亥辰戌、亥午子。
+ *     另择之法 opts.fuYinRen='verse'（伍剑虹书所引口诀「壬辰壬午亥巳申」）不是基准。
+ *   · 返吟（书页 23–26）：有克照常法，中末取上神（即冲）；无克驿马发用，中取支上，末取干上（无亲）。
+ *   · 昴星（书页 18）：阳日取地盘酉上神为初，枝上为中，干上为末（虎视）；阴日取天盘酉下神为初，
+ *     干上为中，枝上为末（冬蛇掩目）。伍剑虹书 p70 一例柔日作中支上末干上，与《探原》相反，不采。
+ *   · 别责（书页 20）：刚日取干合寄宫上神，柔日取支前三合之支本身；中末俱干上神。
+ *   · 八专（书页 22）：两课有克仍用克，无克「不取遥克」；刚日第一课上神顺数三神，柔日第四课上神
+ *     逆数三神；中末俱干上神。
  */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory(require('./tiandipan.js'));
@@ -68,14 +70,21 @@
     ];
   }
 
-  /** 涉害深浅：被克之神（上神 X）从所临地盘位顺行至本家（不含本家），数沿途克 X 者（支与寄干） */
-  function sheHaiDepth(c) {
+  /**
+   * 涉害深浅：上神从所临地盘位顺行至本家（不含本家），历数沿途地盘支与寄宫天干。
+   * 《探原》书页 9–11：下贼上，数克上神者（例：甲辰日亥将卯时，子加辰「涉辰土为一重害……涉戌土为五重害」）；
+   * 上克下，数上神所克者（例：甲午日干上子，「戌加子仅二重克，寅加辰有六重克」——戌所克只子、癸，
+   * 寅所克辰、戊、未、己、戌、丑）。
+   * @param {'xia'|'shang'} [dir] 'shang'＝上克下；缺省为下贼上（遥克亦按此）
+   */
+  function sheHaiDepth(c, dir) {
     const X = c.shang;
+    const hit = dir === 'shang' ? (y) => ke(X, y) : (y) => ke(y, X);
     let n = 0;
     for (let i = zi(c.xiaPos); at(i) !== X; i++) {
       const pos = at(i);
-      if (ke(pos, X)) n++;
-      for (const g of GAN_AT[pos] || []) if (ke(g, X)) n++;
+      if (hit(pos)) n++;
+      for (const g of GAN_AT[pos] || []) if (hit(g)) n++;
     }
     return n;
   }
@@ -88,7 +97,7 @@
     return cands.slice().sort((a, b) => (gang ? side(a) - side(b) : side(b) - side(a)) || a.n - b.n)[0];
   }
 
-  function sheHai(cands, gang, method, ke4) {
+  function sheHai(cands, gang, method, ke4, dir) {
     if (method === 'mengzhong') {
       const best = Math.min(...cands.map((c) => mzRank(c.xiaPos)));
       if (best === 2) {   // 俱临季：「季阳取干上阴取支上」
@@ -99,7 +108,7 @@
       const pick = pool.length === 1 ? pool[0] : fuDeng(pool, gang);
       return { pick, why: `涉害（孟仲法）：${pool.length > 1 ? '同临' : '临'}${best === 0 ? '孟' : '仲'}${pool.length > 1 ? '，复等' : ''}` };
     }
-    const depths = cands.map((c) => ({ c, d: sheHaiDepth(c) }));
+    const depths = cands.map((c) => ({ c, d: sheHaiDepth(c, dir) }));
     const max = Math.max(...depths.map((x) => x.d));
     let pool = depths.filter((x) => x.d === max).map((x) => x.c);
     let why = `涉害深浅：${depths.map((x) => `${x.c.shang}${x.d}重`).join('、')}`;
@@ -116,19 +125,19 @@
   }
 
   /** 从一组候选里定初传：一个即用；多个先比（阳日用阳、阴日用阴），再涉害 */
-  function choose(cands, gang, method, ke4) {
+  function choose(cands, gang, method, ke4, dir) {
     const uniq = [];
     for (const c of cands) if (!uniq.some((u) => u.shang === c.shang)) uniq.push(c);   // 同一神只算一次
     if (uniq.length === 1) return { pick: uniq[0], step: 'single' };
     const bi = uniq.filter((c) => yangZhi(c.shang) === gang);
     if (bi.length === 1) return { pick: bi[0], step: 'biyong', why: `比用：${gang ? '阳日取阳神' : '阴日取阴神'}` };
-    const r = sheHai(bi.length ? bi : uniq, gang, method, ke4);
+    const r = sheHai(bi.length ? bi : uniq, gang, method, ke4, dir);
     return { pick: r.pick, step: 'shehai', why: (bi.length ? '俱比，' : '俱不比，') + r.why };
   }
 
   /**
    * @param {{riGan, riZhi, yueJiang, shiZhi, zhouYe?}} p
-   * @param {{sheHai?: 'shenqian'|'mengzhong', fuYinRen?: 'verse'|'zhinan'}} [opts]
+   * @param {{sheHai?: 'shenqian'|'mengzhong', fuYinRen?: 'verse'}} [opts]  缺省即《探原》基准
    * @returns {{ke, chuan:[初,中,末], name, method, why, flags:[] }}
    */
   function compute(p, opts) {
@@ -147,26 +156,29 @@
     const shangKe = ke4.filter((k) => ke(k.shang, k.xia));    // 上克下
     const offset = pan.offset;
 
-    // 伏吟
+    // 伏吟（《探原》书页 26–27）
     if (offset === 0) {
       const ganShang = JI_GONG[riGan], zhiShang = riZhi;
-      let a, b, c, why;
-      if (xiaKe.length || shangKe.length) {          // 只有乙、癸二干
-        a = (xiaKe[0] || shangKe[0]).shang; b = zhiShang;
-        c = isZiXing(b) ? chong(b) : XING[b];
-        why = '伏吟有克，取克发用，中传支上，末传取刑（中自刑则取冲）';
-        if (b === a) flags.push('伏吟中传与初传同支，书中未载此情形');
-      } else if (riGan === '壬' && (riZhi === '辰' || riZhi === '午')) {
-        if ((opts.fuYinRen || 'verse') === 'verse') { a = '亥'; b = '巳'; c = '申'; why = '伏吟壬辰、壬午：依口诀「亥巳申」'; }
-        else { a = '亥'; b = riZhi; c = chong(riZhi); why = '伏吟壬辰、壬午：依《指南》通则，初自刑中用支，中自刑末取冲'; }
-        flags.push('壬辰、壬午伏吟两说并存（口诀与《指南》），已按 ' + (opts.fuYinRen || 'verse') + ' 取');
+      // 末传：中刑；中自刑则取中冲。丁己辛三卯日初卯中子，子刑复归卯，「中传虽非自刑，亦当取中冲为末传」（书页 27 注）
+      const moOf = (a, b) => (isZiXing(b) || XING[b] === a ? chong(b) : XING[b]);
+      let a, b, why;
+      const youKe = xiaKe.length || shangKe.length;   // 只有乙、癸二干
+      if (youKe) {
+        a = (xiaKe[0] || shangKe[0]).shang;
+        if (isZiXing(a)) { b = zhiShang; why = '伏吟有克，取克发用；初传自刑，「必须取枝上神为中」，中刑为末'; }
+        else { b = XING[a]; why = '伏吟有克，取克发用，中取初刑，末取中刑（不虞）'; }
+      } else if (riGan === '壬' && (riZhi === '辰' || riZhi === '午') && opts.fuYinRen === 'verse') {
+        a = '亥'; b = '巳'; why = '伏吟壬辰、壬午：依口诀「亥巳申」（非《探原》基准，另择之法）';
+        flags.push('壬辰、壬午伏吟：已按口诀「亥巳申」取；《探原》作亥辰戌／亥午子');
+        return out([a, b, '申'], '伏吟', why);
       } else {
         a = gang ? ganShang : zhiShang;
-        if (isZiXing(a)) { b = gang ? zhiShang : ganShang; why = `伏吟无克，${gang ? '阳日自干上' : '阴日自支上'}发用；初传自刑，中传${gang ? '用支' : '用干'}`; }
-        else { b = XING[a]; why = `伏吟无克，${gang ? '阳日自干上' : '阴日自支上'}发用，中末取刑`; }
-        c = isZiXing(b) ? chong(b) : XING[b];
-        if (isZiXing(b)) why += '；中传自刑，末取冲';
+        if (isZiXing(a)) { b = gang ? zhiShang : ganShang; why = `伏吟无克，${gang ? '阳日取干上' : '阴日取枝上'}神为初传；初传自刑，中传${gang ? '取枝上' : '取干上'}（杜传）`; }
+        else { b = XING[a]; why = `伏吟无克，${gang ? '阳日取干上神为初传（自任）' : '阴日取枝上神为初传（自信）'}，初刑为中，中刑为末`; }
       }
+      const c = moOf(a, b);
+      if (isZiXing(b)) why += '；中传又自刑，取中冲为末';
+      else if (XING[b] === a) why += '；中刑复归初传，取中冲为末（书页 27 注）';
       return out([a, b, c], '伏吟', why);
     }
 
@@ -174,7 +186,7 @@
     if (offset === 6) {
       const pool = xiaKe.length ? xiaKe : shangKe;
       if (pool.length) {
-        const r = choose(pool, gang, method, ke4);
+        const r = choose(pool, gang, method, ke4, xiaKe.length ? 'xia' : 'shang');
         return out(normal(r.pick.shang), '返吟', `返吟有克，${xiaKe.length ? '下贼上' : '上克下'}${r.why ? '，' + r.why : ''}，中末取上神（即冲）`);
       }
       return out([YIMA[riZhi], ke4[2].shang, ke4[0].shang], '返吟', '返吟无克，驿马发用，中取支上，末取干上');
@@ -183,7 +195,7 @@
     // 有上下克：先下贼上，后上克下
     if (xiaKe.length || shangKe.length) {
       const pool = xiaKe.length ? xiaKe : shangKe;
-      const r = choose(pool, gang, method, ke4);
+      const r = choose(pool, gang, method, ke4, xiaKe.length ? 'xia' : 'shang');
       const kind = xiaKe.length ? '下贼上' : '上克下';
       const name = r.step === 'single' ? (xiaKe.length ? '重审' : '元首') : r.step === 'biyong' ? '知一（比用）' : '涉害';
       return out(normal(r.pick.shang), name, `${kind}${r.why ? '，' + r.why : ''}（第${r.pick.n}课）`);
@@ -194,9 +206,8 @@
 
     // 八专（干支同位）无克
     if (baZhuan) {
-      flags.push('八专无克：未先取遥克【待核】');
       const first = gang ? at(zi(ke4[0].shang) + 2) : at(zi(ke4[3].shang) - 2);
-      return out([first, ke4[0].shang, ke4[0].shang], '八专', `八专无克，${gang ? '阳日干上神顺数三' : '阴日第四课上神逆数三'}，中末俱干上神`);
+      return out([first, ke4[0].shang, ke4[0].shang], '八专', `八专无克，不取遥克，${gang ? '阳日干上神顺数三' : '阴日第四课上神逆数三'}，中末俱干上神`);
     }
 
     // 遥克：先神遥克日（蒿矢），无则日遥克神（弹射）
@@ -222,7 +233,6 @@
 
     // 昴星
     if (gang) return out([up('酉'), ke4[2].shang, ke4[0].shang], '昴星（虎视）', '四课无克无遥，刚日仰取酉上神，中支上，末干上');
-    flags.push('昴星柔日：依口诀「柔日先干而后辰」中干上末支上；伍剑虹书 p70 之例（子将卯时丁丑日）却作中支上末干上【待核】');
     return out([pan.diUnder('酉'), ke4[0].shang, ke4[2].shang], '昴星（冬蛇掩目）', '四课无克无遥，柔日俯取酉下神，中干上，末支上');
   }
 

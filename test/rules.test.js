@@ -45,7 +45,7 @@ test('规则 1–10 在真实转盘上都给出合法输出', () => {
   const r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: 'wealth', date: new Date(iso), nianMing: '戊辰' });
   assert.equal(r.appliesTo, 'chuanren-exp');
   assert.equal(r.yueJiang.yueJiang, '卯');         // 霜降后卯将
-  assert.equal(r.yueJiang.status, '待核');
+  assert.match(r.yueJiang.status, /^已核/);
   assert.deepEqual(r.rules.map((x) => x.rule), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   for (const x of r.rules.filter((x) => x.rule !== 5 && x.rule !== 7)) assert.ok([-1, 0, 1].includes(x.vote), JSON.stringify(x));
   const r5 = r.rules.find((x) => x.rule === 5);           // 规则 5 只出方位，不投票
