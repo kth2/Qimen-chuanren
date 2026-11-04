@@ -290,7 +290,9 @@
       if (!r.applicable) return '';
       const qp = Object.entries(r.qimenParts || {}).map(([k, v]) => `${esc(k)} ${v.join('') || '—'}`).join('；');
       const lp = Object.entries(r.parts || {}).map(([k, v]) => `${esc(k)} ${v.join('')}`).join('；');
-      return `应期日支：<b>${r.picks.map(esc).join('、')}</b>（${esc(r.how)}）<div class="muted">奇门融合法 v1 取 ${r.qimenPicks.join('')}（${qp}）<br>六壬三法：${lp}</div>`;
+      const qm = r.qimenPicks ? `奇门融合法 v1 取 ${r.qimenPicks.join('') || '—'}${qp ? '（' + qp + '）' : ''}` : '飞盘无奇门融合法';
+      const gu = r.gui ? `<br><b>贵人冲空</b>：${esc(r.gui.zhouYe || '')}贵${esc(r.gui.zhi)}冲 ${esc(r.gui.gong)} 宫空亡之${esc(r.gui.chongZhi)} → 加取${esc(r.gui.zhi)}日（v2.3，用户所定）` : '';
+      return `应期日支：<b>${r.picks.map(esc).join('、')}</b>（${esc(r.how)}）<div class="muted">${qm}<br>六壬：${lp}${gu}</div>`;
     }
     if (r.rule >= 8 && r.rule <= 10 && (r.lrWhy || r.qmWhy)) {
       const sg = (v) => v > 0 ? '＋' : v < 0 ? '－' : '〇';

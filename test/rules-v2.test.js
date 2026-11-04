@@ -25,17 +25,24 @@ const run = (d, domain, purpose) => {
   return { ch, ws, r, by: Object.fromEntries(r.rules.map((x) => [x.rule, x])) };
 };
 
-test('版本 2.2.0；规则 7–10 齐全', () => {
+test('版本 2.3.0；规则 7–10 齐全', () => {
   const { r } = run(new Date('2026-10-28T15:30:00+08:00'), 'wealth', '财运');
-  assert.equal(r.version, '2.2.0');
+  assert.equal(r.version, '2.3.0');
   assert.deepEqual(r.rules.map((x) => x.rule), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 });
 
-test('规则 7（v2.1）：奇门应期融合法 v1 为主；并列时只留落在六壬三法取支里的，都不在则照奇门', () => {
-  let single = 0, broke = 0, kept = 0;
+const CHONG = { 子: '午', 午: '子', 丑: '未', 未: '丑', 寅: '申', 申: '寅', 卯: '酉', 酉: '卯', 辰: '戌', 戌: '辰', 巳: '亥', 亥: '巳' };
+test('规则 7（v2.1＋v2.3）：奇门融合法为主、六壬决胜；贵人之支冲奇门空亡宫的地支时加取贵人之支', () => {
+  let single = 0, broke = 0, kept = 0, gui = 0;
   for (const d of dates(200)) {
-    const { ch, r, by } = run(d, 'wealth', '财运');
+    const { ch, ws, r, by } = run(d, 'wealth', '财运');
     const x = by[7], sc = r.sanChuan, xk = r.liuren.xunKong;
+    // 贵人冲空：独立重算
+    const g0 = r.liuren.guiRen;
+    const kg = Object.keys(ws.gongs).filter((g) => ws.gongs[g].kongWang);
+    const ck = kg.some((g) => (TDP.GONG_ZHI[g] || []).some((z) => CHONG[z] === g0));
+    assert.equal(!!x.gui, ck, '贵人冲空判定');
+    if (ck) { gui++; assert.deepEqual(x.parts['贵人冲空'], [g0]); assert.ok(x.picks.includes(g0)); }
     assert.equal(x.vote, 0);
     assert.equal(x.method, 'qimen-first');
     assert.deepEqual(x.parts['末传合'], [LIU_HE[sc.chuan[2]]]);
@@ -45,12 +52,13 @@ test('规则 7（v2.1）：奇门应期融合法 v1 为主；并列时只留落�
     assert.deepEqual(x.qimenPicks, q);
     const lr = new Set([LIU_HE[sc.chuan[2]], LIU_HE[sc.chuan[0]], ...sc.chuan.filter((z) => xk.includes(z))]);
     const inLr = q.filter((z) => lr.has(z));
-    if (q.length === 1) { assert.deepEqual(x.picks, q); single++; }
-    else if (inLr.length) { assert.deepEqual(x.picks, inLr); broke++; }
-    else { assert.deepEqual(x.picks, q); kept++; }
-    for (const z of x.picks) assert.ok(q.includes(z), '规则 7 不得取奇门没取的支');
+    const add = (arr) => (ck && !arr.includes(g0) ? arr.concat(g0) : arr);
+    if (q.length === 1) { assert.deepEqual(x.picks, add(q)); single++; }
+    else if (inLr.length) { assert.deepEqual(x.picks, add(inLr)); assert.deepEqual(x.overlap, inLr); broke++; }
+    else { assert.deepEqual(x.picks, add(q)); kept++; }
+    for (const z of x.picks) assert.ok(q.includes(z) || (ck && z === g0), '规则 7 只取奇门所取之支，加贵人冲空之支');
   }
-  assert.ok(single > 0 && broke > 0 && kept > 0, `单支 ${single}、决胜 ${broke}、照原样 ${kept}`);
+  assert.ok(single > 0 && broke > 0 && kept > 0 && gui > 0, `单支 ${single}、决胜 ${broke}、照原样 ${kept}、贵人冲空 ${gui}`);
 });
 
 test('规则 8：类神按占类取；入传不空＝六壬＋，两边同向才投票，判的是「发生」', () => {
@@ -163,4 +171,22 @@ test('v2.2 占类无「我」（天气）：规则 2、3、6、10 弃权；1、4
   assert.ok(!/无「我」/.test(by[1].reason || '') && by[7].rule === 7);
   assert.equal(!!YS.getDomain('weather').yongshen.self.length, false, '前提：占类表天气 self 为空');
   assert.ok(YS.getDomain('shefu').yongshen.self.length, '射覆占类表有我（日干），不弃权');
+});
+
+test('v2.3 贵人冲空：复盘两例（10-30 丑日）规则 7 加取丑；飞盘无融合法时贵人冲空单给此支', () => {
+  for (const [d, dom] of [[new Date(2026, 9, 23, 8, 18), 'pregnancy'], [new Date(2026, 8, 7, 20, 22), 'career']]) {
+    const ch = zhuan(d), r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: dom, date: d });
+    const x = r.rules.find((v) => v.rule === 7);
+    assert.equal(x.gui.zhi, '丑'); assert.equal(x.gui.gong, '2'); assert.equal(x.gui.chongZhi, '未');
+    assert.ok(x.picks.includes('丑'));
+  }
+  // 飞盘：找一个贵人冲空的时刻，规则 7 只给贵人之支；不冲空则弃权
+  let seen = 0, abst = 0;
+  for (const d of dates(120)) {
+    const ch = fei(d), r = Rules.evaluate({ chart: ch, wangshuai: WangShuai.analyze(ch), domain: 'wealth', date: d });
+    const x = r.rules.find((v) => v.rule === 7);
+    if (x.gui) { seen++; assert.deepEqual(x.picks, [x.gui.zhi]); assert.equal(x.qimenPicks, null); }
+    else { abst++; assert.equal(x.applicable, false); }
+  }
+  assert.ok(seen > 0 && abst > 0, `飞盘贵人冲空 ${seen}、弃权 ${abst}`);
 });

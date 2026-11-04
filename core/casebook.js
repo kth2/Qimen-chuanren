@@ -38,7 +38,7 @@
       quYong: res.quYong,
       votes: res.rules.map((r) => ({ rule: r.rule, applicable: !!r.applicable, vote: r.vote || 0, relation: r.relation || '',
         secondGongs: r.secondGongs, qimenGong: r.qimenGong, yingQi: r.yingQi || null, mo: r.mo,
-        picks: r.picks, method: r.method || '', verdict: r.verdict || '', lr: r.lr, qm: r.qm })),
+        picks: r.picks, method: r.method || '', verdict: r.verdict || '', lr: r.lr, qm: r.qm, gui: r.gui || null })),
       wuxing: res.wuxing && res.wuxing.applicable ? { score: res.wuxing.score, verdict: res.wuxing.verdict } : null,
       ai: ai ? { answer: String(ai.answer || '').slice(0, 8000), model: ai.model || '' } : null,
       feedback: null,
@@ -191,14 +191,16 @@
       d4.n++; if (r.feedback.actualDayZhi === v.mo) d4.hit++;
     }
     // 规则 7 应期：实际应期日支落在所取日支里算命中；瞎猜期望＝各题所取支数／12 之和
-    let d7 = { n: 0, hit: 0, expect: 0 };
+    let d7 = { n: 0, hit: 0, expect: 0, gui: { n: 0, hit: 0, expect: 0 } };
     for (const r of done.filter(sameVer)) {
       const v = (r.votes || []).find((x) => x.rule === 7);
       // v2.1 起规则 7 改为「奇门为主、六壬决胜」；旧法（四法等权）的记录不混进来
       if (!v || v.method !== 'qimen-first' || !v.picks || !v.picks.length || !r.feedback.actualDayZhi) continue;
       d7.n++; d7.expect += v.picks.length / 12; if (v.picks.includes(r.feedback.actualDayZhi)) d7.hit++;
+      // v2.3 贵人冲空单独记一栏：只看贵人之支一支，瞎猜期望每题 1/12
+      if (v.gui && v.gui.zhi) { d7.gui.n++; d7.gui.expect += 1 / 12; if (v.gui.zhi === r.feedback.actualDayZhi) d7.gui.hit++; }
     }
-    d7.expect = +d7.expect.toFixed(2);
+    d7.expect = +d7.expect.toFixed(2); d7.gui.expect = +d7.gui.expect.toFixed(2);
     return { total: records.length, archived: done.length, yesno: yn.length, pos: truthPos, neg: truthNeg,
       stage: st, ai, aiHit, unlabeled, wuxing: wx, rules, rule5: d5, rule4YingQi: d4, rule7: d7 };
   }

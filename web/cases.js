@@ -111,10 +111,11 @@
       <div class="muted">① 实际发生了什么？（用你自己的话写，越具体越好——判读与复盘全靠这段）</div>
       <textarea data-k="note" rows="2" style="width:100%;box-sizing:border-box;" placeholder="例：最后没借到钱；周三下午对方才回电话">${esc(f.note || '')}</textarea>
       <div>② ${c.ai ? '当时的 AI 解读' : '这一卦'}：${VERDICT_BTNS.map(([v, t]) => `<label><input type="radio" name="vd-${c.id}" value="${v}" ${f.verdict === v ? 'checked' : ''}> ${t}</label>`).join(' ')}</div>
-      <details class="fb-more"${f.actualDate || f.actualGong ? ' open' : ''}><summary class="muted">选填：实际日期、实际方位（核对应期、方位规则用）</summary>
-        实际日期 <input type="date" data-k="date" value="${esc(f.actualDate || '')}">
+      <details class="fb-more"${f.actualDate || f.actualGong ? ' open' : ''}><summary class="muted">选填：实际应期、实际方位（核对应期、方位规则用）</summary>
+        实际应期 <input type="date" data-k="date" value="${esc(f.actualDate || '')}">
         ${day ? `<button class="btn" type="button" data-day="0" style="padding:1px 6px;font-size:12px;background:#666;">占问当天</button>
         <button class="btn" type="button" data-day="1" style="padding:1px 6px;font-size:12px;background:#666;">次日</button>` : ''}
+        <div class="muted" style="font-size:11px;">实际应期＝事情发生的那一天，不是今天回填的日子；问题与时间无关（射覆、是什么病……）就留空。规则 7 的应期命中靠它计。</div>
         实际方位 <select data-k="gong"><option value="">不适用</option>${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => `<option value="${g}" ${String(f.actualGong) === String(g) ? 'selected' : ''}>${GONG[g]}</option>`).join('')}</select>
       </details>
       <button class="btn" data-act="archive" style="padding:4px 12px;font-size:13px;">${f.archived ? '更新' : '回填并归档'}</button>
@@ -300,7 +301,8 @@
     h += `</tbody></table>`;
     h += `<p style="margin-top:8px;">规则 5 方位（只计第二方位与奇门方位不同的方位题）：${s.rule5.n} 题，第二方位命中 ${s.rule5.second}，奇门方位命中 ${s.rule5.qimen}。<br>
       规则 4 应期候选（末传支日）：${s.rule4YingQi.n} 题有实际应期，命中 ${s.rule4YingQi.hit}。<br>
-      规则 7 应期融合·穿壬：${s.rule7.n} 题有实际应期，命中 ${s.rule7.hit}（瞎猜期望 ${s.rule7.expect}）。</p>
+      规则 7 应期融合·穿壬：${s.rule7.n} 题有实际应期，命中 ${s.rule7.hit}（瞎猜期望 ${s.rule7.expect}）。<br>
+      其中 v2.3 贵人冲空（单看贵人之支）：${s.rule7.gui.n} 题，命中 ${s.rule7.gui.hit}（瞎猜期望 ${s.rule7.gui.expect}）。</p>
       <p class="muted">规则账本按版本分开：只计本版（v${esc(String((window.ChuanRenRules || {}).VERSION || '').split('.')[0])}）录入的案例；AI 与五行 v1 全计。</p>`;
     h += `<p class="muted">口径照冻结规格：平衡准确率＝如愿题判对率与不如愿题判对率的平均，瞎猜为 50%；弃权不计。
       判定只在到达评估点时给出：比 AI 结论高 5 个百分点以上且本身 ≥55% 为通过；低于 AI 结论为停止；其余第一次评估继续、第二次停止。</p>`;
@@ -365,6 +367,15 @@
     const fb = readForm(box, c.feedback);
     if (!fb.note) { tag('请先写 ① 实际发生了什么'); return; }
     if (!fb.verdict) { tag('请选 ② 应验程度'); return; }
+    // 起局已过三天以上，实际应期却填成今天：多半是把回填日当成了应期。提醒一次，再按一次才存
+    const today = (() => { const d = new Date(), p2 = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; })();
+    const ask = askDayOf(c);
+    if (fb.actualDate && fb.actualDate === today && ask && (Date.parse(today) - Date.parse(ask)) / 864e5 >= 3
+      && fb.actualDate !== (c.feedback || {}).actualDate && box.dataset.dateWarned !== today) {
+      box.dataset.dateWarned = today;
+      tag('⚠ 实际应期填的是今天，而起局在 ' + ask + '。事情真是今天发生的吗？是就再按一次；若只是今天回填，请改成事情发生那天，或留空。');
+      return;
+    }
     c.feedback = fb; c.updatedAt = new Date().toISOString();
     try { await store.save(c); } catch (err) { alert(err.message); return; }
     if (!c.feedback.labels) await autoLabel(c, tag);
