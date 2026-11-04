@@ -24,7 +24,7 @@
 })(typeof self !== 'undefined' ? self : this, function (WuXing, TianDiPan, YueJiang, SanChuan, YingQi, XiangYi) {
 'use strict';
 
-const VERSION = '2.2.0';
+const VERSION = '2.3.0';
 const APPLIES_TO = 'chuanren-exp';
 
 const ZHI_WX = { 子: '水', 亥: '水', 寅: '木', 卯: '木', 巳: '火', 午: '火', 申: '金', 酉: '金', 辰: '土', 戌: '土', 丑: '土', 未: '土' };
@@ -263,22 +263,39 @@ function evaluate(a) {
   // 规则 7：应期融合·穿壬（不投是非票，出应期日支）
   //   v2.1（kt 2026-10-28 定）：奇门应期融合法 v1 为主；奇门取支多于一支（并列）时，才用六壬三法
   //   （末传合、初传合、三传旬空填实）决胜——只留落在六壬取支里的那几支；都不在则照奇门原样。
-  //   飞盘无奇门融合法，六壬三法单用在回测里低于瞎猜，故弃权。
+  //   v2.3（〔用户所定·2026-11-04〕）：加「贵人冲空」——六壬贵人所乘之支，冲动奇门空亡宫里的地支，
+  //   则加取贵人之支为应期（冲空之日）。与奇门所取并列，不替换；飞盘无奇门融合法，贵人冲空时单给此支。
   {
     const lr = { '末传合': [LIU_HE[sc.chuan[2]]], '初传合': [LIU_HE[sc.chuan[0]]] };
     const kongIn = [...new Set(sc.chuan.filter((z) => xk.includes(z)))];
     if (kongIn.length) lr['三传旬空填实'] = kongIn;
     const lrSet = new Set([].concat(...Object.values(lr)));
+    // 贵人冲空：奇门空亡宫（旺衰层 kongWang）的地支，有被贵人之支所冲者
+    const gui = ln.guiRen;
+    const kongGongs = Object.keys((ws && ws.gongs) || {}).filter((g) => ws.gongs[g].kongWang).sort();
+    let guiCk = null;
+    for (const g of kongGongs) {
+      const z = (TianDiPan.GONG_ZHI[g] || []).find((x) => CHONG[x] === gui);
+      if (z) { guiCk = { zhi: gui, gong: g, chongZhi: z, zhouYe: ln.zhouYe }; break; }
+    }
     const qf = school === 'zhuanpan' && YingQi && YingQi.fusionV1 ? YingQi.fusionV1(ch, a.domain || '') : null;
-    const base = { rule: 7, method: 'qimen-first', vote: 0, parts: lr, lrSet: ZHI_ORDER.filter((z) => lrSet.has(z)) };
+    const base = { rule: 7, method: 'qimen-first', vote: 0, parts: lr, lrSet: ZHI_ORDER.filter((z) => lrSet.has(z)), gui: guiCk };
+    const guiHow = guiCk ? `；贵人${gui}冲${guiCk.gong}宫空亡之${guiCk.chongZhi}，加取${gui}（冲空之日）` : '';
+    if (guiCk) lr['贵人冲空'] = [gui];
     if (!qf || !qf.picks.length) {
-      rules.push(Object.assign(base, { applicable: false, picks: [], qimenPicks: qf ? [] : null,
-        reason: qf ? '奇门应期融合法本盘未取出地支' : '飞盘无奇门应期融合法；六壬三法单用在回测里低于瞎猜，不单独给应期' }));
+      if (guiCk) {
+        rules.push(Object.assign(base, { applicable: true, picks: [gui], qimenPicks: qf ? [] : null, overlap: [],
+          how: (qf ? '奇门应期融合法本盘未取出地支' : '飞盘无奇门应期融合法') + guiHow }));
+      } else {
+        rules.push(Object.assign(base, { applicable: false, picks: [], qimenPicks: qf ? [] : null,
+          reason: qf ? '奇门应期融合法本盘未取出地支，贵人亦不冲空' : '飞盘无奇门应期融合法；贵人不冲空亡宫，不给应期' }));
+      }
     } else {
       const overlap = qf.picks.filter((z) => lrSet.has(z));
       const tie = qf.picks.length > 1;
-      const picks = tie && overlap.length ? overlap : qf.picks.slice();
-      const how = !tie ? '奇门只取一支，照用' : overlap.length ? `奇门并列 ${qf.picks.length} 支，六壬决胜留 ${overlap.join('')}` : `奇门并列 ${qf.picks.length} 支，六壬取支都不在其中，照奇门原样`;
+      const picks = tie && overlap.length ? overlap.slice() : qf.picks.slice();
+      if (guiCk && !picks.includes(gui)) picks.push(gui);
+      const how = (!tie ? '奇门只取一支，照用' : overlap.length ? `奇门并列 ${qf.picks.length} 支，六壬决胜留 ${overlap.join('')}` : `奇门并列 ${qf.picks.length} 支，六壬取支都不在其中，照奇门原样`) + guiHow;
       rules.push(Object.assign(base, { applicable: true, picks, qimenPicks: qf.picks.slice(), qimenParts: qf.parts, overlap, how }));
     }
   }

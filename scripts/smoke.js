@@ -156,6 +156,20 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(m.category === '求财', name + '：占类应为求财，实为 ' + m.category);
     console.log(`✓ AI 提示词（${name}）：system ${m.system.length} 字，user ${m.user.length} 字，含纲要、旺衰、穿壬段、六壬推理`);
   }
+  // v2.3 规则 7 贵人冲空：复盘那例（2026-10-23 08:18 怀孕）应加取丑；AI 提示词合看奇门六壬应期
+  { d.querySelector('#schoolSeg button[data-school="zhuanpan"]').click();
+    const keep = { date: d.getElementById('inDate').value, time: d.getElementById('inTime').value, dom: d.getElementById('inDomain').value };
+    d.getElementById('inDate').value = '2026-10-23'; d.getElementById('inTime').value = '08:18';
+    d.getElementById('inDomain').value = '怀孕'; d.getElementById('inDomain').dispatchEvent(new w.Event('change', { bubbles: true }));
+    d.getElementById('castBtn').click();
+    const row7 = [...d.querySelectorAll('.rule-table tbody tr')].find((tr) => /应期融合/.test(tr.textContent));
+    assert(row7 && /贵人冲空/.test(row7.textContent) && /应期日支：申、丑/.test(row7.textContent), '规则 7 应显示贵人冲空并加取丑：' + (row7 && row7.textContent));
+    const m = await AI.buildMessages(w._chuanrenCtx, '何时做手术');
+    assert(/12\. 问到应期时，奇门、六壬两路合看/.test(m.system) && /贵人冲空 丑/.test(m.user), 'AI 提示词缺两路合看应期或贵人冲空');
+    d.getElementById('inDate').value = keep.date; d.getElementById('inTime').value = keep.time;
+    d.getElementById('inDomain').value = keep.dom; d.getElementById('inDomain').dispatchEvent(new w.Event('change', { bubbles: true }));
+    d.getElementById('castBtn').click();
+    console.log('✓ 规则 7 v2.3：贵人冲空加取丑；AI 两路合看应期'); }
   w.eval("LLM.chat = async (s, u, onTok) => { onTok('## 结论\\n可成。'); return '## 结论\\n可成。\\n\\n## 穿壬旁证\\n规则1 弃权'; }");
   d.getElementById('aiQuestion').value = '这次投资能赚钱吗';
   d.getElementById('aiBtn').click();
@@ -208,6 +222,15 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   { let card = d.querySelector('.case-card .fb');
     card.querySelector('[data-k="note"]').value = '没赚到，亏了三千';
     card.querySelector('input[value="not_happened"]').checked = true;
+    { // 实际应期误填为今天（起局在多日之前）：先提醒、不存；清空后照常归档
+      const t = new Date(), p2 = (n) => String(n).padStart(2, '0');
+      card.closest('.case-card').querySelector('details.fb-more').open = true;
+      card.querySelector('[data-k="date"]').value = `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}`;
+      card.querySelector('button[data-act="archive"]').click();
+      await sleep(100);
+      assert(/实际应期填的是今天/.test(card.querySelector('[data-k="fbtag"]').textContent), '误填今天应提醒：' + card.querySelector('[data-k="fbtag"]').textContent);
+      card.querySelector('[data-k="date"]').value = '';
+      console.log('✓ 实际应期误填今天：先提醒、不存'); }
     card.querySelector('button[data-act="archive"]').click();
     for (let i = 0; i < 40 && !/没赚到/.test(d.getElementById('caseBody').innerHTML); i++) await sleep(50);
     w.eval(`LLM.chat = async (s, u) => (window._rvUser = u, JSON.stringify({ misreads: [{ claim: '可成。', basedOn: 'r8', actual: '亏了三千', why: '只看了生门旺相' }],
