@@ -167,7 +167,8 @@
     {
       const items = [];
       const tn = keTi.split('、').map((n) => TANYUAN_KETI[n]).filter(Boolean);
-      items.push(T(`课名${keTi}${keTi === sc.name ? '' : '（' + sc.name + '）'}：${[...new Set(tn)].join('')}`, keTi.includes('涉害') || /见机|察微|缀瑕/.test(keTi) ? '78；课名见 31–46' : '78；课名见 30–46'));
+      const cat = sc.name.replace(/（.*）/, '');
+      items.push(T(`课名${keTi}${keTi === cat || keTi === sc.name ? '' : '（' + cat + '）'}：${[...new Set(tn)].join('')}`, keTi.includes('涉害') || /见机|察微|缀瑕/.test(keTi) ? '78；课名见 31–46' : '78；课名见 30–46'));
       if (/元首|始入|重审|比用|知一|涉害|见机|察微|缀瑕/.test(keTi)) {
         const shangKe = /元首|知一/.test(keTi) || (/涉害|见机|察微|缀瑕/.test(keTi) && /上克下/.test(sc.why || ''));
         items.push(T(shangKe ? '用逢上克下：主卑幼之灾，事从外来，利男子，利先起。' : '用逢下贼上：主尊长之灾，事由内起，利女子，利后应。', 63));
@@ -518,8 +519,18 @@
     const tag = (q) => (q === '财' || q === '父母' ? '成' : q === '官' || q === '鬼' ? '否' : '不明');
     he.push(W(`伍剑虹参照——三传六亲 ${lq.join('、')}：见财、父母者成，见官鬼者否，见子孙、兄弟者结果不明。逐传为 ${lq.map(tag).join('、')}。`, 130));
 
+    // 先看这几条：照《探原》所言轻重（书页 61–63、72），只指出从哪里看起，不给吉凶
+    const brief = (r) => `${r.dun || ''}${r.zhi}乘${r.jiang}（${r.liuQin}）${r.kong ? '，落旬空' : ''}${a.yueZhi ? '，' + a.yueZhi + '月' + wangXiang(r.zhi, a.yueZhi) : ''}`;
+    const gRel = wxRel(gs.zhi);
+    const focus = [
+      T(`初传 ${brief(c1)}。书言发用「能左右四课之祸福，其力甚大」——这是整课最要紧的一个字。`, 63),
+      T(`末传 ${brief(c3)}。书言「发用在初，决事在末，最为紧切」——看结局。`, 62),
+      T(`干上神 ${gs.zhi} 对日干${riGan}：${{ 生: '生干，大吉', 克: '克干，大凶', 泄: '干生上神，虚耗百出', 财: '干克上神，阻隔重逢', 比: '比和，书未专论' }[gRel]}——看「我」的处境。`, 61),
+      T(`应期线索：本旬空亡${[...kong].join('、') || '（无）'}，空亡填实可为成期；初传${sc.chuan[0]}所合${LIU_HE[sc.chuan[0]]}为成期，末传所冲${chong(sc.chuan[2])}为散期。`, 72),
+    ];
+
     return {
-      appliesTo: APPLIES_TO, source: SOURCE, keTi,
+      appliesTo: APPLIES_TO, source: SOURCE, keTi, focus,
       steps, heKan: he, moves: mv,
       chuan: [c1, c2, c3],
       caution: T('书中原话：「王课论生克，以天将所乘枝神之五行为主……若乘神生干，则凶将亦吉；乘神克干，则吉将亦凶。故将之吉凶，不必尽泥，而神之生克，务宜详究。」又：「吉凶相倚」，须于四课、三传、年命九处合而观之。本面板只把书上的要素逐条摆出，不合成总吉凶。', '75、82、91'),

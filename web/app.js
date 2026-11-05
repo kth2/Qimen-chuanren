@@ -13,6 +13,7 @@
   const XY = window.LiurenXiangYi;
   const CM = window.LiurenCaseMatch;
   const TL = window.LiurenTuiLi;
+  const CD = window.LiurenCiDian;
   let lastDomainUi = null;   // 上次排盘实际用的界面占类
   let BOOK = null;      // knowledge/liuren-cases.json：书中六壬案例（盘式照录＋摘要）
   const $ = (id) => document.getElementById(id);
@@ -350,19 +351,45 @@
       象义取 ${esc(XY.SOURCE)}，书中原则「以十二神与六亲的结合为准」。我＝我宫，事＝事宫，向＝规则 5 第二方位。</p></div>`;
   }
 
+  /** 术语白话卡：原文（书页）／白话（本 app 转述）／对照奇门（本 app 取法） */
+  function cardHtml(t) {
+    return `<div class="tl-card" data-card="${t.id}"><b>${esc(t.title)}</b>
+      <div><span class="tl-lab">白话</span>${esc(t.bai)}</div>
+      <div class="tl-yuan"><span class="tl-lab">原文</span>「${esc(t.yuan)}」<span class="tl-src">${esc(t.src)}</span></div>
+      ${t.qm ? `<div class="tl-qm"><span class="tl-lab">对照奇门</span>${esc(t.qm)} <span class="tl-src">本 app 取法</span></div>` : ''}</div>`;
+  }
+
   /** 六壬推理：照《探原》论断篇八门逐项讲（伍剑虹书作参照）；只显示，不投票，不进规则账本 */
   function tuiliPanel(pan, res) {
     if (!TL || !res.sanChuan) return '';
     const r = TL.analyze({ sc: res.sanChuan, riZhu: pan.siZhu.day, yueZhi: String(pan.siZhu.month || '')[1],
       taiSui: String(pan.siZhu.year || '')[1], xunKong: res.liuren.xunKong, nianMing: res.nianMing || '', xingNian: res.xingNian || '', domain: res.domain || '' });
-    const gongLink = (t) => esc(t).replace(/奇门(\d)宫/g, (m, g) => `<a href="#xj-g${g}" class="tl-gong" data-gong="${g}">奇门${g}宫</a>`);
-    const item = (it) => `<li${it.own ? ' class="tl-own"' : ''}>${gongLink(it.text)}${it.src ? ` <span class="tl-src">${esc(it.src)}</span>` : ''}${it.own ? ' <span class="tl-src">本 app 取法</span>' : ''}</li>`;
-    const steps = r.steps.map((st) => `<div class="tl-step"><b>${esc(st.title)}</b><ul>${st.items.map(item).join('')}</ul></div>`).join('');
+    const gl = (h) => h.replace(/奇门(\d)宫/g, (m, g) => `<a href="#xj-g${g}" class="tl-gong" data-gong="${g}">奇门${g}宫</a>`);
+    // 术语点开看白话（core/liuren/cidian.js）
+    const rich = (t) => {
+      if (!CD) return gl(esc(t));
+      let out = '', pos = 0;
+      for (const h of CD.find(t)) {
+        if (h.at < pos) continue;
+        out += gl(esc(t.slice(pos, h.at))) + `<span class="tl-term" data-term="${h.id}" role="button" tabindex="0">${esc(t.slice(h.at, h.at + h.len))}</span>`;
+        pos = h.at + h.len;
+      }
+      return out + gl(esc(t.slice(pos)));
+    };
+    const item = (it) => `<li${it.own ? ' class="tl-own"' : ''}>${rich(it.text)}${it.src ? ` <span class="tl-src">${esc(it.src)}</span>` : ''}${it.own ? ' <span class="tl-src">本 app 取法</span>' : ''}</li>`;
+    const stepTitle = (st) => `<b>${esc(st.title)}</b>${CD && CD.STEP_TERM[st.key] ? ` <span class="tl-term tl-q" data-term="${CD.STEP_TERM[st.key]}" role="button" tabindex="0" title="这一门看什么">？</span>` : ''}`;
+    const steps = r.steps.map((st) => `<div class="tl-step">${stepTitle(st)}<ul>${st.items.map(item).join('')}</ul></div>`).join('');
+    const r7 = (res.rules || []).find((x) => x.rule === 7);
+    const r7picks = r7 && Array.isArray(r7.picks) && r7.picks.length ? r7.picks.join('、') : '';
+    const focus = (r.focus || []).map(item).join('') + (r7picks ? `<li>规则 7 所取应期之支：${esc(r7picks)}（含贵人冲空，〔用户所定〕）。</li>` : '');
+    const cidian = CD ? `<details class="tl-cidian"><summary>六壬术语白话表（${CD.TERMS.length} 条）</summary>${CD.TERMS.map((t) => cardHtml(t)).join('')}</details>` : '';
     return `<div class="panel" id="tuiliPanel"><h3>六壬推理 <span class="exp-badge">只显示·不投票</span></h3>
+      <div class="tl-focus"><b>先看这几条</b> <span class="muted">照《探原》所言轻重；只指出从哪里看起，不给吉凶。带虚线的词可点开看白话。</span><ul>${focus}</ul></div>
       ${steps}
       <div class="tl-step tl-he"><b>合看</b><ul>${r.heKan.map(item).join('')}</ul></div>
       <p class="muted" style="margin:6px 0 0;">${esc(r.caution.text)}（${esc(r.caution.src)}）<br>
-        出处：${esc(r.source)}。「探原 N」＝《大六壬探原》书页，「伍书 N」＝伍剑虹书页（参照），均为页脚页码。「本 app 取法」＝书中无逐字规定、本 app 自定，可改。点「奇门N宫」跳到九宫详解。</p></div>`;
+        出处：${esc(r.source)}。「探原 N」＝《大六壬探原》书页，「伍书 N」＝伍剑虹书页（参照），均为页脚页码。「本 app 取法」＝书中无逐字规定、本 app 自定，可改。点「奇门N宫」跳到九宫详解。</p>
+      ${cidian}</div>`;
   }
 
   /** 四课三传（版式同六壬书：四课右起第一课，上行天将、中行上神、下行下神） */
@@ -481,6 +508,20 @@
       const t = document.getElementById('xj-g' + a.dataset.gong);
       if (t) { if (t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.classList.add('xj-hit'); setTimeout(() => t.classList.remove('xj-hit'), 1200); }
     }));
+    // 术语：点开／再点收起，卡片插在该句下面
+    const toggleTerm = (el) => {
+      const host = el.closest('li') || el.closest('.tl-step') || el.parentNode;
+      const old = host.querySelector(':scope > .tl-card[data-card="' + el.dataset.term + '"]');
+      if (old) { old.remove(); el.classList.remove('tl-on'); return; }
+      const t = CD && CD.BY_ID[el.dataset.term];
+      if (!t) return;
+      host.insertAdjacentHTML('beforeend', cardHtml(t));
+      el.classList.add('tl-on');
+    };
+    $('chuanren').querySelectorAll('#tuiliPanel .tl-term').forEach((el) => {
+      el.addEventListener('click', (e) => { e.preventDefault(); toggleTerm(el); });
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTerm(el); } });
+    });
     renderBookMatches(pan, res);
   }
 

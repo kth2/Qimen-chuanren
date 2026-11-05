@@ -98,7 +98,17 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(a, '三传应可跳到九宫详解');
     a.click();
     assert(d.getElementById('xj-g' + a.dataset.gong).classList.contains('xj-hit'), '点「奇门N宫」未跳到九宫详解');
-    console.log('✓ 六壬推理：八要素＋合看，每句注书页，可跳九宫详解'); }
+    // 先看这几条、术语白话卡
+    assert(/先看这几条/.test(tl.querySelector('.tl-focus').textContent) && tl.querySelectorAll('.tl-focus li').length >= 4, '缺「先看这几条」');
+    const term = tl.querySelector('.tl-term[data-term="fadian"]');
+    assert(term, '初传未标成可点术语');
+    term.click();
+    const card = term.closest('li').querySelector('.tl-card[data-card="fadian"]');
+    assert(card && /白话/.test(card.textContent) && /原文/.test(card.textContent) && /探原 61、63/.test(card.textContent), '点术语未展开白话卡');
+    term.click();
+    assert(!term.closest('li').querySelector('.tl-card[data-card="fadian"]'), '再点未收起');
+    assert(tl.querySelectorAll('.tl-cidian .tl-card').length >= 25, '术语表不全');
+    console.log('✓ 六壬推理：八要素＋合看，每句注书页，可跳九宫详解；先看这几条；术语点开白话、原文、对照奇门'); }
   // 行年：2026-10-28 年柱丙午，庚午命虚岁 37；男一岁丙寅顺行 → 壬寅
   { const xb = d.getElementById('inXingBie');
     xb.value = '男'; xb.dispatchEvent(new w.Event('change'));
