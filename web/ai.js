@@ -147,7 +147,7 @@
       // 六壬推理：与界面「六壬推理」面板同一份（core/liuren/tuili.js）
       if (TL) {
         try {
-          const tl = TL.analyze({ sc, riZhu: pan.siZhu.day, yueZhi: String(pan.siZhu.month || '')[1], taiSui: String(pan.siZhu.year || '')[1], xunKong: L.xunKong, nianMing });
+          const tl = TL.analyze({ sc, riZhu: pan.siZhu.day, yueZhi: String(pan.siZhu.month || '')[1], taiSui: String(pan.siZhu.year || '')[1], xunKong: L.xunKong, nianMing, xingNian: res.xingNian || '', domain: res.domain || '' });
           out.push(...TL.toPromptLines(tl));
         } catch (e) { /* 推理段出错不挡提示词，其余照给 */ }
       }

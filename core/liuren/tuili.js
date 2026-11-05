@@ -117,6 +117,29 @@
     return { steps, gaps, dir, sanHe, chong, lian, jian };
   }
 
+  // 六十甲子；行年（《探原》凡例：男一岁起丙寅顺行，女一岁起壬申逆行）
+  const GZ60 = Array.from({ length: 60 }, (_, i) => GAN[i % 10] + ZHI[i % 12]);
+  /** 虚岁：起课年柱减本命年柱（六十甲子位差）加一；over60 再加六十 */
+  function xuSui(yearGz, mingGz, over60) {
+    const y = GZ60.indexOf(yearGz), m = GZ60.indexOf(mingGz);
+    if (y < 0 || m < 0) return 0;
+    return ((y - m) % 60 + 60) % 60 + 1 + (over60 ? 60 : 0);
+  }
+  function xingNian(gender, age) {
+    if (!(age >= 1) || (gender !== '男' && gender !== '女')) return '';
+    return gender === '男' ? GZ60[(2 + age - 1) % 60] : GZ60[(((8 - (age - 1)) % 60) + 60) % 60];
+  }
+  // 论方所（书页 87）
+  const FANG_SUO = { 子: '江湖', 丑: '山田、坟墓', 寅: '山林', 卯: '山林', 辰: '冈岭、墙垣，又为衙署', 巳: '窑灶', 午: '市，又为道路', 未: '平田，又为井', 申: '园场，又为道路', 酉: '城', 戌: '营', 亥: '水边楼台' };
+  const ZHU_JU = { 子: '房', 丑: '墙', 寅: '道路', 卯: '大门', 辰: '米栈', 巳: '厨灶', 午: '厅堂', 未: '园井', 申: '庭心、天井', 酉: '后门', 戌: '浴堂', 亥: '坑厕、水沟' };
+  // 占类 → 集说篇专项（书页 84–87）
+  const ZHUAN_XIANG = {
+    traveler: ['存亡', '老少', '远近'], find_person: ['存亡', '男女', '老少', '远近', '方所'], health: ['存亡'],
+    pregnancy: ['男女'], lost_item: ['新旧', '高低', '远近', '方所'], shefu: ['新旧', '高低', '方所'], fengshui: ['方所'],
+    lawsuit: ['胜负'], contest: ['胜负'], relationship: ['亲疏'],
+  };
+  const YANG_JIANG = ['贵人', '螣蛇', '朱雀', '勾陈', '青龙', '白虎'];   // 书页 84：贵、蛇、雀、勾、龙、虎为阳将
+
   // 五行关系（以日干五行论）
   const sheng = (a, b) => SHENG[a] === b, keWx = (a, b) => KE[a] === b;
 
@@ -126,7 +149,9 @@
    * @param a.yueZhi   月建地支（月柱之支），用来定旺相休囚、天马、应期；不给就不看
    * @param a.taiSui   太岁（年柱之支）；不给就不看
    * @param a.xunKong  六壬日旬空 [支, 支]
-   * @param a.nianMing 年命干支（只有天干或空 → 变体一项不看）
+   * @param a.nianMing 年命（本命）干支（只有天干或空 → 本命不看）
+   * @param a.xingNian 行年干支（由性别与虚岁推得；不给就不看）
+   * @param a.domain   占类键（Qimen-pwa domains.json，如 lost_item）；定「占类专项」看哪几节
    */
   function analyze(a) {
     const sc = a.sc, ln = sc.liuren, riGan = a.riZhu[0], riZhi = a.riZhu[1];
@@ -142,7 +167,8 @@
     {
       const items = [];
       const tn = keTi.split('、').map((n) => TANYUAN_KETI[n]).filter(Boolean);
-      items.push(T(`课名${keTi}${keTi === sc.name ? '' : '（' + sc.name + '）'}：${[...new Set(tn)].join('')}`, keTi.includes('涉害') || /见机|察微|缀瑕/.test(keTi) ? '78；课名见 31–46' : '78；课名见 30–46'));
+      const cat = sc.name.replace(/（.*）/, '');
+      items.push(T(`课名${keTi}${keTi === cat || keTi === sc.name ? '' : '（' + cat + '）'}：${[...new Set(tn)].join('')}`, keTi.includes('涉害') || /见机|察微|缀瑕/.test(keTi) ? '78；课名见 31–46' : '78；课名见 30–46'));
       if (/元首|始入|重审|比用|知一|涉害|见机|察微|缀瑕/.test(keTi)) {
         const shangKe = /元首|知一/.test(keTi) || (/涉害|见机|察微|缀瑕/.test(keTi) && /上克下/.test(sc.why || ''));
         items.push(T(shangKe ? '用逢上克下：主卑幼之灾，事从外来，利男子，利先起。' : '用逢下贼上：主尊长之灾，事由内起，利女子，利后应。', 63));
@@ -255,8 +281,8 @@
       if (keWx(k1, ZHI_WX[riZhi])) keWho.push('克辰，家宅不宁');
       if (keWx(k1, ZHI_WX[ln.shiZhi])) keWho.push('克时，忧惊叠至');
       if (keWx(k1, ZHI_WX[sc.chuan[2]])) keWho.push('克末，有头无尾，先易后难');
-      const nz = String(a.nianMing || '')[1];
-      if (nz && ZHI.includes(nz) && keWx(k1, ZHI_WX[nz])) keWho.push('克年命，百事难成');
+      const nz = String(a.nianMing || '')[1], xz = String(a.xingNian || '')[1];
+      if ((nz && ZHI.includes(nz) && keWx(k1, ZHI_WX[nz])) || (xz && keWx(k1, ZHI_WX[xz]))) keWho.push(`克${nz && keWx(k1, ZHI_WX[nz]) ? '本命' : ''}${xz && keWx(k1, ZHI_WX[xz]) ? (nz && keWx(k1, ZHI_WX[nz]) ? '、' : '') + '行年' : ''}，百事难成`);
       if (keWho.length) items.push(T(`用${keWho.join('；')}。`, 63));
       const st = stage(riGan, c1.zhi);
       const stTxt = { 长生: '用逢长生：谋为发达。', 沐浴: '用逢败（沐浴）：事必毁坏。', 死: '用逢死：事必毁坏。', 墓: '用逢墓库：事多迟延；占病死，占物在，占人归，占旧事凶。', 绝: '用绝：事了，人来、信至。' }[st];
@@ -306,30 +332,108 @@
       steps.push({ key: 'guiji', title: '归计门·末传', items });
     }
 
-    // 变体门·年命（书页 66）
+    // 变体门·年命（书页 66）：年＝行年，命＝本命，各看其上神
     {
-      const nm = String(a.nianMing || ''), nz = nm[1];
+      const nm = String(a.nianMing || ''), nz = nm[1], xn = String(a.xingNian || '');
       const items = [];
-      if (nz && ZHI.includes(nz)) {
-        const t = ln.tianOver(nz), r = R(t);
-        items.push(T(`年命为变体门：课传人所同，年命人所独；课传凶而年命得救可转祸为福，神将吉而年命刑冲反令喜处生忧。年命${nm}，上神${zhiLine(r)}`, 66));
-        const hit = [];
-        if (t === ln.yueJiang) hit.push(T('年命上见月将：能解诸凶。', 66));
-        if (a.taiSui && (XING[t] === a.taiSui || XING[a.taiSui] === t)) hit.push(T(`年命上神${t}与太岁${a.taiSui}相刑：常人主官讼忧疑。`, 66));
-        if (t === '申' && r.jiang === '白虎') hit.push(T('年命上见传送申乘白虎：主疾病争端。', 66));
-        if (t === '亥' && r.jiang === '玄武') hit.push(T('年命上见登明亥乘玄武：主覆舟溺死。', 66));
-        if ((t === '辰' || t === '戌') && XIONG_JIANG.includes(r.jiang)) hit.push(T(`年命上见${t}乘${r.jiang}（凶将）：百事不利。`, '65–66'));
+      const one = (label, gz, z) => {
+        const t = ln.tianOver(z), r = R(t), hit = [];
+        items.push(T(`${label}${gz}，上神${zhiLine(r)}`, 66));
+        if (t === ln.yueJiang) hit.push(T(`${label}上见月将：能解诸凶。`, 66));
+        if (a.taiSui && (XING[t] === a.taiSui || XING[a.taiSui] === t)) hit.push(T(`${label}上神${t}与太岁${a.taiSui}相刑：常人主官讼忧疑。`, 66));
+        if (t === '申' && r.jiang === '白虎') hit.push(T(`${label}上见传送申乘白虎：主疾病争端。`, 66));
+        if (t === '亥' && r.jiang === '玄武') hit.push(T(`${label}上见登明亥乘玄武：主覆舟溺死。`, 66));
+        if ((t === '辰' || t === '戌') && XIONG_JIANG.includes(r.jiang)) hit.push(T(`${label}上见${t}乘${r.jiang}（凶将）：百事不利。`, '65–66'));
         const ma = [YIMA[riZhi] === t ? '驿马' : '', a.yueZhi && tianMa(a.yueZhi) === t ? '天马' : ''].filter(Boolean);
-        if (ma.length) hit.push(T(`年命上见${ma.join('、')}：主奔驰远动，官职升迁。`, 66));
+        if (ma.length) hit.push(T(`${label}上见${ma.join('、')}：主奔驰远动，官职升迁。`, 66));
         const st = stage(riGan, t);
-        if (st === '死' || st === '绝') hit.push(T(`年命上见日干${st}之神：主人鬼相侵，惊危百出。`, 66));
-        if ((r.liuQin === '鬼' || r.liuQin === '官') && (r.jiang === '白虎' || r.jiang === '勾陈')) hit.push(T(`年命上见官鬼又乘${r.jiang}：主田土官非。`, 66));
-        if (r.liuQin === '财') hit.push(T('年命上见财：书言「又遇德合，主财禄盈庭」；德合本面板未算，只记见财。', 66));
+        if (st === '死' || st === '绝') hit.push(T(`${label}上见日干${st}之神：主人鬼相侵，惊危百出。`, 66));
+        if ((r.liuQin === '鬼' || r.liuQin === '官') && (r.jiang === '白虎' || r.jiang === '勾陈')) hit.push(T(`${label}上见官鬼又乘${r.jiang}：主田土官非。`, 66));
+        if (r.liuQin === '财') hit.push(T(`${label}上见财：书言「又遇德合，主财禄盈庭」；德合本面板未算，只记见财。`, 66));
         items.push(...hit);
-        if (!hit.length) items.push(T(`年命上神未见书中所列诸象（月将、太岁刑、申虎、亥玄、辰戌凶将、二马、死绝、财、官鬼虎勾），其余见父母、兄弟、子孙者「俱依法论」。`, 66));
+        return hit.length;
+      };
+      const have = [];
+      if (xn) have.push(one('行年', xn, xn[1]));
+      if (nz && ZHI.includes(nz)) have.push(one('本命', nm, nz));
+      if (have.length) {
+        items.unshift(T('年命为变体门：课传人所同，年命人所独；课传凶而年命得救可转祸为福，神将吉而年命刑冲反令喜处生忧。年＝行年，命＝本命。', 66));
+        if (!have.some((n) => n)) items.push(T('年命上神未见书中所列诸象（月将、太岁刑、申虎、亥玄、辰戌凶将、二马、死绝、财、官鬼虎勾），其余见父母、兄弟、子孙者「俱依法论」。', 66));
         items.push(T('三传凶，行年吉，能解之；三传行年俱凶，不能解。', 62));
-      } else items.push(T('未给年命地支，此项不看（年命须有年支才定得了位置）。', 66));
+        if (!xn) items.push(OWN('未给性别，行年不看（行年须由性别与岁数推得）。'));
+      } else items.push(T('未给年命地支，也未给性别，此项不看（本命须有年支，行年须有性别）。', 66));
       steps.push({ key: 'bianti', title: '变体门·年命', items });
+    }
+
+    // 占类专项（集说篇书页 84–87）
+    {
+      const parts = ZHUAN_XIANG[a.domain] || [];
+      const items = [];
+      const f = sc.chuan[0], cf = c1, wq = a.yueZhi ? wangXiang(f, a.yueZhi) : '';
+      const youQi = wq === '旺' || wq === '相';
+      const mzj = (z) => (MENG.includes(z) ? '孟' : ZHONG.includes(z) ? '仲' : '季');
+      for (const part of parts) {
+        if (part === '存亡') {
+          const hu = ZHI.split('').find((z) => ln.jiangOf(z) === '白虎');
+          const ke2 = hu && keWx(ZHI_WX[hu], ZHI_WX[zs.zhi]);
+          items.push(T(`论存亡：问人不知存亡，专视白虎——白虎乘${hu}，${ke2 ? `克枝上神${zs.zhi}，则亡` : `不克枝上神${zs.zhi}，则存`}。`, 84));
+          const st = stage(riGan, f);
+          if (['长生', '帝旺', '临官'].includes(st) || ['死', '墓'].includes(st)) items.push(T(`占人得生旺为存，死墓为亡：发用${f}为日干${st}之地。`, 84));
+          if (a.xingNian) { const di = ln.diUnder(a.xingNian[1]); items.push(T(`占久出之人，行年${a.xingNian[1]}临${di}（${mzj(di)}）：${{ 孟: '临孟则存', 仲: '临仲则病', 季: '临季则亡' }[mzj(di)]}。`, 84)); }
+          if (['长生', '帝旺', '临官', '死', '墓'].includes(st)) items.push(OWN('「占人得生旺」取发用之支在日干十二长生中的位置。'));
+        } else if (part === '男女') {
+          const yang = sc.chuan.filter((z) => zi(z) % 2 === 0).length;
+          const txt = yang === 3 ? '纯阳主男' : yang === 0 ? '纯阴主女' : yang === 1 ? '一阳二阴主男' : '一阴二阳主女';
+          items.push(T(`论男女：三传${sc.chuan.join('')}，${txt}。`, 84));
+          items.push(T(`发用乘${c1.jiang}，为${YANG_JIANG.includes(c1.jiang) ? '阳将' : '阴将'}（贵、蛇、雀、勾、龙、虎为阳将；后、阴、合、空、常、玄为阴将）。`, 84));
+        } else if (part === '老少') {
+          const di = c1.di;
+          items.push(T(`论老少：发用临${di}（${mzj(di)}）——临孟为少，临仲为壮，临季为老${wq ? `；发用${wq}，${youQi ? '有气为少' : '无气为老'}` : ''}。`, 85));
+        } else if (part === '新旧') {
+          const st = stage(riGan, f);
+          const bits = [`发用${f}为${mzj(f)}神（孟新、仲半新、季旧）`];
+          if (wq) bits.push(`${wq}（旺相为新、休囚为旧）`);
+          if (st === '长生' || st === '墓') bits.push(`为日干${st}（长生为新、墓神为旧）`);
+          items.push(T(`论新旧：${bits.join('，')}。占物，新神发用为新物，旧神发用为旧物。`, 85));
+        } else if (part === '高低') {
+          const bits = [];
+          if (f === ke[0].shang) bits.push('干上发用为高，物藏高处');
+          else if (f === ke[2].shang) bits.push('枝上发用为低，物藏低处');
+          if (wq) bits.push(youQi ? '发用有气为高' : '发用无气为低');
+          if (bits.length) items.push(T(`论高低：${bits.join('；')}。`, 86));
+        } else if (part === '方所') {
+          items.push(T(`论方所：发用${f}为${FANG_SUO[f]}；论住居为${ZHU_JU[f]}。`, 87));
+          items.push(OWN('方所取发用之支；书中未限定取哪一支，类神另见规则 8。'));
+        } else if (part === '远近') {
+          const bits = [];
+          if (/知一|比用|伏吟/.test(sc.name + keTi)) bits.push(`课体${keTi}为近`);
+          if (/涉害|返吟/.test(sc.name)) bits.push(`课体${sc.name}为远`);
+          if (wq) bits.push(youQi ? `发用${wq}为远` : `发用${wq}为近`);
+          if (c1.jiang === '贵人' || c1.jiang === '太常') bits.push(`发用乘${c1.jiang}为近`);
+          if (c1.jiang === '青龙' || c1.jiang === '六合') bits.push(`发用乘${c1.jiang}为远`);
+          const d = ((zi(c1.di) - zi(ganPos)) % 12 + 12) % 12;
+          bits.push(d === 0 ? '发用临干为近' : `发用所临距干${Math.min(d, 12 - d)}位（隔一二三四位渐远，七位极远）`);
+          items.push(T(`论远近：${bits.join('；')}；以三传言，初近、中远、末更远。`, 87));
+        } else if (part === '胜负') {
+          const zw = ZHI_WX[riZhi];
+          const bits = [keWx(me, zw) ? '干克枝，我胜' : keWx(zw, me) ? '枝克干，彼胜' : me === zw ? '干枝比和，彼我俱不胜' : '干枝相生，书未论胜负'];
+          if (/上克下/.test(sc.why || '')) bits.push('上克下发用，先举者胜');
+          else if (/下贼上/.test(sc.why || '')) bits.push('下贼上发用，后起者胜');
+          const gK = keWx(ZHI_WX[gs.zhi], me), zK = keWx(ZHI_WX[zs.zhi], zw);
+          if (gK && zK) bits.push('干枝俱被上克，尊卑皆负'); else if (gK) bits.push('干被上克，尊负'); else if (zK) bits.push('枝被上克，卑负');
+          if (keWx(ZHI_WX[zs.zhi], me)) bits.push('干被枝上克，我负');
+          if (keWx(ZHI_WX[gs.zhi], zw)) bits.push('枝被干上克，彼负');
+          items.push(T(`论胜负：${bits.join('；')}。`, 86));
+        } else if (part === '亲疏') {
+          const he2 = (x, y) => LIU_HE[x] === y || (sanHeOf(x).includes(y) && x !== y);
+          const sh = (x, y) => sheng(ZHI_WX[x], ZHI_WX[y]) || sheng(ZHI_WX[y], ZHI_WX[x]);
+          const qin = he2(gs.zhi, zs.zhi) || he2(ganPos, riZhi) || he2(gs.zhi, riZhi) || he2(zs.zhi, ganPos) || sh(gs.zhi, zs.zhi) || sh(ganPos, riZhi);
+          items.push(T(`论亲疏：干枝上下${qin ? '互为合或相生，彼此相契为亲' : '不联合、不相生，道不同不相为谋，为疏'}。`, 85));
+          const fq = he2(f, ganPos) || sh(f, ganPos);
+          items.push(T(`发用${f}与干${fq ? '相合或相生，为亲' : '不联合、不相生，为疏'}。`, 85));
+        }
+      }
+      if (parts.length) steps.push({ key: 'zhuanxiang', title: '占类专项', items });
     }
 
     // 应期（书页 71–72、88）：只作参照
@@ -349,6 +453,16 @@
         items.push(T(d >= 1 && d <= 3 ? `岁月节候均不见发用，以本日枝推：初传${f}在日枝${riZhi}后第${d}位，应在第${d + 1}日。` : `岁月节候均不见发用，以本日枝推：初传${f}不在日枝${riZhi}后一至三位（「出四位则不取」），此法不取。`, 72));
       }
       items.push(T(`初传${f}所合${LIU_HE[f]}为成期，末传${sc.chuan[2]}所冲${chong(sc.chuan[2])}为散期。`, 72));
+      const su = [], chi = [];
+      if (sc.chuan.includes(ln.shiZhi)) su.push('传见占时');
+      if (sc.chuan.some((z) => dun[z] === '丁')) su.push('传见丁神');
+      if (sc.chuan.includes(YIMA[riZhi])) su.push('传见驿马');
+      if (ln.shun) su.push('贵人顺行'); else chi.push('贵人逆行');
+      if (sc.name === '伏吟') chi.push('伏吟');
+      if (sc.name === '涉害') chi.push('涉害');
+      if ([c1, c2, c3].some((r) => r.kong)) chi.push('传见空');
+      if (sc.chuan.some((z) => stage(riGan, z) === '墓')) chi.push('传见墓');
+      items.push(T(`迟速：${su.length ? su.join('、') + '，主事速' : ''}${su.length && chi.length ? '；' : ''}${chi.length ? chi.join('、') + '，主事迟' : ''}。`, 87));
       const ZH = { 亥: '丑', 子: '丑', 寅: '辰', 卯: '辰', 巳: '未', 午: '未', 申: '戌', 酉: '戌', 戌: '丑', 丑: '辰', 辰: '未', 未: '戌' };
       items.push(T(`中黄歌：发用${f}，看天盘${ZH[f]}所临地盘${ln.diUnder(ZH[f])}为应期。`, 88));
       items.push(OWN('应期诸法只作参照；AI 解读的最终应期照纪律第 12 条，六壬一路只用规则 7 所列之支。'));
@@ -405,8 +519,18 @@
     const tag = (q) => (q === '财' || q === '父母' ? '成' : q === '官' || q === '鬼' ? '否' : '不明');
     he.push(W(`伍剑虹参照——三传六亲 ${lq.join('、')}：见财、父母者成，见官鬼者否，见子孙、兄弟者结果不明。逐传为 ${lq.map(tag).join('、')}。`, 130));
 
+    // 先看这几条：照《探原》所言轻重（书页 61–63、72），只指出从哪里看起，不给吉凶
+    const brief = (r) => `${r.dun || ''}${r.zhi}乘${r.jiang}（${r.liuQin}）${r.kong ? '，落旬空' : ''}${a.yueZhi ? '，' + a.yueZhi + '月' + wangXiang(r.zhi, a.yueZhi) : ''}`;
+    const gRel = wxRel(gs.zhi);
+    const focus = [
+      T(`初传 ${brief(c1)}。书言发用「能左右四课之祸福，其力甚大」——这是整课最要紧的一个字。`, 63),
+      T(`末传 ${brief(c3)}。书言「发用在初，决事在末，最为紧切」——看结局。`, 62),
+      T(`干上神 ${gs.zhi} 对日干${riGan}：${{ 生: '生干，大吉', 克: '克干，大凶', 泄: '干生上神，虚耗百出', 财: '干克上神，阻隔重逢', 比: '比和，书未专论' }[gRel]}——看「我」的处境。`, 61),
+      T(`应期线索：本旬空亡${[...kong].join('、') || '（无）'}，空亡填实可为成期；初传${sc.chuan[0]}所合${LIU_HE[sc.chuan[0]]}为成期，末传所冲${chong(sc.chuan[2])}为散期。`, 72),
+    ];
+
     return {
-      appliesTo: APPLIES_TO, source: SOURCE, keTi,
+      appliesTo: APPLIES_TO, source: SOURCE, keTi, focus,
       steps, heKan: he, moves: mv,
       chuan: [c1, c2, c3],
       caution: T('书中原话：「王课论生克，以天将所乘枝神之五行为主……若乘神生干，则凶将亦吉；乘神克干，则吉将亦凶。故将之吉凶，不必尽泥，而神之生克，务宜详究。」又：「吉凶相倚」，须于四课、三传、年命九处合而观之。本面板只把书上的要素逐条摆出，不合成总吉凶。', '75、82、91'),
@@ -425,5 +549,5 @@
     return out;
   }
 
-  return { APPLIES_TO, SOURCE, KETI, TANYUAN_KETI, QISHU, analyze, wangXiang, moves, stage, toPromptLines };
+  return { APPLIES_TO, SOURCE, KETI, TANYUAN_KETI, QISHU, ZHUAN_XIANG, analyze, wangXiang, moves, stage, xuSui, xingNian, toPromptLines };
 });

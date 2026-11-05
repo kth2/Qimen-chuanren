@@ -93,12 +93,30 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(tl, '缺六壬推理面板');
     const titles = [...tl.querySelectorAll('.tl-step > b')].map((e) => e.textContent).join(' ');
     assert(/大局·课体 先锋门·占时 直事门·月将 外事门·日干（我） 内事门·日枝（彼） 发端门·初传 移易门·中传 归计门·末传 变体门·年命 应期（参照） 合看/.test(titles), '六壬推理八门不全：' + titles);
-    assert(/年命庚午，上神/.test(tl.textContent) && /探原 66/.test(tl.textContent) && /贵人.*(顺治|逆行)/.test(tl.textContent) && /课名/.test(tl.textContent), '六壬推理内容不全');
+    assert(/本命庚午，上神/.test(tl.textContent) && /探原 66/.test(tl.textContent) && /贵人.*(顺治|逆行)/.test(tl.textContent) && /课名/.test(tl.textContent), '六壬推理内容不全');
     const a = tl.querySelector('.tl-gong');
     assert(a, '三传应可跳到九宫详解');
     a.click();
     assert(d.getElementById('xj-g' + a.dataset.gong).classList.contains('xj-hit'), '点「奇门N宫」未跳到九宫详解');
-    console.log('✓ 六壬推理：八要素＋合看，每句注书页，可跳九宫详解'); }
+    // 先看这几条、术语白话卡
+    assert(/先看这几条/.test(tl.querySelector('.tl-focus').textContent) && tl.querySelectorAll('.tl-focus li').length >= 4, '缺「先看这几条」');
+    const term = tl.querySelector('.tl-term[data-term="fadian"]');
+    assert(term, '初传未标成可点术语');
+    term.click();
+    const card = term.closest('li').querySelector('.tl-card[data-card="fadian"]');
+    assert(card && /白话/.test(card.textContent) && /原文/.test(card.textContent) && /探原 61、63/.test(card.textContent), '点术语未展开白话卡');
+    term.click();
+    assert(!term.closest('li').querySelector('.tl-card[data-card="fadian"]'), '再点未收起');
+    assert(tl.querySelectorAll('.tl-cidian .tl-card').length >= 25, '术语表不全');
+    console.log('✓ 六壬推理：八要素＋合看，每句注书页，可跳九宫详解；先看这几条；术语点开白话、原文、对照奇门'); }
+  // 行年：2026-10-28 年柱丙午，庚午命虚岁 37；男一岁丙寅顺行 → 壬寅
+  { const xb = d.getElementById('inXingBie');
+    xb.value = '男'; xb.dispatchEvent(new w.Event('change'));
+    assert(d.getElementById('xnHint').textContent === '虚岁 37，行年 壬寅', '行年提示不对：' + d.getElementById('xnHint').textContent);
+    assert(/行年壬寅，上神/.test(d.getElementById('tuiliPanel').textContent), '六壬推理未列行年');
+    assert(w._chuanrenCtx.xingNian === '壬寅', '行年未进 AI／案例上下文');
+    xb.value = ''; xb.dispatchEvent(new w.Event('change'));
+    console.log('✓ 行年：男 37 岁壬寅，进推理面板与上下文'); }
 
   // 书中同课案例：等案例库载入；2024-01-07 02:30 为庚午日丑将丑时，与伍剑虹书伍-10 全同
   for (let i = 0; i < 60 && /载入中/.test(d.getElementById('bookCases').textContent); i++) await new Promise((r) => setTimeout(r, 50));
