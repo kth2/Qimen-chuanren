@@ -196,6 +196,21 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   assert(d.getElementById('aiStatus').textContent === '完成', 'AI 未完成：' + d.getElementById('aiStatus').textContent);
   assert(/穿壬旁证/.test(d.getElementById('aiAnswer').textContent), 'AI 答案未显示');
   console.log('✓ AI 解读：假模型流式作答，答案已渲染');
+  // 六壬推理逐条「问」：请 AI 讲这一条
+  { w.eval("window._askCalls = []; const _orig = LLM.chat; window._origChat = _orig; LLM.chat = async (s, u, onTok) => { window._askCalls.push({ s, u }); onTok('这一条说的是……'); return '这一条说的是……（讲解完）'; }");
+    const btn = d.querySelector('#tuiliPanel .tl-ask');
+    assert(btn, '六壬推理每句应有「问」');
+    btn.click();
+    for (let i = 0; i < 40 && !/讲解完/.test((btn.closest('li').querySelector('.tl-askbox') || {}).textContent || ''); i++) await sleep(50);
+    const box = btn.closest('li').querySelector('.tl-askbox');
+    assert(box && /讲解完/.test(box.textContent) && /供学习参考/.test(box.textContent), '「问」未显示讲解');
+    const call = w._askCalls[0];
+    assert(call && /大六壬老师/.test(call.s) && /【学生点的这一条】初传/.test(call.u) && /【术语卡】/.test(call.u) && /这次投资能赚钱吗/.test(call.u) && /穿壬/.test(call.u), '「问」的提示词不全');
+    btn.click(); assert(!btn.closest('li').querySelector('.tl-askbox'), '再点「问」应收起');
+    btn.click(); await sleep(50);
+    assert(w._askCalls.length === 1, '同一条再问应取缓存，不再调模型');
+    w.eval("LLM.chat = window._origChat");
+    console.log('✓ 六壬推理逐条「问」：带本盘与术语卡请 AI 讲解，可收起，同句不重问'); }
 
   // 案例本：存 → 回填归档 → 准确率
   d.getElementById('caseSaveBtn').click();
@@ -268,6 +283,15 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     d.querySelector('#caseTabSeg button[data-tab="stats"]').click();
     assert(/复盘汇总（1 例）/.test(d.getElementById('caseBody').textContent) && /规则8/.test(d.getElementById('caseBody').textContent), '准确率页缺复盘汇总');
     console.log('✓ AI 复盘：断错分析、当时该怎么断、偏差、心得已存进案例；准确率页有复盘汇总'); }
+  // 复盘心得：同一张盘再排一次，应列出刚复盘的这一例的心得，并可打开该案例
+  { d.getElementById('castBtn').click();
+    for (let i = 0; i < 60 && !/用神旺不等于得财/.test(d.getElementById('xindePanel').textContent); i++) await sleep(50);
+    const xp = d.getElementById('xindePanel');
+    assert(/用神旺不等于得财/.test(xp.textContent) && /单案·未经检验/.test(xp.textContent) && /相同之处/.test(xp.textContent), '复盘心得未列出：' + xp.textContent.slice(0, 200));
+    xp.querySelector('.xd-open').click();
+    for (let i = 0; i < 40 && !d.querySelector('.case-card[open]'); i++) await sleep(50);
+    assert(d.querySelector('.case-card[open]'), '「打开这个案例」未展开该案例');
+    console.log('✓ 复盘心得：盘象相近的已复盘案例列出心得与相同之处，可打开该案例'); }
   // 判读不对可手改：改成怕发生 → 记为手改，如愿翻转
   d.querySelector('#caseTabSeg button[data-tab="done"]').click();
   { const card = d.querySelector('.case-card .fb');

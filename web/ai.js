@@ -258,6 +258,29 @@
     } finally { btn.disabled = false; }
   }
 
+  /* ---------- 六壬推理：逐条「问」 ---------- */
+  const TUTOR = [
+    '你是大六壬老师。学生懂奇门、不懂六壬。请用白话讲解学生点的这一条六壬推理，分三小段，合计 300 字以内，不用表格：',
+    '1. 这句话本身是什么意思：逐个解释其中的术语。术语依所给「术语卡」与该句所注书页；不得编造《大六壬探原》或伍剑虹书的原话、书页，书中没写的要说「书中未载」。',
+    '2. 放在这张盘、这个问题里意味着什么：只就这一条讲，不下整盘吉凶或成败结论。',
+    '3. 奇门盘里可以对照看哪里：这一支所临的奇门宫（盘面已给）、该宫的门星神，说明两边是同向、相反还是无关。',
+    '该句若标〔本 app 取法〕或「伍剑虹参照」「只作参照」，照样说明它不是《探原》原文。六壬在本 app 只作旁证。',
+  ].join('\n');
+  const _explained = new Map();
+  /** 讲解一条：返回全文；onChunk 收流式片段 */
+  async function explainLine(ctx, line, onChunk) {
+    const q = ($('aiQuestion').value || '').trim() || '（未填问句）';
+    const key = (ctx.dateStr || '') + '|' + q + '|' + line;
+    if (_explained.has(key)) { const t = _explained.get(key); if (onChunk) onChunk(t); return t; }
+    const m = await buildMessages(ctx, q);
+    const CD = window.LiurenCiDian;
+    const cards = CD ? CD.find(line).map((h) => CD.BY_ID[h.id]).map((t) => `· ${t.title}：${t.bai}（原文：「${t.yuan}」${t.src}）`).join('\n') : '';
+    const user = `【学生点的这一条】${line}\n【问句】${q}\n` + (cards ? `【术语卡】\n${cards}\n` : '') + '\n【本盘全文（奇门盘面与穿壬段，供对照）】\n' + m.user;
+    const ans = await LLM.chat(TUTOR, user, onChunk || null, () => {});
+    _explained.set(key, ans || '');
+    return ans || '';
+  }
+
   /* ---------- 初始化 ---------- */
   if (typeof LLM === 'undefined') { $('aiStatus').textContent = 'AI 模块未载入'; return; }
   $('cfgProvider').addEventListener('change', showProvFields);
@@ -275,5 +298,5 @@
   });
   document.querySelectorAll('[data-listmodels]').forEach((b) => b.addEventListener('click', () => listModelsFor(b.dataset.listmodels, b)));
   loadCfgForm();
-  window.ChuanRenAI = { buildMessages, DISCIPLINE };
+  window.ChuanRenAI = { buildMessages, DISCIPLINE, explainLine, TUTOR };
 })();
