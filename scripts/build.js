@@ -38,6 +38,7 @@ const COPY = [
   ['core/liuren/casematch.js', 'core/liuren/casematch.js'],
   ['core/liuren/tuili.js', 'core/liuren/tuili.js'],
   ['core/liuren/cidian.js', 'core/liuren/cidian.js'],
+  ['core/liuren/xinde.js', 'core/liuren/xinde.js'],
   ['knowledge/liuren-cases.json', 'knowledge/liuren-cases.json'],
   ['vendor/qimen-pwa/style.css', 'vendor/qimen-pwa/style.css'],
   ['vendor/qimen-pwa/engine.bundle.js', 'vendor/qimen-pwa/engine.bundle.js'],

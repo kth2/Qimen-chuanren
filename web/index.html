@@ -146,6 +146,14 @@
     .tl-focus ul { margin: 2px 0 0; padding-left: 18px; }
     .tl-cidian { margin-top: 8px; font-size: 13px; }
     .tl-cidian summary { cursor: pointer; color: #8a6d3b; }
+    .tl-ask { font-size: 11px; padding: 0 5px; margin-left: 2px; border: 1px solid #b9c9e0; border-radius: 3px; background: #f3f7fc; color: #31708f; cursor: pointer; line-height: 16px; }
+    .tl-ask.tl-on { background: #d9e8f6; }
+    .tl-askbox { margin: 4px 0 6px; padding: 6px 8px; background: #f3f7fc; border-left: 3px solid #9fb9d6; border-radius: 4px; font-size: 12.5px; line-height: 1.65; white-space: pre-wrap; }
+    .tl-askfoot { white-space: normal; font-size: 11px; margin-top: 4px; }
+    .xd-item { border-top: 1px dashed #ddd; padding: 6px 0; font-size: 13px; line-height: 1.7; }
+    .xd-item:first-of-type { border-top: 0; }
+    .xd-shared .tag { margin-right: 4px; }
+    .xd-notes { margin: 2px 0; padding-left: 18px; color: #555; }
     .xj-mark { font-size: 11px; color: #6f5499; border: 1px solid #d6cdea; border-radius: 3px; padding: 0 3px; }
     .geju-list li, .suggestion-list li { margin: 3px 0; }
     .case-card { border-bottom: 1px solid #eee; padding: 6px 0; font-size: 13px; }
@@ -255,6 +263,7 @@
   <div id="basicInfo" class="panel" style="display:none;"></div>
   <div id="chart"></div>
   <div id="chuanren"></div>
+  <div id="xindePanel"></div>
 
   <div class="panel" id="aiPanel">
     <h3>AI 解读 <span class="exp-badge">奇门为主·穿壬旁证</span>　<span class="muted" id="aiProviderTag"></span></h3>
@@ -364,6 +373,7 @@
   <script src="core/liuren/casematch.js"></script>
   <script src="core/liuren/tuili.js"></script>
   <script src="core/liuren/cidian.js"></script>
+  <script src="core/liuren/xinde.js"></script>
   <script src="core/rules.js"></script>
   <script src="vendor/qimen-pwa/core/calendar.js"></script>
   <script src="app.js"></script>

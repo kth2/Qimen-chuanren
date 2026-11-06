@@ -382,6 +382,18 @@
     await refresh();
   });
 
-  window.ChuanRenCases = { store, refresh, stats: () => CB.stats(cache) };
+  /** 从别处（复盘心得）打开某一例：切到所在分页、展开、滚过去 */
+  async function openCase(id) {
+    if (!cache.length) cache = await store.list();
+    const c = cache.find((x) => x.id === id);
+    if (!c) return false;
+    tab = c.feedback && c.feedback.archived ? 'done' : 'open';
+    openId = id;
+    render();
+    const el = document.querySelector('.case-card[data-id="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
+  }
+  window.ChuanRenCases = { store, refresh, openCase, list: () => store.list(), stats: () => CB.stats(cache) };
   refresh();
 })();

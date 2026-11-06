@@ -14,6 +14,7 @@
   const CM = window.LiurenCaseMatch;
   const TL = window.LiurenTuiLi;
   const CD = window.LiurenCiDian;
+  const XD = window.LiurenXinDe;
   let lastDomainUi = null;   // 上次排盘实际用的界面占类
   let BOOK = null;      // knowledge/liuren-cases.json：书中六壬案例（盘式照录＋摘要）
   const $ = (id) => document.getElementById(id);
@@ -351,6 +352,65 @@
       象义取 ${esc(XY.SOURCE)}，书中原则「以十二神与六亲的结合为准」。我＝我宫，事＝事宫，向＝规则 5 第二方位。</p></div>`;
   }
 
+  /* ---------- 逐条「问」：请 AI 结合本盘讲这一条（web/ai.js explainLine） ---------- */
+  let _askLines = [];
+  async function askLine(btn) {
+    const li = btn.closest('li');
+    const old = li.querySelector(':scope > .tl-askbox');
+    if (old && !btn.disabled) { old.remove(); btn.classList.remove('tl-on'); return; }
+    const AI = window.ChuanRenAI, ctx = window._chuanrenCtx;
+    const box = document.createElement('div');
+    box.className = 'tl-askbox';
+    li.appendChild(box);
+    btn.classList.add('tl-on');
+    if (!AI || !AI.explainLine || typeof LLM === 'undefined') { box.textContent = 'AI 模块未载入，请先在「AI 解读」里设好模型。'; return; }
+    if (!ctx) { box.textContent = '请先排盘。'; return; }
+    btn.disabled = true;
+    box.textContent = 'AI 讲解中…';
+    try {
+      const t = await AI.explainLine(ctx, _askLines[+btn.dataset.ask], (full) => { box.textContent = full || 'AI 讲解中…'; });
+      box.textContent = t || '（无内容）';
+      box.insertAdjacentHTML('beforeend', '<div class="muted tl-askfoot">AI 讲解，供学习参考；术语原文以白话卡所注书页为准。</div>');
+    } catch (e) { box.textContent = '失败：' + e.message + '（可在「AI 解读」里检查模型设置）'; }
+    finally { btn.disabled = false; }
+  }
+
+  /* ---------- 复盘心得（单案）：六壬盘象相近、已复盘的旧案例（core/liuren/xinde.js） ---------- */
+  const HOW_LABEL = { overrated: '当时高估了', underrated: '当时低估了', missed: '当时漏看了', misread: '当时读错了' };
+  const ITEM_LABEL = (id) => ({ xk: '六壬旬空', gui: '贵人', sc: '三传', ke: '四课', r7: '规则 7 应期', r8: '规则 8 类神', r9: '规则 9 贵人互参', r10: '规则 10 我彼双读' }[id]
+    || (/^tl-/.test(id) ? '六壬推理·' + ({ keti: '课体', xianfeng: '先锋门', zhishi: '直事门', waishi: '外事门', neishi: '内事门', fadian: '发端门（初传）', yiyi: '移易门（中传）', guiji: '归计门（末传）', bianti: '变体门（年命）', zhuanxiang: '占类专项', yingqi: '应期', he: '合看' }[id.slice(3)] || id.slice(3)) : id));
+  let _xdSeq = 0;
+  async function renderXinDe(pan, res) {
+    const host = $('xindePanel');
+    if (!host) return;
+    const seq = ++_xdSeq;
+    host.innerHTML = '';
+    if (!XD || !window.ChuanRenCases || !window.ChuanRenCases.list) return;
+    let recs;
+    try { recs = await window.ChuanRenCases.list(); } catch (e) { return; }
+    if (seq !== _xdSeq) return;   // 期间又排了新盘
+    const reviewed = recs.filter((c) => c.review && c.review.lesson);
+    if (!reviewed.length) return;
+    const cur = XD.features({ riZhu: pan.siZhu.day, yueJiang: res.yueJiang.yueJiang, shiZhi: pan.siZhu.time[1],
+      xunKong: res.liuren.xunKong, ui: res.uiName || (window._chuanrenCtx || {}).ui, gui: !!((res.rules || []).find((x) => x.rule === 7) || {}).gui });
+    const hits = XD.match(cur, reviewed);
+    const VL = (window.ChuanRenCasebook && window.ChuanRenCasebook.VERDICT_LABEL) || {};
+    const body = hits.length ? hits.map((h) => {
+      const c = h.rec, f = c.feedback || {};
+      const notes = h.notes.map((n) => `<li>${esc(HOW_LABEL[n.how] || n.how)}「${esc(ITEM_LABEL(n.itemId))}」：${esc(n.why)}</li>`).join('');
+      return `<div class="xd-item"><div><b>${esc(String(c.question || '').replace(/\s+/g, ' ').slice(0, 60))}</b>
+        <span class="muted">${esc(String(c.input.date || '').slice(0, 10))} · ${esc(c.input.ui || '')}${f.verdict ? ' · ' + esc(VL[f.verdict] || f.verdict) : ''}</span></div>
+        <div class="xd-shared">相同之处：${h.shared.map((s) => `<span class="tag">${esc(s)}</span>`).join('')}</div>
+        <div>复盘心得：${esc(c.review.lesson)}</div>
+        ${notes ? `<ul class="xd-notes">${notes}</ul>` : ''}
+        <a href="#caseBody" class="xd-open" data-id="${esc(c.id)}">打开这个案例</a></div>`;
+    }).join('') : `<p class="muted">案例本里 ${reviewed.length} 个已复盘的案例，暂无与本盘六壬盘象相近的。</p>`;
+    host.innerHTML = `<div class="panel"><h3>复盘心得 <span class="exp-badge">单案·未经检验</span></h3>
+      <p class="muted" style="margin:0 0 6px;">从已做过 AI 复盘的旧案例里，找六壬盘象相近的（同占类、课体、初传末传落空、初传天将六亲、干上神对日干、贵人冲空，逐项比），把当时的心得列出来对照学习。
+      这些都是单个案例的事后总结，不是规则；同样的盘象下次未必同样应。</p>${body}</div>`;
+    host.querySelectorAll('.xd-open').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); window.ChuanRenCases.openCase(a.dataset.id); }));
+  }
+
   /** 术语白话卡：原文（书页）／白话（本 app 转述）／对照奇门（本 app 取法） */
   function cardHtml(t) {
     return `<div class="tl-card" data-card="${t.id}"><b>${esc(t.title)}</b>
@@ -376,15 +436,19 @@
       }
       return out + gl(esc(t.slice(pos)));
     };
-    const item = (it) => `<li${it.own ? ' class="tl-own"' : ''}>${rich(it.text)}${it.src ? ` <span class="tl-src">${esc(it.src)}</span>` : ''}${it.own ? ' <span class="tl-src">本 app 取法</span>' : ''}</li>`;
+    _askLines = [];
+    const item = (it) => {
+      const n = _askLines.push(it.text + (it.own ? '〔本 app 取法〕' : it.src ? `〔${it.src}〕` : '')) - 1;
+      return `<li${it.own ? ' class="tl-own"' : ''}>${rich(it.text)}${it.src ? ` <span class="tl-src">${esc(it.src)}</span>` : ''}${it.own ? ' <span class="tl-src">本 app 取法</span>' : ''} <button type="button" class="tl-ask" data-ask="${n}" title="请 AI 结合这张盘讲解这一条">问</button></li>`;
+    };
     const stepTitle = (st) => `<b>${esc(st.title)}</b>${CD && CD.STEP_TERM[st.key] ? ` <span class="tl-term tl-q" data-term="${CD.STEP_TERM[st.key]}" role="button" tabindex="0" title="这一门看什么">？</span>` : ''}`;
     const steps = r.steps.map((st) => `<div class="tl-step">${stepTitle(st)}<ul>${st.items.map(item).join('')}</ul></div>`).join('');
     const r7 = (res.rules || []).find((x) => x.rule === 7);
     const r7picks = r7 && Array.isArray(r7.picks) && r7.picks.length ? r7.picks.join('、') : '';
-    const focus = (r.focus || []).map(item).join('') + (r7picks ? `<li>规则 7 所取应期之支：${esc(r7picks)}（含贵人冲空，〔用户所定〕）。</li>` : '');
+    const focus = (r.focus || []).map(item).join('') + (r7picks ? item({ text: `规则 7 所取应期之支：${r7picks}（含贵人冲空，〔用户所定〕）。`, src: '', own: false }) : '');
     const cidian = CD ? `<details class="tl-cidian"><summary>六壬术语白话表（${CD.TERMS.length} 条）</summary>${CD.TERMS.map((t) => cardHtml(t)).join('')}</details>` : '';
     return `<div class="panel" id="tuiliPanel"><h3>六壬推理 <span class="exp-badge">只显示·不投票</span></h3>
-      <div class="tl-focus"><b>先看这几条</b> <span class="muted">照《探原》所言轻重；只指出从哪里看起，不给吉凶。带虚线的词可点开看白话。</span><ul>${focus}</ul></div>
+      <div class="tl-focus"><b>先看这几条</b> <span class="muted">照《探原》所言轻重；只指出从哪里看起，不给吉凶。带虚线的词可点开看白话；每句末的「问」请 AI 结合本盘讲这一条。</span><ul>${focus}</ul></div>
       ${steps}
       <div class="tl-step tl-he"><b>合看</b><ul>${r.heKan.map(item).join('')}</ul></div>
       <p class="muted" style="margin:6px 0 0;">${esc(r.caution.text)}（${esc(r.caution.src)}）<br>
@@ -518,6 +582,8 @@
       host.insertAdjacentHTML('beforeend', cardHtml(t));
       el.classList.add('tl-on');
     };
+    $('chuanren').querySelectorAll('#tuiliPanel .tl-ask').forEach((b) => b.addEventListener('click', (e) => { e.preventDefault(); askLine(b); }));
+    renderXinDe(pan, res);
     $('chuanren').querySelectorAll('#tuiliPanel .tl-term').forEach((el) => {
       el.addEventListener('click', (e) => { e.preventDefault(); toggleTerm(el); });
       el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleTerm(el); } });
@@ -600,6 +666,7 @@
       res.nianMing = nianMing;
       res.nianMingAuto = nianMing !== nmPicked ? nianMing : '';
       res.domain = domainKeyOf(ui);
+      res.uiName = ui;
       // 行年（《探原》凡例）：性别＋虚岁；虚岁＝起课年柱减本命年柱（六十甲子）加一，勾选「61 岁以上」再加六十
       res.xingBie = $('inXingBie').value;
       res.xuSui = nianMing && nianMing.length === 2 ? TL.xuSui(pan.siZhu.year, nianMing, $('inOver60').checked) : 0;
