@@ -209,6 +209,41 @@
     return `【占类：${cat}　模型：${who}　奇门穿壬·实验】\n\n`;
   }
 
+  /**
+   * 转盘：日干、时干、年命落宫（照奇门 app 的 riShiGanBlock 补这一段）。
+   * 纲要叫模型「以用神宫、值符值使对年命宫的生克」定成败，却只给了年命天干，没说年命落哪宫——补上。
+   * 落宫一律用 Qimen-pwa YongShen.locate（年命、日干为甲按六甲遁仪；甲年未给年支则如实说定不了）。
+   * 飞盘不加：飞盘引擎自己的提示词已列年命宫。
+   */
+  function ganGongBlock(pan, nianMing) {
+    const YS = window.YongShen;
+    if (!YS || !YS.locate) return '';
+    const sz = pan.siZhu || {};
+    const actors = { riGan: String(sz.day || '')[0], riZhu: sz.day, shiGan: String(sz.time || '')[0], nianMingGan: nianMing || '' };
+    const line = (label, name) => {
+      const m = YS.locate(pan, name, actors);
+      if (!m || !m.gong) return null;
+      return `  - ${label}：${m.via ? m.via + '，' : ''}天盘落${m.gong}宫（${GONG_NAME[m.gong] || ''}${m.direction ? '·' + m.direction : ''}）` +
+        `，${m.men || ''}${m.xing ? '、' + m.xing : ''}${m.shen ? '、' + m.shen : ''}${m.kongWang ? '，空亡' : ''}${m.yiMa ? '，驿马' : ''}`;
+    };
+    const nm = String(nianMing || '');
+    const lines = ['', nm ? '【日干/时干/年命落宫（转盘断局补充）】' : '【日干/时干落宫（转盘断局补充）】',
+      line(`日干(求测人)${sz.day}`, '日干') || `  - 日干(求测人)${sz.day}：盘上未见`,
+      line(`时干(所占之事/对方)${sz.time}`, '时干') || `  - 时干(所占之事/对方)${sz.time}：盘上未见`];
+    let nmOk = false;
+    if (nm) {
+      const l = line(`年命(求测人本命)${nm}`, '年命');
+      if (l) { lines.push(l); nmOk = true; }
+      else if (nm[0] === '甲' && nm.length < 2) lines.push('  - 年命(求测人本命)甲：甲不上天盘，须按本年之甲所遁之仪取宫；本次未给年支，无法定位。**不得以本盘旬首或值符代之**。');
+      else lines.push(`  - 年命(求测人本命)${nm}：盘上未见`);
+    }
+    lines.push(nmOk
+      ? '请按纲要「日干为人、时干为事」：先审时干宫对年命宫(求测人本命，优先于日干宫)的生克盗泄定成败，再合值符值使、用神宫参断。'
+      : '请按纲要「日干为人、时干为事」：先审时干宫对日干宫的生克盗泄定成败，再合值符值使、用神宫参断。'
+        + (nm ? '（年命未能定宫，以日干宫代年命宫）' : '（本次未提供年命，以日干宫代年命宫）'));
+    return lines.join('\n');
+  }
+
   /** 供测试：不调模型，只组出要发给模型的 system 与 user */
   async function buildMessages(ctx, q) {
     const { pan, res, school, engineCategory, nianMing } = ctx;
@@ -226,7 +261,8 @@
     const frLine = fr && fr.direction === 'adverse'
       ? `\n· ⚠ 问句方向：所问之事「${fr.event}」是求测人（或所问之人）不愿其发生之事（问句检出：「${fr.phrase}」）。奇门「事成」与穿壬规则 8 的 +1 于此题为凶，换算见纪律第 11 条。`
       : '';
-    const user = prompt.user + frLine + ws + yq + wx + '\n' + chuanRenBlock(pan, res, nianMing) +
+    const gg = school === 'feipan' ? '' : ganGongBlock(pan, nmGan);
+    const user = prompt.user + gg + frLine + ws + yq + wx + '\n' + chuanRenBlock(pan, res, nianMing) +
       `\n\n【再次提醒】占问：${q}。奇门为主，穿壬只作旁证；结尾单列「穿壬旁证」。`;
     return { system: prompt.system + '\n' + DISCIPLINE, user, category: (prompt.context && prompt.context.category) || engineCategory, framing: fr };
   }

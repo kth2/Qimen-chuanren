@@ -185,6 +185,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(row7 && /贵人冲空/.test(row7.textContent) && /应期日支：申、丑/.test(row7.textContent), '规则 7 应显示贵人冲空并加取丑：' + (row7 && row7.textContent));
     const m = await AI.buildMessages(w._chuanrenCtx, '何时做手术');
     assert(/12\. 问到应期时，奇门、六壬两路合看/.test(m.system) && /贵人冲空 丑/.test(m.user), 'AI 提示词缺两路合看应期或贵人冲空');
+    assert(w._chuanrenCtx.school === 'zhuanpan' && w._chuanrenCtx.nianMing === '庚午', '此处应为转盘、年命庚午'); assert(/【日干\/时干\/年命落宫（转盘断局补充）】/.test(m.user) && /年命\(求测人本命\)\S+：.*天盘落\d宫/.test(m.user) && /时干宫对年命宫/.test(m.user), '转盘提示词缺年命落宫：' + w._chuanrenCtx.nianMing);
     d.getElementById('inDate').value = keep.date; d.getElementById('inTime').value = keep.time;
     d.getElementById('inDomain').value = keep.dom; d.getElementById('inDomain').dispatchEvent(new w.Event('change', { bubbles: true }));
     d.getElementById('castBtn').click();
