@@ -92,7 +92,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   { const tl = d.getElementById('tuiliPanel');
     assert(tl, '缺六壬推理面板');
     const titles = [...tl.querySelectorAll('.tl-step > b')].map((e) => e.textContent).join(' ');
-    assert(/大局·课体 先锋门·占时 直事门·月将 外事门·日干（我） 内事门·日枝（彼） 发端门·初传 移易门·中传 归计门·末传 变体门·年命 应期（参照） 合看/.test(titles), '六壬推理八门不全：' + titles);
+    assert(/大局·课体 先锋门·占时 直事门·月将 外事门·日干（我） 内事门·日枝（彼） 发端门·初传 移易门·中传 归计门·末传 变体门·年命 德（福佑之神） 应期（参照） 合看/.test(titles), '六壬推理八门不全：' + titles);
     assert(/本命庚午，上神/.test(tl.textContent) && /探原 66/.test(tl.textContent) && /贵人.*(顺治|逆行)/.test(tl.textContent) && /课名/.test(tl.textContent), '六壬推理内容不全');
     const a = tl.querySelector('.tl-gong');
     assert(a, '三传应可跳到九宫详解');
