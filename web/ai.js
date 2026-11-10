@@ -10,8 +10,10 @@
  *   · 问句方向（怕发生之事）：Qimen-pwa 的 Framing 模块原样调用；纪律第 11 条照奇门 app E30 改写成穿壬用语。
  * 本文件只新增：「穿壬·六壬层」一段（事实与规则票），以及约束模型怎样用它的几条纪律。
  *
- * 与 Qimen-pwa 的差距（如实说明）：它的结构化证据包（象义、应期时间线、类象、力量禁令、
- * 证据合流、吟局、八十一格、时格、取数）由 app.js 里约 300 行编排生成，没有导出，这里没有。
+ *   · 结构化证据包（象义判读、应期时间线、类象用神、力量校验、证据合流、吟局、八十一格、时格、取数）：
+ *     Qimen-pwa core/reading.js 的 evidenceFor 原样调用，与奇门 app 同一份编排、同一份知识库。
+ *     未带的一项：奇门 app 案例本的经验附注与本机修订集（那是奇门 app 自己的案例本，穿壬不读）。
+ *     证据包排不出时（知识库没载到等），退回旺衰、应期、五行推理三段，同此前。
  */
 (function () {
   const QM = window.QM, MD = window.MdLite, TDP = window.LiurenTianDiPan, FR = window.Framing, TL = window.LiurenTuiLi;
@@ -123,6 +125,18 @@
       + '④ 穿壬规则 8 的 +1 是「此事会发生」，于此题为凶；五行推理 v1 的「如愿」即所怕之事不发生；规则 1–6、9、10 的 +1 只是关系分值，照第 7 条不作吉断；'
       + '⑤ 断「会发生」之前，先说明为何不读作虚悬——只凭凶象叠加断「必发」是这类题的主错。'
       + '（奇门 app 案例本 2026-10-05：此类是非题 18 例，所怕之事实际发生的只有 7 例；断错者 6 例断「会发生」而实际没发生。样本小，只作纠偏，不作概率。）',
+  ].join('\n');
+
+  // 证据包在时追加：奇门 app 的 E 规则原样带入，这里只说明它与穿壬各条怎样并用
+  const EVIDENCE_NOTE = '\n' + [
+    '',
+    '=== E 规则与穿壬各条的关系 ===',
+    'E1–E31 管的是奇门一路，证据包只含奇门盘的内容，不含六壬层。',
+    '· E3、E4、E13「用神不得另立、应期不得另推、只在 TIMING 所列锚点中选」说的是奇门的用神与奇门的应期。'
+      + '六壬一路的应期仍照第 12 条，只取规则 7 列出的支；第 12 条所说「【应期与数字】块」即证据包中 yingqi 与 TIMING 两段。',
+    '· E10、E19、E20 的 READING 倾向、合流档位、路数，只就奇门证据计；穿壬规则票不算作其中一路，也不改档位。',
+    '· 证据包里的五行推理一段与规则票中的规则 2 是两回事：前者用宫内五行，后者用六壬天盘支；照第 7 条分开看，不相加。',
+    '· E30 与第 11 条说的是同一件事；穿壬规则 8 的换算照第 11 条④。',
   ].join('\n');
 
   /* ---------- 穿壬段 ---------- */
@@ -262,9 +276,26 @@
       ? `\n· ⚠ 问句方向：所问之事「${fr.event}」是求测人（或所问之人）不愿其发生之事（问句检出：「${fr.phrase}」）。奇门「事成」与穿壬规则 8 的 +1 于此题为凶，换算见纪律第 11 条。`
       : '';
     const gg = school === 'feipan' ? '' : ganGongBlock(pan, nmGan);
-    const user = prompt.user + gg + frLine + ws + yq + wx + '\n' + chuanRenBlock(pan, res, nianMing) +
+    // 结构化证据包：调奇门 app 的同一份编排。占类口径同奇门 app 的 resolveCategory：
+    // 下拉选了为显式，规则占类取界面所选；自动判定时由引擎按问句识别的占类反推。
+    let ev = { evBlock: '', sysExtra: '', runOut: null };
+    const RD = window.QimenReading, YS = window.YongShen;
+    if (RD && RD.evidenceFor) {
+      try {
+        const explicit = ctx.domainSource === 'explicit';
+        const rc = { category: engineCategory, uiPick: explicit ? ctx.ui : '', explicit };
+        const catMap = (YS && YS.categoryMap) ? YS.categoryMap(ctx.ui || engineCategory, school === 'feipan' ? 'feipan' : 'zhuanpan') : null;
+        ev = await RD.evidenceFor({ pan, q, school, prompt, rc, catMap, nianMing: nmGan, fallbackCategory: engineCategory,
+          ysGongs, wsBlock: ws, yqBlock: yq, base: 'vendor/qimen-pwa/' });
+      } catch (e) { console.warn('[穿壬] 证据包排不出，本次退回旺衰、应期两段：', e.message); }
+    }
+    // 证据包已含旺衰四害、应期、五行推理、问句方向，有它就不再另拼，免得同一内容进两次
+    const qimenBlocks = ev.evBlock ? ev.evBlock : frLine + ws + yq + wx;
+    const user = prompt.user + gg + qimenBlocks + '\n' + chuanRenBlock(pan, res, nianMing) +
       `\n\n【再次提醒】占问：${q}。奇门为主，穿壬只作旁证；结尾单列「穿壬旁证」。`;
-    return { system: prompt.system + '\n' + DISCIPLINE, user, category: (prompt.context && prompt.context.category) || engineCategory, framing: fr };
+    const sysEv = ev.evBlock ? ev.sysExtra + EVIDENCE_NOTE : '';
+    return { system: prompt.system + '\n' + DISCIPLINE + sysEv, user, category: (prompt.context && prompt.context.category) || engineCategory, framing: fr,
+      evidence: ev.runOut && ev.runOut.evidence ? ev.runOut : null };
   }
 
   async function runAI() {

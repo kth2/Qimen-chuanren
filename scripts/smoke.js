@@ -173,7 +173,13 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
     assert(/三传（.+）：初传/.test(m.user) && m.user.includes('四课：第一课'), name + '：提示词缺四课三传');
     assert(m.user.includes('六壬推理（照') && /发端门·初传：.*〔探原 61、63〕/.test(m.user) && m.system.includes('〔探原 N〕为袁树珊《大六壬探原》书页'), name + '：提示词缺六壬推理段或其纪律');
     assert(m.category === '求财', name + '：占类应为求财，实为 ' + m.category);
-    console.log(`✓ AI 提示词（${name}）：system ${m.system.length} 字，user ${m.user.length} 字，含纲要、旺衰、穿壬段、六壬推理`);
+    // 结构化证据包：与奇门 app 同一份编排（vendor/qimen-pwa/core/reading.js），E 规则随之带入；旺衰块只进一次
+    assert(m.evidence && m.user.includes('【结构化证据包 Evidence') && m.user.includes('占类：wealth'), name + '：缺结构化证据包');
+    assert(m.system.includes('结构化证据（Evidence）使用规则') && m.system.includes('E 规则与穿壬各条的关系'), name + '：缺 E 规则或其与穿壬各条的关系说明');
+    assert(m.user.split('\n【旺衰与四害').length === 2 && m.user.split('\n【应期与数字').length === 2, name + '：旺衰或应期块应恰好一份');
+    assert(m.user.includes('证据合流') && m.user.includes('力量校验'), name + '：证据包缺合流或力量校验');
+    assert(m.user.indexOf('【结构化证据包') < m.user.indexOf('【穿壬·六壬层】'), name + '：穿壬段应排在证据包之后');
+    console.log(`✓ AI 提示词（${name}）：system ${m.system.length} 字，user ${m.user.length} 字，含纲要、证据包、穿壬段、六壬推理`);
   }
   // v2.3 规则 7 贵人冲空：复盘那例（2026-10-23 08:18 怀孕）应加取丑；AI 提示词合看奇门六壬应期
   { d.querySelector('#schoolSeg button[data-school="zhuanpan"]').click();
@@ -238,8 +244,8 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   // 问句方向：怕发生之事要在提示词里点出；盼发生之事不点
   { const mFear = await AI.buildMessages(w._chuanrenCtx, '这次会不会被裁员');
     const mHope = await AI.buildMessages(w._chuanrenCtx, '这次投资能赚钱吗');
-    assert(mFear.user.includes('⚠ 问句方向') && mFear.system.includes('【问句方向】'), '怕发生之事未点出');
-    assert(!mHope.user.includes('⚠ 问句方向'), '盼发生之事不该点出问句方向');
+    assert(/⚠ \**问句方向/.test(mFear.user) && mFear.system.includes('【问句方向】'), '怕发生之事未点出');
+    assert(!/⚠ \**问句方向/.test(mHope.user), '盼发生之事不该点出问句方向');
     console.log('✓ 问句方向：怕发生之事已点出'); }
   // 改了问句：旧解读标灰；存案例不收旧解读；检出怕发生之事时回填预选「怕」
   d.querySelector('#caseTabSeg button[data-tab="open"]').click();

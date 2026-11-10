@@ -52,6 +52,28 @@ const COPY = [
   ['vendor/qimen-pwa/assets/zhuanpan-method.md', 'vendor/qimen-pwa/assets/zhuanpan-method.md'],
   ['vendor/qimen-pwa/assets/feipan-method.md', 'vendor/qimen-pwa/assets/feipan-method.md'],
   ['vendor/qimen-pwa/knowledge/domains.json', 'vendor/qimen-pwa/knowledge/domains.json'],
+  // 结构化证据包（与奇门 app 同一份编排 core/reading.js 及其各层、各知识库）
+  ['vendor/qimen-pwa/core/xiangyi.js', 'vendor/qimen-pwa/core/xiangyi.js'],
+  ['vendor/qimen-pwa/core/timing.js', 'vendor/qimen-pwa/core/timing.js'],
+  ['vendor/qimen-pwa/core/leixiang.js', 'vendor/qimen-pwa/core/leixiang.js'],
+  ['vendor/qimen-pwa/core/severity.js', 'vendor/qimen-pwa/core/severity.js'],
+  ['vendor/qimen-pwa/core/converge.js', 'vendor/qimen-pwa/core/converge.js'],
+  ['vendor/qimen-pwa/core/yinju.js', 'vendor/qimen-pwa/core/yinju.js'],
+  ['vendor/qimen-pwa/core/geju.js', 'vendor/qimen-pwa/core/geju.js'],
+  ['vendor/qimen-pwa/core/shige.js', 'vendor/qimen-pwa/core/shige.js'],
+  ['vendor/qimen-pwa/core/qushu.js', 'vendor/qimen-pwa/core/qushu.js'],
+  ['vendor/qimen-pwa/core/evidence.js', 'vendor/qimen-pwa/core/evidence.js'],
+  ['vendor/qimen-pwa/core/reading.js', 'vendor/qimen-pwa/core/reading.js'],
+  ['vendor/qimen-pwa/knowledge/symbols.json', 'vendor/qimen-pwa/knowledge/symbols.json'],
+  ['vendor/qimen-pwa/knowledge/domain-rules.json', 'vendor/qimen-pwa/knowledge/domain-rules.json'],
+  ['vendor/qimen-pwa/knowledge/timing-rules.json', 'vendor/qimen-pwa/knowledge/timing-rules.json'],
+  ['vendor/qimen-pwa/knowledge/leixiang.json', 'vendor/qimen-pwa/knowledge/leixiang.json'],
+  ['vendor/qimen-pwa/knowledge/severity-rules.json', 'vendor/qimen-pwa/knowledge/severity-rules.json'],
+  ['vendor/qimen-pwa/knowledge/dimensions.json', 'vendor/qimen-pwa/knowledge/dimensions.json'],
+  ['vendor/qimen-pwa/knowledge/yinju-rules.json', 'vendor/qimen-pwa/knowledge/yinju-rules.json'],
+  ['vendor/qimen-pwa/knowledge/geju-81.json', 'vendor/qimen-pwa/knowledge/geju-81.json'],
+  ['vendor/qimen-pwa/knowledge/shige-rules.json', 'vendor/qimen-pwa/knowledge/shige-rules.json'],
+  ['vendor/qimen-pwa/knowledge/qushu-rules.json', 'vendor/qimen-pwa/knowledge/qushu-rules.json'],
 ];
 
 fs.rmSync(DIST, { recursive: true, force: true });
