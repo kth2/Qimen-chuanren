@@ -239,6 +239,7 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   assert(/可计分的是非题 1 题/.test(d.getElementById('caseBody').textContent) && /未到评估点/.test(d.getElementById('caseBody').textContent), '准确率页不对');
   assert(/完全应验 1/.test(d.getElementById('caseBody').textContent) && /应验分 100\.0%/.test(d.getElementById('caseBody').textContent), '准确率页缺应验分');
   { const s0 = w.ChuanRenCases.stats(); assert(s0.ai.n === 1 && s0.ai.acc === 1, 'AI 结论方向未由应验推出'); }
+  assert(/六壬判法影子追踪 v1/.test(d.getElementById('caseBody').textContent) && /S1 干上神生克日干〔探原 61〕/.test(d.getElementById('caseBody').textContent) && /S2 初传落旬空〔探原 63〕/.test(d.getElementById('caseBody').textContent), '准确率页缺影子追踪');
   console.log('✓ 案例本：存（含 AI 解读）→ 只填实况与应验 → AI 盲标 → 准确率页');
 
   // 问句方向：怕发生之事要在提示词里点出；盼发生之事不点

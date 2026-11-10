@@ -284,6 +284,26 @@
       ${feedbackForm(c)}</details>`;
   }
 
+  /** 六壬判法影子追踪 v1（docs/SHADOW-liuren-v1.md）：只记账，不投票 */
+  function shadowHtml() {
+    const SH = window.LiurenShadow;
+    if (!SH) return '';
+    const s = SH.stats(cache, CB), a = s.S1, b = s.S2;
+    const v = (x) => (x.verdict ? `<b>${x.verdict}</b>` : '<span class="muted">未到评估点</span>');
+    const n1 = a.next ? `离${a.next.label}还差 ${Math.max(0, a.next.n - a.test.n)} 题（且如愿、不如愿各 ≥${a.next.each}，现 ${a.test.pos}／${a.test.neg}）` : '两次评估都已到';
+    const n2 = b.next ? `离${b.next.label}：触发 ${b.test.fired}／${b.next.fired}，未触发 ${b.test.rest}／${b.next.rest}` : '两次评估都已到';
+    return `<h4 style="margin:14px 0 6px;">六壬判法影子追踪 v1 <span class="muted" style="font-weight:normal;">（${esc(s.spec.frozenAt)} 冻结；只记账，不投票、不进规则票）</span></h4>
+      <div class="tbl-wrap"><table class="rule-table acc-table"><thead><tr><th>判法</th><th>检验集（${esc(s.spec.frozenAt)} 起录入）</th><th>判定</th><th>回看（此前录入，不计入判定）</th></tr></thead><tbody>
+      <tr><td>S1 干上神生克日干〔探原 61〕<br><span class="muted">生干记如愿，克干记不如愿，其余不投票</span></td>
+        <td>${a.test.n} 题，平衡准确率 ${pct(a.test.balanced)}；同批 AI 结论 ${pct(a.test.ai.balanced)}<br><span class="muted">${n1}</span></td><td>${v(a)}</td>
+        <td class="muted">${a.lookback.n} 题，平衡准确率 ${pct(a.lookback.balanced)}</td></tr>
+      <tr><td>S2 初传落旬空〔探原 63〕<br><span class="muted">初传旬空记「事不发生」，不空不投票</span></td>
+        <td>触发 ${b.test.fired} 题，事发生 ${pct(b.test.firedRate)}；未触发 ${b.test.rest} 题，事发生 ${pct(b.test.restRate)}<br><span class="muted">${n2}</span></td><td>${v(b)}</td>
+        <td class="muted">触发 ${b.lookback.fired} 题发生 ${pct(b.lookback.firedRate)}；未触发 ${b.lookback.rest} 题发生 ${pct(b.lookback.restRate)}</td></tr>
+      </tbody></table></div>
+      <p class="muted">S1 判定同各规则。S2 是单向判法：到评估点时，未触发组的发生率比触发组高 ${Math.round(SH.S2_MARGIN * 100)} 个百分点以上为通过，不高于触发组为停止，其余第一次继续、第二次停止。回看一栏的案例在定规格前已看过，只供参考。</p>`;
+  }
+
   function statsHtml() {
     const s = CB.stats(cache, { rulesVersion: window.ChuanRenRules && window.ChuanRenRules.VERSION }), st = s.stage;
     const nextTxt = st.next ? `离${st.next.label}：还差 ${Math.max(0, st.next.n - s.yesno)} 题（且如愿、不如愿各 ≥${st.next.each}，现 ${s.pos}／${s.neg}）` : '两次评估都已到';
@@ -304,6 +324,7 @@
       规则 7 应期融合·穿壬：${s.rule7.n} 题有实际应期，命中 ${s.rule7.hit}（瞎猜期望 ${s.rule7.expect}）。<br>
       其中 v2.3 贵人冲空（单看贵人之支）：${s.rule7.gui.n} 题，命中 ${s.rule7.gui.hit}（瞎猜期望 ${s.rule7.gui.expect}）。</p>
       <p class="muted">规则账本按版本分开：只计本版（v${esc(String((window.ChuanRenRules || {}).VERSION || '').split('.')[0])}）录入的案例；AI 与五行 v1 全计。</p>`;
+    h += shadowHtml();
     h += `<p class="muted">口径照冻结规格：平衡准确率＝如愿题判对率与不如愿题判对率的平均，瞎猜为 50%；弃权不计。
       判定只在到达评估点时给出：比 AI 结论高 5 个百分点以上且本身 ≥55% 为通过；低于 AI 结论为停止；其余第一次评估继续、第二次停止。</p>`;
     return h;
