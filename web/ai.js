@@ -298,16 +298,19 @@
       evidence: ev.runOut && ev.runOut.evidence ? ev.runOut : null };
   }
 
-  async function runAI() {
+  async function runAI(retry) {
     const ctx = window._chuanrenCtx;
     if (!ctx || !ctx.res) { $('aiStatus').textContent = '请先排盘'; return; }
     const q = $('aiQuestion').value.trim();
     if (!q) { $('aiStatus').textContent = '请填写占问'; return; }
     const btn = $('aiBtn'); btn.disabled = true;
     $('aiAnswerBar').style.display = 'none';
+    $('aiOffChart').style.display = 'none';
     $('aiStatus').textContent = 'AI 解读中…（边生成边显示）';
     try {
       const m = await buildMessages(ctx, q);
+      // 上一次回复离题时的重问：只在末尾加一句，要求照盘作答；盘面、规则、纪律一字不动
+      if (retry === true) m.user += '\n\n【重问】上一次的回复没有引用盘面。用户明知这是传统术数，要的是照上方盘面与规则推出的断语；请逐项引用宫位、门星神与规则票作答，不要改写成科普或心理建议。';
       window._aiMessages = m;   // 便于在控制台核对喂给模型的内容
       $('aiAnswer').style.display = 'block'; _showRaw = false; stream(head(m.category));
       let streamed = false;
@@ -316,6 +319,9 @@
       _raw = head(m.category) + ((!streamed || !ans) ? (ans || '（无内容）') : ans);
       paint();
       $('aiStatus').textContent = '完成';
+      // 离题检测（Qimen-pwa core/reading.js）：回复几乎不提盘面时提醒，并可照盘再问一次
+      const RD = window.QimenReading, oc = RD && RD.offChart ? RD.offChart(ans) : null;
+      if (oc && oc.off) { $('aiOffChartText').textContent = RD.OFF_CHART_NOTE; $('aiOffChart').style.display = 'block'; }
       const u = (LLM.lastUsed && LLM.lastUsed()) || LLM.info();
       window._lastAI = { ctx, question: q, answer: ans || '', model: `${u.provider}/${u.model}` };   // 供「存为案例」取用，只认同一张盘、同一问句
       $('aiAnswer').classList.remove('ai-stale');
@@ -353,6 +359,7 @@
   $('cfgProvider').addEventListener('change', showProvFields);
   $('cfgSaveBtn').addEventListener('click', saveCfg);
   $('aiBtn').addEventListener('click', runAI);
+  $('aiRetryBtn').addEventListener('click', () => runAI(true));
   $('aiRawToggle').addEventListener('click', () => { _showRaw = !_showRaw; paint(); });
   $('cfgProbeBtn').addEventListener('click', async () => {
     const b = $('cfgProbeBtn'), out = $('cfgProbeOut');

@@ -79,6 +79,37 @@ test('S1 到第一次评估点才给判定；S2 单向，比两组发生率', ()
 });
 
 test('规格登记：两条都注《探原》书页，冻结日与分界一致', () => {
-  assert.deepEqual(SH.ITEMS.map((x) => [x.id, x.src]), [['S1', '探原 61'], ['S2', '探原 63']]);
+  assert.deepEqual(SH.ITEMS.map((x) => [x.id, x.src]), [['S1', '探原 61'], ['S2', '探原 63'], ['S3', '探原 66、75']]);
   assert.equal(SH.SPEC.cutoff.slice(0, 10), SH.SPEC.frozenAt);
+});
+
+test('S3：类神九处——闲地、空亡、休囚、刑克记不如愿；现而旺相不空且生合记如愿；占类不在表内不投票', () => {
+  const SC = require('../core/liuren/sanchuan.js');
+  const base = { riZhu: '癸酉', yueJiang: '丑', shiZhi: '戌', xunKong: ['戌', '亥'], yueZhi: '子' };
+  // 不在表内的占类、缺月支：不投票
+  assert.equal(SH.votes(Object.assign({}, base, { ui: '失物' })).S3.vote, 0);
+  assert.equal(SH.votes(Object.assign({}, base, { ui: '财运', yueZhi: '' })).S3.vote, 0);
+  // 逐项对照定义：把每个类神的状态按规格重算一遍
+  const sc = SC.compute({ riGan: '癸', riZhi: '酉', yueJiang: '丑', shiZhi: '戌' });
+  const v = SH.votes(Object.assign({}, base, { ui: '财运' })).S3;
+  const long = [...'子丑寅卯辰巳午未申酉戌亥'].find((z) => sc.liuren.jiangOf(z) === '青龙');
+  assert.deepEqual(v.lei.map((x) => [x.name, x.zhi]), [['青龙', long]]);
+  const nine = [...sc.ke.map((k) => k.shang), ...sc.chuan];
+  if (!nine.includes(long)) { assert.equal(v.lei[0].state, '闲地'); assert.equal(v.vote, -1); }
+  // 婚姻分男女：男占取天后与财星，女占取六合与官杀，未给性别只取六合
+  const names = (xb) => SH.votes(Object.assign({}, base, { ui: '婚姻', xingBie: xb })).S3.lei.map((x) => x.name);
+  assert.ok(names('男').includes('天后') && names('男').includes('财星'));
+  assert.ok(names('女').includes('六合') && names('女').includes('官杀'));
+  assert.deepEqual(names(''), ['六合']);
+  // 全表扫一遍，四种结论都要出现过，且状态与票一致
+  const seen = new Set();
+  const GZ = ['甲子', '丙寅', '戊辰', '庚午', '壬申', '乙亥', '丁丑', '己卯', '辛巳', '癸未'];
+  for (const rz of GZ) for (const yj of '子卯午酉') for (const sz of '丑辰未戌') for (const ui of ['财运', '事业', '学业']) {
+    const r = SH.votes({ riZhu: rz, yueJiang: yj, shiZhi: sz, xunKong: [], yueZhi: '寅', ui }).S3;
+    r.lei.forEach((x) => seen.add(x.state));
+    if (r.lei.some((x) => x.state === '现而德合相生')) assert.equal(r.vote, 1);
+    else if (r.lei.every((x) => ['闲地', '空亡', '休囚', '刑克日辰'].includes(x.state))) assert.equal(r.vote, -1);
+    else assert.equal(r.vote, 0);
+  }
+  for (const st of ['闲地', '休囚', '刑克日辰', '现而德合相生']) assert.ok(seen.has(st), '未出现：' + st);
 });

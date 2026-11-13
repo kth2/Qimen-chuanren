@@ -240,6 +240,11 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   assert(/完全应验 1/.test(d.getElementById('caseBody').textContent) && /应验分 100\.0%/.test(d.getElementById('caseBody').textContent), '准确率页缺应验分');
   { const s0 = w.ChuanRenCases.stats(); assert(s0.ai.n === 1 && s0.ai.acc === 1, 'AI 结论方向未由应验推出'); }
   assert(/六壬判法影子追踪 v1/.test(d.getElementById('caseBody').textContent) && /S1 干上神生克日干〔探原 61〕/.test(d.getElementById('caseBody').textContent) && /S2 初传落旬空〔探原 63〕/.test(d.getElementById('caseBody').textContent), '准确率页缺影子追踪');
+  // 离题检测与问法提示
+  assert(w.QimenReading.offChart('石头是自然界中的矿物集合体，建议寻求专业的心理健康顾问的建议。').off === true, '离题回复未判出');
+  assert(w.QimenReading.offChart('用神生门落艮八宫，乘天任、值符，旺相不空；日干落震三宫。').off === false, '照盘回复误判离题');
+  assert(d.getElementById('aiOffChart') && d.getElementById('aiRetryBtn') && /不问事物的真假/.test(d.body.textContent), '缺离题提醒栏或问法提示');
+  assert(/S3 类神九处〔探原 66、75〕/.test(d.getElementById('caseBody').textContent), '准确率页缺 S3');
   console.log('✓ 案例本：存（含 AI 解读）→ 只填实况与应验 → AI 盲标 → 准确率页');
 
   // 问句方向：怕发生之事要在提示词里点出；盼发生之事不点
