@@ -40,6 +40,13 @@
   // 驿马：冲三合之首（书页 71）；天马：正七月午、二八月申……（书页 66 注）
   const YIMA = { 申: '寅', 子: '寅', 辰: '寅', 寅: '申', 午: '申', 戌: '申', 巳: '亥', 酉: '亥', 丑: '亥', 亥: '巳', 卯: '巳', 未: '巳' };
   const tianMa = (yueZhi) => '午申戌子寅辰'[((zi(yueZhi) - 2 + 12) % 12) % 6];
+  // 德（书页 68「论德」，歌诀后各附所在之支，照录）：天德、月德按月建，日德按日干，枝德子日起巳顺行
+  const TIAN_DE = { 寅: '未', 卯: '申', 辰: '亥', 巳: '戌', 午: '亥', 未: '寅', 申: '丑', 酉: '寅', 戌: '巳', 亥: '辰', 子: '巳', 丑: '申' };
+  const YUE_DE = { 寅: '巳', 午: '巳', 戌: '巳', 卯: '寅', 未: '寅', 亥: '寅', 辰: '亥', 申: '亥', 子: '亥', 巳: '申', 酉: '申', 丑: '申' };
+  const RI_DE = { 甲: '寅', 己: '寅', 乙: '申', 庚: '申', 丙: '戌', 辛: '戌', 戊: '巳', 癸: '巳', 丁: '亥', 壬: '亥' };
+  /** 四德所在之支。月支未给则不出天德、月德 */
+  const deShen = (riGan, riZhi, yueZhi) => ({ ri: RI_DE[riGan], zhi: at(zi(riZhi) + 5),
+    yue: yueZhi ? YUE_DE[yueZhi] : '', tian: yueZhi ? TIAN_DE[yueZhi] : '' });
   // 十干长生（书页 70）：阳干顺行、阴干逆行
   const CHANG_SHENG = { 甲: '亥', 乙: '午', 丙: '寅', 戊: '寅', 丁: '酉', 己: '酉', 庚: '巳', 辛: '子', 壬: '申', 癸: '卯' };
   const STAGES = ['长生', '沐浴', '冠带', '临官', '帝旺', '衰', '病', '死', '墓', '绝', '胎', '养'];
@@ -349,7 +356,11 @@
         const st = stage(riGan, t);
         if (st === '死' || st === '绝') hit.push(T(`${label}上见日干${st}之神：主人鬼相侵，惊危百出。`, 66));
         if ((r.liuQin === '鬼' || r.liuQin === '官') && (r.jiang === '白虎' || r.jiang === '勾陈')) hit.push(T(`${label}上见官鬼又乘${r.jiang}：主田土官非。`, 66));
-        if (r.liuQin === '财') hit.push(T(`${label}上见财：书言「又遇德合，主财禄盈庭」；德合本面板未算，只记见财。`, 66));
+        if (r.liuQin === '财') {
+          const dd = deShen(riGan, riZhi, a.yueZhi);
+          const dn = [['日德', dd.ri], ['枝德', dd.zhi], ['月德', dd.yue], ['天德', dd.tian]].filter((x) => x[1] === t).map((x) => x[0]);
+          hit.push(T(`${label}上见财：书言「又遇德合，主财禄盈庭」；${dn.length ? '此神又是' + dn.join('、') + '（德见书页 68）' : '此神不是德'}，合未算。`, 66));
+        }
         items.push(...hit);
         return hit.length;
       };
@@ -363,6 +374,27 @@
         if (!xn) items.push(OWN('未给性别，行年不看（行年须由性别与岁数推得）。'));
       } else items.push(T('未给年命地支，也未给性别，此项不看（本命须有年支，行年须有性别）。', 66));
       steps.push({ key: 'bianti', title: '变体门·年命', items });
+    }
+
+    // 德（书页 68）：临日、入传者能转凶为吉；忌逢空、落空
+    {
+      const d = deShen(riGan, riZhi, a.yueZhi), items = [];
+      const named = [['日德', d.ri], ['枝德', d.zhi], ['月德', d.yue], ['天德', d.tian]].filter((x) => x[1]);
+      items.push(T(`${named.map((x) => x[0] + x[1]).join('、')}。德者福佑之神，凡临日入传，能转凶为吉，而日德尤吉；俱宜生旺，不宜休囚，忌逢空、落空。`, 68));
+      let any = false;
+      for (const z of [...new Set(named.map((x) => x[1]))]) {
+        const names = named.filter((x) => x[1] === z).map((x) => x[0]).join('、');
+        const where = [ke[0].shang === z ? '临日干（干上神）' : '', ...sc.chuan.map((c, i) => (c === z ? '入' + '初中末'[i] + '传' : ''))].filter(Boolean);
+        if (!where.length) continue;
+        any = true;
+        const bad = kong.has(z) ? '但值旬空，书言忌逢空' : kong.has(ln.diUnder(z)) ? `但临地盘${ln.diUnder(z)}为旬空之位，书言忌落空` : '';
+        items.push(T(`${names}${z}${where.join('、')}${bad ? '，' + bad : ''}。`, 68));
+        if (ke[0].shang === z && sc.chuan[0] === z && (c1.liuQin === '鬼' || c1.liuQin === '官')) items.push(T('德加干发用为鬼，仍作德断，盖德能化鬼为吉。', 68));
+      }
+      if (!any) items.push(OWN('诸德不临日干、不入三传，本课不论德。'));
+      if (!a.yueZhi) items.push(OWN('未给月支，天德、月德未算。'));
+      if (riGan === '丙' || riGan === '辛') items.push(OWN('丙辛日日德照《探原》书页 68 取戌（歌诀与其后所列两处皆同）；他书有无异文未核，【待核】。'));
+      steps.push({ key: 'de', title: '德（福佑之神）', items });
     }
 
     // 占类专项（集说篇书页 84–87）
@@ -549,5 +581,5 @@
     return out;
   }
 
-  return { APPLIES_TO, SOURCE, KETI, TANYUAN_KETI, QISHU, ZHUAN_XIANG, analyze, wangXiang, moves, stage, xuSui, xingNian, toPromptLines };
+  return { APPLIES_TO, SOURCE, KETI, TANYUAN_KETI, QISHU, ZHUAN_XIANG, analyze, wangXiang, moves, stage, deShen, xuSui, xingNian, toPromptLines };
 });

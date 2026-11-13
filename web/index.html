@@ -256,6 +256,7 @@
   <div class="q-bar">
     <textarea id="aiQuestion" rows="2" placeholder="问句（例：这次投资能赚钱吗？）——占类留「自动判定」时按问句判占类"></textarea>
     <div class="muted" id="domainTag"></div>
+    <div class="muted" style="font-size:11px;">问法：问一件事的吉凶成败（例：「收下这件礼物对我吉凶如何？宜留宜送？」），不问事物的真假（例：「这石头有没有能量？」）。后一种盘答不了，模型会改答常识。</div>
     <div class="muted" style="font-size:11px;">占类决定取哪套用神、规则 1–10 怎么取类神。自动判定按问句关键词猜，
       「钱包丢了」会被猜成求财、「另找合作方」会被猜成失物——猜错就整盘都错，这里看一眼，不对就在占类里改。</div>
   </div>
@@ -330,13 +331,17 @@
     <div id="aiAnswerBar" class="muted" style="display:none;margin-top:8px;">
       <button class="btn" id="aiRawToggle" style="padding:2px 8px;font-size:12px;">查看原文</button>
     </div>
+    <div id="aiOffChart" class="note-warn" style="display:none;margin-top:8px;padding:8px;border:1px solid #d9a441;border-radius:6px;background:#fff8e6;font-size:13px;">
+      <span id="aiOffChartText"></span>
+      <button class="btn" id="aiRetryBtn" style="padding:2px 8px;font-size:12px;margin-left:6px;">照盘再问一次</button>
+    </div>
     <div id="aiAnswer"></div>
     <div style="margin-top:8px;">
       <button class="btn" id="caseSaveBtn">📝 存为案例（日后回填结果，记准确率）</button>
       <span class="muted" id="caseSaveTag"></span>
     </div>
     <p class="muted" style="margin:8px 0 0;">设置与 Qimen-pwa 共用（同一网站，同一份本机设置），key 只存在本机。
-      奇门部分照 Qimen-pwa 的纲要与盘面数据；Qimen-pwa 的结构化证据包这里尚未接入。</p>
+      奇门部分照 Qimen-pwa 的纲要与盘面数据；结构化证据包（象义判读、应期时间线、类象用神、力量校验、证据合流、伏吟反吟、八十一格、时格、取数）与奇门 app 同一份；奇门 app 案例本的经验附注不带过来。</p>
   </div>
 
   <div class="panel" id="casePanel">
@@ -364,6 +369,18 @@
   <script src="vendor/qimen-pwa/core/framing.js"></script>
   <script src="vendor/qimen-pwa/core/yingqi.js"></script>
   <script src="vendor/qimen-pwa/core/mdlite.js"></script>
+  <!-- 结构化证据包：与奇门 app 同一份（各层分析 + core/reading.js 编排） -->
+  <script src="vendor/qimen-pwa/core/xiangyi.js"></script>
+  <script src="vendor/qimen-pwa/core/timing.js"></script>
+  <script src="vendor/qimen-pwa/core/leixiang.js"></script>
+  <script src="vendor/qimen-pwa/core/severity.js"></script>
+  <script src="vendor/qimen-pwa/core/converge.js"></script>
+  <script src="vendor/qimen-pwa/core/yinju.js"></script>
+  <script src="vendor/qimen-pwa/core/geju.js"></script>
+  <script src="vendor/qimen-pwa/core/shige.js"></script>
+  <script src="vendor/qimen-pwa/core/qushu.js"></script>
+  <script src="vendor/qimen-pwa/core/evidence.js"></script>
+  <script src="vendor/qimen-pwa/core/reading.js"></script>
   <script src="vendor/qimen-pwa/llm.js"></script>
   <script src="lib/tyme4ts.js"></script>
   <script src="core/liuren/tiandipan.js"></script>
@@ -374,6 +391,7 @@
   <script src="core/liuren/tuili.js"></script>
   <script src="core/liuren/cidian.js"></script>
   <script src="core/liuren/xinde.js"></script>
+  <script src="core/liuren/shadow.js"></script>
   <script src="core/rules.js"></script>
   <script src="vendor/qimen-pwa/core/calendar.js"></script>
   <script src="app.js"></script>

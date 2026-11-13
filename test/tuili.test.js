@@ -20,9 +20,9 @@ function fromCase(id, extra) {
 }
 const all = (r) => r.steps.flatMap((s) => s.items).concat(r.heKan).map((x) => x.text).join('\n');
 
-test('骨架照《探原》论断篇八门（书页 59–66），前置课体、后附应期参照；每句注《探原》或伍书书页，或标「本 app 取法」', () => {
+test('骨架照《探原》论断篇八门（书页 59–66），前置课体、后附德（书页 68）与应期参照；每句注《探原》或伍书书页，或标「本 app 取法」', () => {
   const r = fromCase('王-13');
-  assert.deepEqual(r.steps.map((s) => s.title), ['大局·课体', '先锋门·占时', '直事门·月将', '外事门·日干（我）', '内事门·日枝（彼）', '发端门·初传', '移易门·中传', '归计门·末传', '变体门·年命', '应期（参照）']);
+  assert.deepEqual(r.steps.map((s) => s.title), ['大局·课体', '先锋门·占时', '直事门·月将', '外事门·日干（我）', '内事门·日枝（彼）', '发端门·初传', '移易门·中传', '归计门·末传', '变体门·年命', '德（福佑之神）', '应期（参照）']);
   for (const it of r.steps.flatMap((s) => s.items).concat(r.heKan)) {
     if (/^(干阴|枝阴)/.test(it.text)) continue;   // 紧接上一句的续行
     assert.ok(it.own || /^(探原|伍书) /.test(it.src), '无出处：' + it.text);
@@ -146,4 +146,31 @@ test('占类专项（集说篇书页 84–87）：按占类只列相关几节', 
   // 迟速（书页 87）各占类都列在应期参照里
   const r = TL.analyze(Object.assign({ domain: 'wealth' }, base));
   assert.match(r.steps.find((x) => x.key === 'yingqi').items.map((x) => x.text).join(''), /迟速：.*主事(速|迟)/);
+});
+
+// 德（《探原》书页 68）：表照原文逐字录；袁-8 为原书例
+test('德：四德表照书页 68；袁-8 月德亥临申命', () => {
+  const TL = require('../core/liuren/tuili.js');
+  // 天德：正月丁未、二月坤申、三月壬亥、四月辛戌、五月乾亥、六月甲寅、七月癸丑、八月艮寅、九月丙巳、十月乙辰、十一月巽巳、十二月庚申
+  const yue = '寅卯辰巳午未申酉戌亥子丑';
+  assert.equal([...yue].map((m) => TL.deShen('甲', '子', m).tian).join(''), '未申亥戌亥寅丑寅巳辰巳申');
+  // 月德：正五九丙巳，二六十甲寅，三七十一壬亥，四八十二庚申
+  assert.equal([...yue].map((m) => TL.deShen('甲', '子', m).yue).join(''), '巳寅亥申巳寅亥申巳寅亥申');
+  // 日德：甲己寅，乙庚申，丙辛戌，戊癸巳，丁壬亥
+  assert.equal([...'甲乙丙丁戊己庚辛壬癸'].map((g) => TL.deShen(g, '子', '寅').ri).join(''), '寅申戌亥巳寅申戌亥巳');
+  // 枝德：子巳、丑午、寅未、卯申、辰酉、巳戌、午亥、未子、申丑、酉寅、戌卯、亥辰
+  assert.equal([...'子丑寅卯辰巳午未申酉戌亥'].map((z) => TL.deShen('甲', z, '寅').zhi).join(''), '巳午未申酉戌亥子丑寅卯辰');
+  // 袁-8：庚戌年十二月初三（1911-01-03，小寒前，月建子）癸酉日丑将戌时，书云「月德临于申命」：子月月德亥，申上正是亥
+  const SC = require('../core/liuren/sanchuan.js');
+  const sc = SC.compute({ riGan: '癸', riZhi: '酉', yueJiang: '丑', shiZhi: '戌' });
+  assert.equal(TL.deShen('癸', '酉', '子').yue, '亥');
+  assert.equal(sc.liuren.tianOver('申'), '亥');
+  const r = TL.analyze({ sc, riZhu: '癸酉', yueZhi: '子', taiSui: '戌', xunKong: ['戌', '亥'], nianMing: '庚申', xingNian: '丙辰', domain: '' });
+  const de = r.steps.find((s) => s.key === 'de');
+  assert.ok(de && /日德巳、枝德寅、月德亥、天德巳/.test(de.items[0].text) && de.items[0].src === '探原 68');
+  // 丙辛日照书取戌，并标待核
+  const sc2 = SC.compute({ riGan: '丙', riZhi: '寅', yueJiang: '丑', shiZhi: '子' });
+  const r2 = TL.analyze({ sc: sc2, riZhu: '丙寅', yueZhi: '子', taiSui: '酉', xunKong: ['戌', '亥'], nianMing: '', xingNian: '', domain: '' });
+  const de2 = r2.steps.find((s) => s.key === 'de');
+  assert.ok(/日德戌/.test(de2.items[0].text) && de2.items.some((it) => it.own && /待核/.test(it.text)));
 });

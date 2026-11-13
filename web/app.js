@@ -378,7 +378,7 @@
   /* ---------- 复盘心得（单案）：六壬盘象相近、已复盘的旧案例（core/liuren/xinde.js） ---------- */
   const HOW_LABEL = { overrated: '当时高估了', underrated: '当时低估了', missed: '当时漏看了', misread: '当时读错了' };
   const ITEM_LABEL = (id) => ({ xk: '六壬旬空', gui: '贵人', sc: '三传', ke: '四课', r7: '规则 7 应期', r8: '规则 8 类神', r9: '规则 9 贵人互参', r10: '规则 10 我彼双读' }[id]
-    || (/^tl-/.test(id) ? '六壬推理·' + ({ keti: '课体', xianfeng: '先锋门', zhishi: '直事门', waishi: '外事门', neishi: '内事门', fadian: '发端门（初传）', yiyi: '移易门（中传）', guiji: '归计门（末传）', bianti: '变体门（年命）', zhuanxiang: '占类专项', yingqi: '应期', he: '合看' }[id.slice(3)] || id.slice(3)) : id));
+    || (/^tl-/.test(id) ? '六壬推理·' + ({ keti: '课体', xianfeng: '先锋门', zhishi: '直事门', waishi: '外事门', neishi: '内事门', fadian: '发端门（初传）', yiyi: '移易门（中传）', guiji: '归计门（末传）', bianti: '变体门（年命）', de: '德', zhuanxiang: '占类专项', yingqi: '应期', he: '合看' }[id.slice(3)] || id.slice(3)) : id));
   let _xdSeq = 0;
   async function renderXinDe(pan, res) {
     const host = $('xindePanel');
