@@ -240,6 +240,30 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   assert(/完全应验 1/.test(d.getElementById('caseBody').textContent) && /应验分 100\.0%/.test(d.getElementById('caseBody').textContent), '准确率页缺应验分');
   { const s0 = w.ChuanRenCases.stats(); assert(s0.ai.n === 1 && s0.ai.acc === 1, 'AI 结论方向未由应验推出'); }
   assert(/六壬判法影子追踪 v1/.test(d.getElementById('caseBody').textContent) && /S1 干上神生克日干〔探原 61〕/.test(d.getElementById('caseBody').textContent) && /S2 初传落旬空〔探原 63〕/.test(d.getElementById('caseBody').textContent), '准确率页缺影子追踪');
+  // 影子追踪 v2：起盘时算好存进案例；准确率页有表；AI 提示词不带
+  { const recs = await w.ChuanRenCases.store.list(), r0 = recs[recs.length - 1];
+    assert(r0.shadow2 && r0.shadow2.v === 'liuren-shadow-v2' && r0.shadow2.N1 && r0.shadow2.N3 && r0.shadow2.S7A && r0.shadow2.S8A, '案例未存影子 v2');
+    const body = d.getElementById('caseBody').textContent;
+    assert(/影子追踪 v2/.test(body) && /N1 天干融合/.test(body) && /N3 迟速融合/.test(body) && /S7-A 初传合为成期/.test(body) && /S8-A 发用逢墓/.test(body) && /组合实验/.test(body), '准确率页缺影子 v2');
+    const m2 = await AI.buildMessages(w._chuanrenCtx, '这次投资能赚钱吗');
+    assert(!/影子|N1 天干|S7-A|S8-A/.test(m2.system + m2.user), 'AI 提示词带进了影子 v2'); }
+  // S8-A 另标：失物题回填表多出「东西还在」「最后找回」「在哪里」，存进 feedback.s8
+  { const recs = await w.ChuanRenCases.store.list(), r0 = recs[recs.length - 1];
+    const r1 = JSON.parse(JSON.stringify(r0)); r1.id = r0.id + 'L'; r1.question = '钥匙丢了能找到吗'; r1.input.domain = 'lost_item'; r1.feedback = null;
+    await w.ChuanRenCases.store.save(r1);
+    d.querySelector('#caseTabSeg button[data-tab="open"]').click(); await w.ChuanRenCases.refresh(); await sleep(50);
+    const box = d.querySelector(`.fb[data-id="${r1.id}"]`);
+    assert(box && box.querySelector('[data-s8="wuZai"]') && box.querySelector('[data-s8="zhaoHui"]') && box.querySelector('[data-s8="weiZhi"]'), '失物题缺 S8-A 另标栏');
+    box.querySelector('[data-k="note"]').value = '在沙发缝里找到';
+    box.querySelector('input[value="happened"]').checked = true;
+    box.querySelector('[data-s8="wuZai"]').value = 'yes'; box.querySelector('[data-s8="zhaoHui"]').value = 'yes'; box.querySelector('[data-s8="weiZhi"]').value = '沙发缝';
+    box.querySelector('button[data-act="archive"]').click();
+    for (let i = 0; i < 60 && !((await w.ChuanRenCases.store.get(r1.id)).feedback || {}).archived; i++) await sleep(50);
+    const saved = (await w.ChuanRenCases.store.get(r1.id)).feedback.s8;
+    assert(saved && saved.wuZai === 'yes' && saved.zhaoHui === 'yes' && saved.weiZhi === '沙发缝', 'S8-A 另标未存：' + JSON.stringify(saved));
+    await w.ChuanRenCases.store.remove(r1.id); await w.ChuanRenCases.refresh();
+    d.querySelector('#caseTabSeg button[data-tab="stats"]').click(); }
+  console.log('✓ 影子追踪 v2：起盘存进案例、准确率页、失物另标；AI 提示词不带');
   // 离题检测与问法提示
   assert(w.QimenReading.offChart('石头是自然界中的矿物集合体，建议寻求专业的心理健康顾问的建议。').off === true, '离题回复未判出');
   assert(w.QimenReading.offChart('用神生门落艮八宫，乘天任、值符，旺相不空；日干落震三宫。').off === false, '照盘回复误判离题');

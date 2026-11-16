@@ -151,6 +151,41 @@
   const sheng = (a, b) => SHENG[a] === b, keWx = (a, b) => KE[a] === b;
 
   /**
+   * 首从发用（书页 71–72）：发用起太岁、月建、月将、旬首、本日干枝、占时者各有所应；
+   * 都不见，以本日枝推，初传在日枝后一至三位者应在第 d+1 日，出四位不取。
+   * @returns { qi: [说法], kinds: [年|月|月将|旬|日|时], d: 1..3 或 0 }
+   */
+  function shouFa(o) {
+    const { sc, riGan, riZhi, yueZhi, taiSui, dun } = o;
+    const ln = sc.liuren, f = sc.chuan[0], ganPos = JI_GONG[riGan];
+    const qi = [], kinds = [];
+    if (taiSui && f === taiSui) { qi.push('发用起太岁，吉凶应在本年之内'); kinds.push('年'); }
+    if (yueZhi && f === yueZhi) { qi.push('发用起月建，应在本月之内'); kinds.push('月'); }
+    if (f === ln.yueJiang) { qi.push('发用起月将，应在月将值事之内'); kinds.push('月将'); }
+    if (dun[f] === '甲') { qi.push('发用起旬首，应在本旬之内'); kinds.push('旬'); }
+    if (f === ganPos || f === riZhi) { qi.push('发用起本日干枝，应在本日'); kinds.push('日'); }
+    if (f === ln.shiZhi) { qi.push('发用起所占之时，应在当时'); kinds.push('时'); }
+    let d = 0;
+    if (!qi.length) { const k = ((zi(f) - zi(riZhi)) % 12 + 12) % 12; if (k >= 1 && k <= 3) d = k; }
+    return { qi, kinds, d };
+  }
+
+  /** 迟速（书页 87）：本面板所取的几项。返回 { su: [主速者], chi: [主迟者] } */
+  function chiSu(o) {
+    const { sc, riGan, riZhi, dun, kong } = o;
+    const ln = sc.liuren, su = [], chi = [];
+    if (sc.chuan.includes(ln.shiZhi)) su.push('传见占时');
+    if (sc.chuan.some((z) => dun[z] === '丁')) su.push('传见丁神');
+    if (sc.chuan.includes(YIMA[riZhi])) su.push('传见驿马');
+    if (ln.shun) su.push('贵人顺行'); else chi.push('贵人逆行');
+    if (sc.name === '伏吟') chi.push('伏吟');
+    if (sc.name === '涉害') chi.push('涉害');
+    if (sc.chuan.some((z) => kong.has(z))) chi.push('传见空');
+    if (sc.chuan.some((z) => stage(riGan, z) === '墓')) chi.push('传见墓');
+    return { su, chi };
+  }
+
+  /**
    * @param a.sc       SanChuan.compute 的结果（含 ke、chuan、name、keTi、why、liuren 天地盘）
    * @param a.riZhu    日柱（如「丁丑」）
    * @param a.yueZhi   月建地支（月柱之支），用来定旺相休囚、天马、应期；不给就不看
@@ -472,28 +507,11 @@
     {
       const items = [];
       const f = sc.chuan[0];
-      const qi = [];
-      if (a.taiSui && f === a.taiSui) qi.push('发用起太岁，吉凶应在本年之内');
-      if (a.yueZhi && f === a.yueZhi) qi.push('发用起月建，应在本月之内');
-      if (f === ln.yueJiang) qi.push('发用起月将，应在月将值事之内');
-      if (dun[f] === '甲') qi.push('发用起旬首，应在本旬之内');
-      if (f === ganPos || f === riZhi) qi.push('发用起本日干枝，应在本日');
-      if (f === ln.shiZhi) qi.push('发用起所占之时，应在当时');
-      if (qi.length) items.push(T(qi.join('；') + '。', '71–72'));
-      else {
-        const d = ((zi(f) - zi(riZhi)) % 12 + 12) % 12;
-        items.push(T(d >= 1 && d <= 3 ? `岁月节候均不见发用，以本日枝推：初传${f}在日枝${riZhi}后第${d}位，应在第${d + 1}日。` : `岁月节候均不见发用，以本日枝推：初传${f}不在日枝${riZhi}后一至三位（「出四位则不取」），此法不取。`, 72));
-      }
+      const sf = shouFa({ sc, riGan, riZhi, yueZhi: a.yueZhi, taiSui: a.taiSui, dun });
+      if (sf.qi.length) items.push(T(sf.qi.join('；') + '。', '71–72'));
+      else items.push(T(sf.d ? `岁月节候均不见发用，以本日枝推：初传${f}在日枝${riZhi}后第${sf.d}位，应在第${sf.d + 1}日。` : `岁月节候均不见发用，以本日枝推：初传${f}不在日枝${riZhi}后一至三位（「出四位则不取」），此法不取。`, 72));
       items.push(T(`初传${f}所合${LIU_HE[f]}为成期，末传${sc.chuan[2]}所冲${chong(sc.chuan[2])}为散期。`, 72));
-      const su = [], chi = [];
-      if (sc.chuan.includes(ln.shiZhi)) su.push('传见占时');
-      if (sc.chuan.some((z) => dun[z] === '丁')) su.push('传见丁神');
-      if (sc.chuan.includes(YIMA[riZhi])) su.push('传见驿马');
-      if (ln.shun) su.push('贵人顺行'); else chi.push('贵人逆行');
-      if (sc.name === '伏吟') chi.push('伏吟');
-      if (sc.name === '涉害') chi.push('涉害');
-      if ([c1, c2, c3].some((r) => r.kong)) chi.push('传见空');
-      if (sc.chuan.some((z) => stage(riGan, z) === '墓')) chi.push('传见墓');
+      const { su, chi } = chiSu({ sc, riGan, riZhi, dun, kong });
       items.push(T(`迟速：${su.length ? su.join('、') + '，主事速' : ''}${su.length && chi.length ? '；' : ''}${chi.length ? chi.join('、') + '，主事迟' : ''}。`, 87));
       const ZH = { 亥: '丑', 子: '丑', 寅: '辰', 卯: '辰', 巳: '未', 午: '未', 申: '戌', 酉: '戌', 戌: '丑', 丑: '辰', 辰: '未', 未: '戌' };
       items.push(T(`中黄歌：发用${f}，看天盘${ZH[f]}所临地盘${ln.diUnder(ZH[f])}为应期。`, 88));
@@ -581,5 +599,5 @@
     return out;
   }
 
-  return { APPLIES_TO, SOURCE, KETI, TANYUAN_KETI, QISHU, ZHUAN_XIANG, analyze, wangXiang, moves, stage, deShen, xuSui, xingNian, toPromptLines };
+  return { APPLIES_TO, SOURCE, KETI, TANYUAN_KETI, QISHU, ZHUAN_XIANG, analyze, wangXiang, moves, stage, deShen, shouFa, chiSu, xuSui, xingNian, toPromptLines };
 });

@@ -104,6 +104,22 @@
         <div class="muted" style="font-size:11px;">这三项只用来给规则计分：规则的 +1 说的是「如愿」，所以要知道你是盼还是怕、事情发生没有。</div>
       </details></div>`;
   }
+  /** 影子 v2 的 S8-A：失物、行人另标三项／两项。物在不等于找回，人归不等于平安，分开问 */
+  const S8_Q = {
+    lost_item: [['wuZai', '东西还在吗（没被拿走、没毁掉）'], ['zhaoHui', '最后找回了吗']],
+    traveler: [['renGui', '人回来了吗'], ['pingAn', '最后平安吗']],
+  };
+  function s8Fields(c) {
+    const dom = window.LiurenShadow2 ? window.LiurenShadow2.domainOf(c) : (c.input || {}).domain;
+    const qs = S8_Q[dom];
+    if (!qs) return '';
+    const v = ((c.feedback || {}).s8) || {};
+    const sel = (k) => `<select data-s8="${k}">${[['', '未填'], ['yes', '是'], ['no', '否'], ['?', '不知道']].map(([x, t]) => `<option value="${x}"${v[k] === x ? ' selected' : ''}>${t}</option>`).join('')}</select>`;
+    const loc = dom === 'lost_item' ? `<div>东西在哪里（选填） <input data-s8="weiZhi" value="${esc(v.weiZhi || '')}" style="width:60%;"></div>` : '';
+    return `<div class="s8" style="margin:6px 0;padding:6px;border:1px dashed #bbb;border-radius:6px;">
+      <div class="muted" style="font-size:11px;">影子追踪 v2 用（${dom === 'lost_item' ? '失物' : '行人'}）：几项分开填，不知道就选不知道。</div>
+      ${qs.map(([k, t]) => `<div>${t} ${sel(k)}</div>`).join('')}${loc}</div>`;
+  }
   function feedbackForm(c) {
     const f = c.feedback || {};
     const day = askDayOf(c);
@@ -116,6 +132,7 @@
         ${day ? `<button class="btn" type="button" data-day="0" style="padding:1px 6px;font-size:12px;background:#666;">占问当天</button>
         <button class="btn" type="button" data-day="1" style="padding:1px 6px;font-size:12px;background:#666;">次日</button>` : ''}
         <div class="muted" style="font-size:11px;">实际应期＝事情发生的那一天，不是今天回填的日子；问题与时间无关（射覆、是什么病……）就留空。规则 7 的应期命中靠它计。</div>
+        ${s8Fields(c)}
         实际方位 <select data-k="gong"><option value="">不适用</option>${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => `<option value="${g}" ${String(f.actualGong) === String(g) ? 'selected' : ''}>${GONG[g]}</option>`).join('')}</select>
       </details>
       <button class="btn" data-act="archive" style="padding:4px 12px;font-size:13px;">${f.archived ? '更新' : '回填并归档'}</button>
@@ -124,6 +141,13 @@
       ${labelLine(c)}
       ${reviewHtml(c)}
     </div>`;
+  }
+  function readS8(box, old) {
+    const els = box.querySelectorAll('[data-s8]');
+    if (!els.length) return old || null;
+    const o = {};
+    els.forEach((el) => { const v = el.value.trim(); if (v) o[el.dataset.s8] = v; });
+    return Object.keys(o).length ? o : null;
   }
   function readForm(box, old) {
     const id = box.dataset.id, vd = box.querySelector(`input[name="vd-${id}"]:checked`);
@@ -134,7 +158,7 @@
     const keepLabels = o.labels && String(o.note || '').trim() === note;
     return Object.assign({}, o, { verdict: vd ? vd.value : '', note,
       actualGong: box.querySelector('[data-k="gong"]').value, actualDate: date, actualDayZhi: dayZhiOf(date),
-      labels: keepLabels ? o.labels : null, archived: true });
+      labels: keepLabels ? o.labels : null, archived: true, s8: readS8(box, o.s8) });
   }
 
   /** AI 标注员：只看问句与实况，判是非题、盼怕、是否发生。失败不阻断归档，只是这条暂不计分 */
@@ -284,6 +308,55 @@
       ${feedbackForm(c)}</details>`;
   }
 
+  /** 影子追踪 v2（docs/SHADOW-liuren-v2.md）：只记账，不投票、不进规则票、不改 AI 解读 */
+  function shadow2Html() {
+    const S2 = window.LiurenShadow2;
+    if (!S2) return '';
+    const all = S2.stats(cache, CB, window.LiurenShadow), t = all.test, lb = all.lookback;
+    const v = (x) => (x.verdict ? `<b>${x.verdict}</b>` : '<span class="muted">未到评估点</span>');
+    const c2 = (x) => (x == null ? '—' : x.toFixed(2));
+    const nx = (x, f) => (x.next ? `<span class="muted">离${x.next.label}：${f(x.next)}</span>` : '<span class="muted">两次评估都已到</span>');
+    const ab = (o) => Object.entries(o || {}).map(([k, n]) => `${esc(k)} ${n}`).join('；') || '无';
+    const hs = (h) => `${h.hit}／${h.n} 题，瞎猜 ${h.expect}，${h.ratio == null ? '—' : h.ratio + ' 倍'}${h.p == null ? '' : '，p＝' + h.p}`;
+    let h = `<h4 style="margin:14px 0 6px;">影子追踪 v2 <span class="muted" style="font-weight:normal;">（${esc(all.spec.frozenAt)} 冻结；检验集为此日起录入的案例；只记账，不投票、不进规则票、不改 AI 解读）</span></h4>`;
+    // N1
+    const n1 = t.N1;
+    h += `<p><b>N1 天干融合</b>〔探原 64 × 奇门落宫〕：符合条件 ${n1.eligible} 题，出票 ${n1.n} 题，平衡准确率 ${pct(n1.balanced)}；同批 AI 结论 ${pct(n1.ai.balanced)}　判定：${v(n1)}<br>
+      ${nx(n1, (e) => `出票 ${n1.n}／${e.n} 题，如愿 ${n1.pos}／${e.each}，不如愿 ${n1.neg}／${e.each}`)}<br><span class="muted">弃权：${ab(n1.abstain)}</span></p>
+      <div class="tbl-wrap"><table class="rule-table acc-table"><thead><tr><th>N1 各条件单看（描述，不判定）</th><th>题数</th><th>平衡准确率</th></tr></thead><tbody>
+      ${n1.factors.map((f) => `<tr><td>${esc(f.name)}</td><td>${f.n}</td><td>${pct(f.balanced)}</td></tr>`).join('')}</tbody></table></div>`;
+    // N3
+    const n3 = t.N3, row3 = (k, x) => `<tr><td>${k}</td><td>${x.fast}／${x.slow}／${x.abstain}</td><td>${c2(x.c)}</td><td>${x.medFast == null ? '—' : x.medFast}／${x.medSlow == null ? '—' : x.medSlow}</td></tr>`;
+    h += `<p><b>N3 迟速融合</b>〔探原 87 × 纲要应期5〕：有实际应期 ${n3.n} 题；两边一致 ${(n3.relation || {})['一致'] || 0}、相反 ${(n3.relation || {})['相反'] || 0}、一边不定 ${(n3.relation || {})['有一边不定'] || 0}　判定（合看）：${v(n3)}<br>
+      ${nx(n3, (e) => `合看判速 ${n3.fused.fast}／${e.each}，判迟 ${n3.fused.slow}／${e.each}`)}</p>
+      <div class="tbl-wrap"><table class="rule-table acc-table"><thead><tr><th>迟速</th><th>判速／判迟／不定</th><th>一致性 C（瞎猜 0.50）</th><th>相隔天数中位数（速／迟）</th></tr></thead><tbody>
+      ${row3('六壬单看', n3.lr)}${row3('奇门单看', n3.qm)}${row3('两边合看（一致才判）', n3.fused)}</tbody></table></div>`;
+    // S7
+    const s7 = t.S7, F = s7.F;
+    h += `<div class="tbl-wrap"><table class="rule-table acc-table"><thead><tr><th>应期（实际应期日支）</th><th>命中／瞎猜</th><th>判定</th></tr></thead><tbody>
+      <tr><td>S7-A 初传合为成期、末传冲为散期〔探原 72〕<br><span class="muted">成期 ${hs(s7.A.cheng)}；散期 ${hs(s7.A.san)}</span></td><td>${hs(s7.A)}<br>${nx(s7.A, (e) => `${s7.A.n}／${e.n} 题`)}</td><td>${v(s7.A)}</td></tr>
+      <tr><td>S7-B 末传合（现行规则 7 所用）</td><td>${hs(s7.B)}<br>${nx(s7.B, (e) => `${s7.B.n}／${e.n} 题`)}</td><td>${v(s7.B)}</td></tr>
+      <tr><td>现行规则 7</td><td>${hs(s7.combos.r7)}</td><td class="muted">对照</td></tr>
+      <tr><td>规则 7 ＋ S7-A</td><td>${hs(s7.combos.r7A)}</td><td class="muted">组合</td></tr>
+      <tr><td>规则 7 ＋ S7-B</td><td>${hs(s7.combos.r7B)}</td><td class="muted">组合</td></tr>
+      <tr><td>规则 7 ＋ S7-A ＋ S7-B</td><td>${hs(s7.combos.all)}</td><td class="muted">组合</td></tr>
+      </tbody></table></div>
+      <p class="muted">起盘当天就应验的除外（描述，不判定）：S7-A ${hs(s7.notSameDay.A)}；S7-B ${hs(s7.notSameDay.B)}；规则 7 ${hs(s7.notSameDay.r7)}。</p>
+      <p class="muted">S7-F 首从发用（只记录，不判定）：本日 ${F.日.hit}／${F.日.n}，当时（当天）${F.时.hit}／${F.时.n}，日枝推 ${F.日枝推.hit}／${F.日枝推.n}，旬首（本旬内）${F.旬.hit}／${F.旬.n}；其余（年、月、月将）${F.其余} 题未核，此法不取 ${F.不取} 题。</p>`;
+    // S8-A
+    const s8row = (name, x, k1, k2) => `<tr><td>${name}</td><td>逢墓 ${x.fired} 题${k1} ${pct(x.firedRate)}；不逢墓 ${x.rest} 题${k1} ${pct(x.restRate)}<br>${nx(x, (e) => `逢墓 ${x.fired}／${e.fired}，不逢墓 ${x.rest}／${e.rest}`)}</td><td>${v(x)}</td>
+      <td class="muted">${k2}：逢墓 ${pct(x.secondary.firedRate)}，不逢墓 ${pct(x.secondary.restRate)}（${x.secondary.n} 题）；同批规则 8 对「发生」${x.rule8.n} 题，平衡 ${pct(x.rule8.balanced)}</td></tr>`;
+    h += `<div class="tbl-wrap"><table class="rule-table acc-table"><thead><tr><th>S8-A 发用逢墓〔探原 63〕</th><th>检验集</th><th>判定</th><th>另记（不判定）</th></tr></thead><tbody>
+      ${s8row('失物：物在', t.S8A.lost_item, '东西还在', '最后找回')}${s8row('行人：人归', t.S8A.traveler, '人回来了', '最后平安')}</tbody></table></div>`;
+    // 组合与重复证据
+    const cb = t.combo;
+    h += `<div class="tbl-wrap"><table class="rule-table acc-table"><thead><tr><th>组合实验（如愿题 ${cb.n} 题，同一批）</th><th>出票率</th><th>出票题平衡准确率</th><th>全集正确率（弃权算半对）</th></tr></thead><tbody>
+      ${cb.rows.map(([k, x]) => `<tr><td>${esc(k)}</td><td>${pct(x.coverage)}</td><td>${pct(x.balanced)}（${x.n} 题）</td><td>${pct(x.adjusted)}</td></tr>`).join('')}</tbody></table></div>
+      <p class="muted">重复证据：${cb.pairs.map((p) => `${p.a}×${p.b} 同题出票 ${p.both}，同向 ${pct(p.same)}`).join('；')}。N1 与 S2（初传旬空）同题出票 ${cb.n1s2} 题——初传空则无遁干，两条结构上互斥。</p>
+      <p class="muted">回看（冻结前录入，不计入判定）：N1 出票 ${lb.N1.n}；N3 有应期 ${lb.N3.n}；S7-A ${hs(lb.S7.A)}；S7-B ${hs(lb.S7.B)}。N1、N3 要起盘时存下的奇门盘，冻结前的案例没有，故为 0。</p>`;
+    return h;
+  }
+
   /** 六壬判法影子追踪 v1（docs/SHADOW-liuren-v1.md）：只记账，不投票 */
   function shadowHtml() {
     const SH = window.LiurenShadow;
@@ -330,6 +403,7 @@
       其中 v2.3 贵人冲空（单看贵人之支）：${s.rule7.gui.n} 题，命中 ${s.rule7.gui.hit}（瞎猜期望 ${s.rule7.gui.expect}）。</p>
       <p class="muted">规则账本按版本分开：只计本版（v${esc(String((window.ChuanRenRules || {}).VERSION || '').split('.')[0])}）录入的案例；AI 与五行 v1 全计。</p>`;
     h += shadowHtml();
+    h += shadow2Html();
     h += `<p class="muted">口径照冻结规格：平衡准确率＝如愿题判对率与不如愿题判对率的平均，瞎猜为 50%；弃权不计。
       判定只在到达评估点时给出：比 AI 结论高 5 个百分点以上且本身 ≥55% 为通过；低于 AI 结论为停止；其余第一次评估继续、第二次停止。</p>`;
     return h;

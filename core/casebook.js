@@ -37,6 +37,7 @@
       chart: { siZhu: pan.siZhu, juShu: pan.juShu && pan.juShu.fullName },
       liuren: { yueJiang: res.yueJiang.yueJiang, xunKong: res.liuren.xunKong, sanChuan: res.sanChuan.chuan, keTi: res.sanChuan.name },
       quYong: res.quYong,
+      shadow2: ctx.shadow2 || null,   // 影子追踪 v2：起盘时算好的 N1、N3（只记账）
       votes: res.rules.map((r) => ({ rule: r.rule, applicable: !!r.applicable, vote: r.vote || 0, relation: r.relation || '',
         secondGongs: r.secondGongs, qimenGong: r.qimenGong, yingQi: r.yingQi || null, mo: r.mo,
         picks: r.picks, method: r.method || '', verdict: r.verdict || '', lr: r.lr, qm: r.qm, gui: r.gui || null })),
