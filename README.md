@@ -53,6 +53,7 @@ core/rules.js              规则 1–10，入口 evaluate()
 docs/SPEC-v2.md            v2 规格（规则 7–10）
 knowledge/liuren-candidates.json  《实占百例》萃取的候选规则（不参与求值）
 docs/SHADOW-liuren-v1.md          六壬判法影子追踪 v1（干上神生克日干、初传落旬空；只记账不投票）
+docs/SHADOW-liuren-v2.md          影子追踪 v2（天干融合、迟速融合、成期散期、发用逢墓；只记账不投票）
 web/                       PWA 页面、控制器（app.js）、AI 解读（ai.js）、manifest、service worker
 scripts/build.js           产出 dist/（打包 tyme4ts，从 submodule 取页面用到的文件）
 scripts/smoke.js           在 jsdom 里打开 dist 页面，排转盘、飞盘各一次

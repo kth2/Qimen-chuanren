@@ -660,7 +660,8 @@
         yongGong: yong && yong.gong, yongName: yong && yong.name };
     }
     try {
-      const res = RULES.evaluate({ chart: pan, wangshuai: WS.analyze(pan), domain: domainKeyOf(ui), date, feipan, nianMing,
+      const ws = WS.analyze(pan);
+      const res = RULES.evaluate({ chart: pan, wangshuai: ws, domain: domainKeyOf(ui), date, feipan, nianMing,
         yong: sk === 'zhuanpan' && yong ? { gong: yong.gong, name: yong.name, source: yong.source } : null, selfless });
       res.yongPick = yong;
       res.nianMing = nianMing;
@@ -676,7 +677,14 @@
       renderChuanRen(pan, res);
       window._chuanren = res;
       // 供 AI 解读（web/ai.js）取用：同一张盘、同一份穿壬结果，不重算
-      window._chuanrenCtx = { pan, res, school, date, ui, domainSource: dom.source, nianMing, xingNian: res.xingNian, xingBie: res.xingBie, domain: res.domain, engineCategory: engineCategoryOf(ui, school), dateStr: `${$('inDate').value} ${$('inTime').value}` };
+      // 影子追踪 v2（docs/SHADOW-liuren-v2.md）：只记账，存进案例；不进规则票、不进面板、不进 AI 提示词
+      let shadow2 = null;
+      try {
+        shadow2 = window.LiurenShadow2 ? window.LiurenShadow2.evaluate({ school: res.school, chart: pan, ws, sc: res.sanChuan,
+          riZhu: pan.siZhu.day, xunKong: res.liuren.xunKong, Y: res.quYong && res.quYong.Y, domain: res.domain,
+          yueZhi: String(pan.siZhu.month || '')[1], taiSui: String(pan.siZhu.year || '')[1] }) : null;
+      } catch (e) { console.warn('[影子 v2] 算不出：', e.message); }
+      window._chuanrenCtx = { pan, res, school, date, ui, domainSource: dom.source, nianMing, xingNian: res.xingNian, xingBie: res.xingBie, domain: res.domain, engineCategory: engineCategoryOf(ui, school), dateStr: `${$('inDate').value} ${$('inTime').value}` , shadow2 };
       markAIStale();
     } catch (e) {
       renderBoard(pan, null);
