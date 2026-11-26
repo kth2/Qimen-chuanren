@@ -194,6 +194,28 @@
     .rv-box.rv-no { border-color: #c9c9c9; background: #fafafa; }
     .rv-item { font-size: 12px; margin-top: 3px; }
     .rv-warn { font-size: 11px; color: #a15c00; }
+    /* ---- 版面收拢（手机一屏看得完上半部；长块可收起，展开状态记在本机） ---- */
+    .more-opts { flex-basis: 100%; }
+    .more-opts > summary { color: #555; }
+    .more-opts .more-body { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+    .q-help { margin-top: 2px; }
+    .q-help > summary { color: #888; font-size: 12px; }
+    .sec-nav { position: sticky; top: 0; z-index: 20; display: flex; gap: 2px; overflow-x: auto; white-space: nowrap;
+      background: rgba(255,255,255,.96); border-bottom: 1px solid #e5e5e5; padding: 4px 2px; margin: 0 -4px 6px; -webkit-overflow-scrolling: touch; }
+    .sec-nav a, .sec-nav button { font-size: 13px; padding: 4px 9px; border-radius: 14px; color: #3c763d; text-decoration: none; background: #f1f7f0; border: none; flex: none; }
+    .sec-nav button { color: #666; background: #f3f3f3; margin-left: auto; }
+    #chart, .panel { scroll-margin-top: 44px; }
+    .xj-gong { scroll-margin-top: 52px; }
+    details.panel.fold > summary { list-style: none; display: flex; align-items: center; gap: 6px; color: inherit; font-size: inherit; }
+    details.panel.fold > summary::-webkit-details-marker { display: none; }
+    details.panel.fold > summary > h3 { margin: 0; flex: 1; }
+    details.panel.fold > summary::after { content: '展开 ▾'; font-size: 12px; color: #3c763d; flex: none; }
+    details.panel.fold[open] > summary::after { content: '收起 ▴'; color: #999; }
+    details.panel.fold[open] > summary { margin-bottom: 8px; }
+    details.tl-step > summary { color: inherit; font-size: inherit; }
+    details.tl-step > summary .tl-n { font-weight: normal; }
+    details.tl-step:not([open]) { margin-top: 2px; }
+    details.rule-why > summary { font-size: 12px; }
   </style>
 </head>
 <body>
@@ -210,6 +232,24 @@
     </span>
     <label>日期 <input type="date" id="inDate"></label>
     <label>时间 <input type="time" id="inTime"></label>
+    <label>占类
+      <select id="inDomain">
+        <option value="">跟随问句自动判定</option>
+        <option value="综合">综合</option><option value="事业">事业</option><option value="财运">财运</option>
+        <option value="婚姻">婚姻</option><option value="健康">健康</option><option value="学业">学业</option>
+        <option value="出行">出行</option><option value="行人">行人(来否/何时到)</option><option value="失物">失物</option><option value="寻人">寻人追踪</option>
+        <option value="怀孕">怀孕</option><option value="官司">官司</option><option value="风水">风水(阴阳宅)</option>
+        <option value="射覆">射覆</option><option value="天气">天气</option><option value="竞赛">竞赛</option><option value="股市">股市(大盘/个股)</option>
+        <option value="终身局">终身局(按出生时间起盘)</option><option value="异梦">异梦(怪梦/诡异)</option>
+        <optgroup label="飞盘专有（《鸣法·用神章》；转盘纲要未列）">
+          <option value="追捕">追捕</option><option value="逃亡">逃亡</option><option value="讨债">讨债</option><option value="盗贼">盗贼有无</option>
+          <option value="避难">避难潜行</option><option value="文书音讯">文书音讯</option><option value="口舌斗殴">口舌斗殴</option><option value="家宅">家宅安居</option>
+        </optgroup>
+      </select>
+    </label>
+    <button class="btn" id="castBtn">排盘</button>
+    <details class="more-opts" id="moreOpts"><summary>更多设置 <span class="muted" id="moreSum">局、年命、行年、万年历</span></summary>
+      <div class="more-body">
     <button class="btn" type="button" id="calBtn" style="background:#666;">📅 万年历</button>
     <label>局
       <select id="inJuShu">
@@ -226,21 +266,6 @@
         </optgroup>
       </select>
     </label>
-    <label>占类
-      <select id="inDomain">
-        <option value="">跟随问句自动判定</option>
-        <option value="综合">综合</option><option value="事业">事业</option><option value="财运">财运</option>
-        <option value="婚姻">婚姻</option><option value="健康">健康</option><option value="学业">学业</option>
-        <option value="出行">出行</option><option value="行人">行人(来否/何时到)</option><option value="失物">失物</option><option value="寻人">寻人追踪</option>
-        <option value="怀孕">怀孕</option><option value="官司">官司</option><option value="风水">风水(阴阳宅)</option>
-        <option value="射覆">射覆</option><option value="天气">天气</option><option value="竞赛">竞赛</option><option value="股市">股市(大盘/个股)</option>
-        <option value="终身局">终身局(按出生时间起盘)</option><option value="异梦">异梦(怪梦/诡异)</option>
-        <optgroup label="飞盘专有（《鸣法·用神章》；转盘纲要未列）">
-          <option value="追捕">追捕</option><option value="逃亡">逃亡</option><option value="讨债">讨债</option><option value="盗贼">盗贼有无</option>
-          <option value="避难">避难潜行</option><option value="文书音讯">文书音讯</option><option value="口舌斗殴">口舌斗殴</option><option value="家宅">家宅安居</option>
-        </optgroup>
-      </select>
-    </label>
     <label title="年干必选；年支选填（规则 6 要用；甲年必选，以定所遁之仪）。不知道年柱可在万年历里查出生那天，按「设为年命」">年命
       <select id="inNmGan"></select><select id="inNmZhi"></select><input type="hidden" id="inNianMing" value="">
       <span class="muted" id="nmHint"></span></label>
@@ -248,7 +273,8 @@
       <select id="inXingBie"><option value="">性别（选填）</option><option value="男">男</option><option value="女">女</option></select>
       <label class="muted" style="font-weight:normal;"><input type="checkbox" id="inOver60">61 岁以上</label>
       <span class="muted" id="xnHint"></span></label>
-    <button class="btn" id="castBtn">排盘</button>
+      </div>
+    </details>
   </div>
 
   <div id="calPanel" class="panel cal" style="display:none;"></div>
@@ -256,11 +282,17 @@
   <div class="q-bar">
     <textarea id="aiQuestion" rows="2" placeholder="问句（例：这次投资能赚钱吗？）——占类留「自动判定」时按问句判占类"></textarea>
     <div class="muted" id="domainTag"></div>
+    <details class="q-help"><summary>问法与占类提示</summary>
     <div class="muted" style="font-size:11px;">问法：问一件事的吉凶成败（例：「收下这件礼物对我吉凶如何？宜留宜送？」），不问事物的真假（例：「这石头有没有能量？」）。后一种盘答不了，模型会改答常识。</div>
     <div class="muted" style="font-size:11px;">占类决定取哪套用神、规则 1–10 怎么取类神。自动判定按问句关键词猜，
       「钱包丢了」会被猜成求财、「另找合作方」会被猜成失物——猜错就整盘都错，这里看一眼，不对就在占类里改。</div>
+    </details>
   </div>
 
+  <nav id="secNav" class="sec-nav" hidden>
+    <a href="#chart">盘面</a><a href="#lrPanel">六壬</a><a href="#tuiliPanel">推理</a><a href="#fxPanel">奇门</a><a href="#jiuGongXiangJie">九宫</a><a href="#rulesPanel">规则</a><a href="#aiPanel">AI</a><a href="#casePanel">案例</a>
+    <button type="button" id="foldAll">全部展开</button>
+  </nav>
   <div id="basicInfo" class="panel" style="display:none;"></div>
   <div id="chart"></div>
   <div id="chuanren"></div>

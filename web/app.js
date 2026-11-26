@@ -242,7 +242,7 @@
     // 点宫跳到九宫详解
     $('chart').querySelectorAll('.pan-grid .gong').forEach((el, i) => {
       el.style.cursor = 'pointer';
-      el.addEventListener('click', () => { const t = document.getElementById('xj-g' + GRID_ORDER[i]); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.classList.add('xj-hit'); setTimeout(() => t.classList.remove('xj-hit'), 1200); } });
+      el.addEventListener('click', () => { const t = document.getElementById('xj-g' + GRID_ORDER[i]); if (t) { jumpTo(t, 'center'); t.classList.add('xj-hit'); setTimeout(() => t.classList.remove('xj-hit'), 1200); } });
     });
     // 我宫、事宫、第二方位：只加内阴影描边，不动宫格内的排版
     const R = String((res && res.quYong.R) || ''), Y = String((res && res.quYong.Y) || '');
@@ -311,7 +311,7 @@
     const purpose = (pan.basicInfo && pan.basicInfo.purpose) || '综合';
     let html = '';
     if (school === 'feipan') html += `<p class="muted">飞盘解断复用通用奇门基线(五行生克/十干克应/门迫/空亡/格局/用神)，飞盘专法(遁干81格/三乙四宫)以 AI 占断为准。</p>`;
-    html += `<div class="panel"><h3>分析与建议 · 目的：${esc(purpose)}</h3>`;
+    html += `<div class="panel" id="fxPanel"><h3>分析与建议 · 目的：${esc(purpose)}</h3>`;
     const yp = res && res.yongPick;
     if (a.yongShen) html += `<p>用神（${esc(purpose)}）：<b>${esc(a.yongShen.name)}</b> 落 <b>${esc(a.yongShen.direction)}方(${esc(a.yongShen.gongName)}宫，${esc(a.yongShen.jiXiongText)})</b> <span class="muted">${esc(a.yongShen.tip)}</span></p>`;
     else if (yp && yp.gong) html += `<p>用神（${esc(purpose)}）：<b>${esc(yp.name)}</b> 落 <b>${esc(yp.direction || '')}方(${esc(yp.gongName || '')}宫)</b> `
@@ -408,6 +408,7 @@
     host.innerHTML = `<div class="panel"><h3>复盘心得 <span class="exp-badge">单案·未经检验</span></h3>
       <p class="muted" style="margin:0 0 6px;">从已做过 AI 复盘的旧案例里，找六壬盘象相近的（同占类、课体、初传末传落空、初传天将六亲、干上神对日干、贵人冲空，逐项比），把当时的心得列出来对照学习。
       这些都是单个案例的事后总结，不是规则；同样的盘象下次未必同样应。</p>${body}</div>`;
+    foldPanels(host);
     host.querySelectorAll('.xd-open').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); window.ChuanRenCases.openCase(a.dataset.id); }));
   }
 
@@ -442,7 +443,8 @@
       return `<li${it.own ? ' class="tl-own"' : ''}>${rich(it.text)}${it.src ? ` <span class="tl-src">${esc(it.src)}</span>` : ''}${it.own ? ' <span class="tl-src">本 app 取法</span>' : ''} <button type="button" class="tl-ask" data-ask="${n}" title="请 AI 结合这张盘讲解这一条">问</button></li>`;
     };
     const stepTitle = (st) => `<b>${esc(st.title)}</b>${CD && CD.STEP_TERM[st.key] ? ` <span class="tl-term tl-q" data-term="${CD.STEP_TERM[st.key]}" role="button" tabindex="0" title="这一门看什么">？</span>` : ''}`;
-    const steps = r.steps.map((st) => `<div class="tl-step">${stepTitle(st)}<ul>${st.items.map(item).join('')}</ul></div>`).join('');
+    // 各门默认收起，标出条数；「先看这几条」常开
+    const steps = r.steps.map((st) => `<details class="tl-step" data-step="${esc(st.key)}"><summary>${stepTitle(st)} <span class="muted tl-n">${st.items.length} 条</span></summary><ul>${st.items.map(item).join('')}</ul></details>`).join('');
     const r7 = (res.rules || []).find((x) => x.rule === 7);
     const r7picks = r7 && Array.isArray(r7.picks) && r7.picks.length ? r7.picks.join('、') : '';
     const focus = (r.focus || []).map(item).join('') + (r7picks ? item({ text: `规则 7 所取应期之支：${r7picks}（含贵人冲空，〔用户所定〕）。`, src: '', own: false }) : '');
@@ -450,7 +452,7 @@
     return `<div class="panel" id="tuiliPanel"><h3>六壬推理 <span class="exp-badge">只显示·不投票</span></h3>
       <div class="tl-focus"><b>先看这几条</b> <span class="muted">照《探原》所言轻重；只指出从哪里看起，不给吉凶。带虚线的词可点开看白话；每句末的「问」请 AI 结合本盘讲这一条。</span><ul>${focus}</ul></div>
       ${steps}
-      <div class="tl-step tl-he"><b>合看</b><ul>${r.heKan.map(item).join('')}</ul></div>
+      <details class="tl-step tl-he"><summary><b>合看</b> <span class="muted tl-n">${r.heKan.length} 条</span></summary><ul>${r.heKan.map(item).join('')}</ul></details>
       <p class="muted" style="margin:6px 0 0;">${esc(r.caution.text)}（${esc(r.caution.src)}）<br>
         出处：${esc(r.source)}。「探原 N」＝《大六壬探原》书页，「伍书 N」＝伍剑虹书页（参照），均为页脚页码。「本 app 取法」＝书中无逐字规定、本 app 自定，可改。点「奇门N宫」跳到九宫详解。</p>
       ${cidian}</div>`;
@@ -521,6 +523,7 @@
       <p class="muted" style="margin:6px 0 0;">${Object.values(BOOK._books || {}).map(esc).join('、')}。盘式照书录入，问事、断法、应验是摘要，注明页码，请以原书为准。
       同课＝日柱与天地盘相同，四课三传全同；同三传＝三传相同而日柱不同。</p></div>`;
     box.innerHTML = html;
+    foldPanels(box);
     const all = $('bkAll'), q = $('bkSearch');
     const draw = () => {
       const k = (q.value || '').trim();
@@ -534,11 +537,48 @@
 
   const YSRC = { engine: '（事宫取 AI 解读【用神落宫】中第一个在盘者）', domain: '（引擎无此占类，按占类表取）',
     'wuxing-v1': '（照五行推理 v1）', shigan: '（无专一用神，取时干）' };
+  /* ---------- 版面收拢：长面板可收起；各面板展开与否记在本机（localStorage，读写失败就用默认） ---------- */
+  const FOLD = [   // [标题开头, 键, 默认展开]
+    ['六壬层', 'lr', true], ['四课三传', 'ke', true], ['六壬推理', 'tuili', true], ['书中同课案例', 'book', false],
+    ['分析与建议', 'fx', true], ['格局', 'geju', true], ['九宫详解', 'jiugong', false], ['穿壬规则', 'rules', true], ['复盘心得', 'xinde', false],
+  ];
+  const FOLD_KEY = 'chuanren.fold.v1';
+  const foldState = () => { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '{}') || {}; } catch (e) { return {}; } };
+  const foldSave = (k, open) => { try { const s = foldState(); s[k] = open; localStorage.setItem(FOLD_KEY, JSON.stringify(s)); } catch (e) { /* 存不了就算了 */ } };
+  /** 把 root 下直属的 .panel（有 h3 标题的）换成可收起的 details，id、class 原样保留 */
+  function foldPanels(root) {
+    if (!root) return;
+    const st = foldState();
+    root.querySelectorAll(':scope > .panel, :scope > div > .panel').forEach((el) => {
+      if (el.tagName === 'DETAILS') return;
+      const h = el.querySelector(':scope > h3');
+      if (!h) return;
+      const f = FOLD.find(([t]) => h.textContent.trim().startsWith(t));
+      if (!f) return;
+      const d = document.createElement('details');
+      for (const at of el.attributes) d.setAttribute(at.name, at.value);
+      d.classList.add('fold');
+      d.dataset.fold = f[1];
+      const sum = document.createElement('summary');
+      sum.appendChild(h);
+      d.appendChild(sum);
+      while (el.firstChild) d.appendChild(el.firstChild);
+      d.open = f[1] in st ? !!st[f[1]] : f[2];
+      d.addEventListener('toggle', () => foldSave(f[1], d.open));
+      el.replaceWith(d);
+    });
+  }
+  /** 跳到某处：沿途收起的 details 先展开 */
+  function jumpTo(t, block) {
+    for (let e = t; e; e = e.parentElement) if (e.tagName === 'DETAILS' && !e.open) e.open = true;
+    if (t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: block || 'start' });
+  }
+
   function renderChuanRen(pan, res) {
     const R = String(res.quYong.R || ''), Y = String(res.quYong.Y || '');
     const yj = res.yueJiang, L = res.liuren;
 
-    let html = `<div class="panel"><h3>六壬层 <span class="exp-badge">实验</span></h3>
+    let html = `<div class="panel" id="lrPanel"><h3>六壬层 <span class="exp-badge">实验</span></h3>
       <div style="font-size:13px;line-height:1.8;">
         <b>月将</b> ${esc(yj.yueJiang)}（${esc(yj.zhongQi || '')}后${yj.since ? '，自 ' + esc(yj.since) : ''}）
         <span class="muted">月将切换规则${esc(yj.status)}</span><br>
@@ -556,21 +596,23 @@
     html += qimenAnalysisPanels(pan, res);
     html += jiuGongPanel(pan, res);
 
-    html += `<div class="panel"><h3>穿壬规则 <span class="exp-badge">未检验</span></h3>
+    html += `<div class="panel" id="rulesPanel"><h3>穿壬规则 <span class="exp-badge">未检验</span></h3>
       <table class="rule-table"><thead><tr><th>规则</th><th>票</th><th>依据</th></tr></thead><tbody>`;
     for (const r of res.rules) {
-      html += `<tr><td>${r.rule}　${RULE_NAME[r.rule]}</td><td>${voteHtml(r)}</td><td>${ruleDetail(r)}${r.reason ? `<div class="muted">${esc(r.reason)}</div>` : ''}</td></tr>`;
+      const why = `${ruleDetail(r)}${r.reason ? `<div class="muted">${esc(r.reason)}</div>` : ''}`;
+      html += `<tr><td>${r.rule}　${RULE_NAME[r.rule]}</td><td>${voteHtml(r)}</td><td>${why ? `<details class="rule-why"><summary>看依据</summary>${why}</details>` : ''}</td></tr>`;
     }
     html += `</tbody></table>
       <p class="muted" style="margin:6px 0 0;">自创实验流派（appliesTo: ${esc(res.appliesTo)}）。+1／−1 只是关系分值，不等于吉或成功；
       各规则分开计票、不相加，冲突原样保留。规则 3、4 依第二层三传（取法据《探原》）。
       规则 7–10 为 v2：奇门、六壬两边同向才投票，相反记「混」。</p></div>`;
     $('chuanren').innerHTML = html;
+    foldPanels($('chuanren'));
     // 六壬推理里的「奇门N宫」：跳到九宫详解并闪一下
     $('chuanren').querySelectorAll('.tl-gong').forEach((a) => a.addEventListener('click', (e) => {
       e.preventDefault();
       const t = document.getElementById('xj-g' + a.dataset.gong);
-      if (t) { if (t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); t.classList.add('xj-hit'); setTimeout(() => t.classList.remove('xj-hit'), 1200); }
+      if (t) { jumpTo(t, 'center'); t.classList.add('xj-hit'); setTimeout(() => t.classList.remove('xj-hit'), 1200); }
     }));
     // 术语：点开／再点收起，卡片插在该句下面
     const toggleTerm = (el) => {
@@ -620,6 +662,8 @@
 
   /* ---------- 排盘 ---------- */
   function cast() {
+    $('secNav').hidden = false;
+    updateMoreSum();
     const date = getDate(), juShu = getJuShuOverride();
     const dom = resolveDomain(), ui = dom.ui;
     lastDomainUi = ui;
@@ -742,6 +786,40 @@
     cast();
   });
   $('castBtn').addEventListener('click', cast);
+
+  /* ---------- 「更多设置」摘要：收起时也看得到局、年命、行年选了什么 ---------- */
+  function updateMoreSum() {
+    const el = $('moreSum');
+    if (!el) return;
+    const parts = [];
+    const ju = $('inJuShu');
+    if (ju && ju.value) parts.push(ju.options[ju.selectedIndex].text);
+    const g = $('inNmGan').value, z = $('inNmZhi').value;
+    if (g) parts.push('年命 ' + g + (z || ''));
+    const xb = $('inXingBie').value;
+    if (xb) parts.push(xb + ($('inOver60').checked ? '·61 岁以上' : ''));
+    el.textContent = parts.length ? parts.join(' · ') : '局、年命、行年、万年历';
+    el.style.color = parts.length ? '#3c763d' : '';
+  }
+  $('moreOpts').addEventListener('change', updateMoreSum);
+  $('calPanel').addEventListener('click', () => setTimeout(updateMoreSum, 0));   // 万年历「设为年命」
+  updateMoreSum();
+
+  /* ---------- 分区导航：排盘后显示；点哪去哪，收起的先展开 ---------- */
+  $('secNav').addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    if (!a) return;
+    const t = document.getElementById(a.getAttribute('href').slice(1));
+    if (!t) return;
+    e.preventDefault();
+    jumpTo(t);
+  });
+  $('foldAll').addEventListener('click', () => {
+    const all = [...document.querySelectorAll('details.fold, #tuiliPanel details.tl-step')];
+    const open = all.some((d) => !d.open);
+    all.forEach((d) => { d.open = open; });
+    $('foldAll').textContent = open ? '全部收起' : '全部展开';
+  });
   // 自动判定时，问句一改就重判占类；占类真变了才重排盘
   let qTimer = null;
   $('aiQuestion').addEventListener('input', () => {

@@ -91,12 +91,19 @@ function assert(c, msg) { if (!c) throw new Error('冒烟失败：' + msg); }
   assert(/卯/.test(d.getElementById('chuanren').textContent), '霜降后应为卯将');
   { const tl = d.getElementById('tuiliPanel');
     assert(tl, '缺六壬推理面板');
-    const titles = [...tl.querySelectorAll('.tl-step > b')].map((e) => e.textContent).join(' ');
+    const titles = [...tl.querySelectorAll('.tl-step > summary > b')].map((e) => e.textContent).join(' ');
     assert(/大局·课体 先锋门·占时 直事门·月将 外事门·日干（我） 内事门·日枝（彼） 发端门·初传 移易门·中传 归计门·末传 变体门·年命 德（福佑之神） 应期（参照） 合看/.test(titles), '六壬推理八门不全：' + titles);
     assert(/本命庚午，上神/.test(tl.textContent) && /探原 66/.test(tl.textContent) && /贵人.*(顺治|逆行)/.test(tl.textContent) && /课名/.test(tl.textContent), '六壬推理内容不全');
     const a = tl.querySelector('.tl-gong');
     assert(a, '三传应可跳到九宫详解');
+    // 版面收拢：九宫详解默认收起；各门默认收起且标条数；规则依据收起；局、年命、行年收在「更多设置」里
+    assert(d.getElementById('jiuGongXiangJie').tagName === 'DETAILS' && !d.getElementById('jiuGongXiangJie').open, '九宫详解应默认收起');
+    assert(tl.tagName === 'DETAILS' && tl.open && [...tl.querySelectorAll('details.tl-step')].every((x) => !x.open && /\d+ 条/.test(x.querySelector('summary').textContent)), '六壬推理各门应默认收起并标条数');
+    assert(d.querySelectorAll('#rulesPanel details.rule-why').length === 10, '规则依据应逐行收起');
+    assert(['inJuShu', 'inNmGan', 'inXingBie', 'calBtn'].every((id) => d.getElementById(id).closest('#moreOpts')), '局、年命、行年、万年历应在「更多设置」里');
+    assert(!d.getElementById('secNav').hidden, '排盘后应显示分区导航');
     a.click();
+    assert(d.getElementById('jiuGongXiangJie').open, '点「奇门N宫」应先展开九宫详解');
     assert(d.getElementById('xj-g' + a.dataset.gong).classList.contains('xj-hit'), '点「奇门N宫」未跳到九宫详解');
     // 先看这几条、术语白话卡
     assert(/先看这几条/.test(tl.querySelector('.tl-focus').textContent) && tl.querySelectorAll('.tl-focus li').length >= 4, '缺「先看这几条」');
